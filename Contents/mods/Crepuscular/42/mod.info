@@ -1,7 +1,7 @@
 name=Crepuscular
 id=Crepuscular
-description=Day, night and blood moon phases, with sandbox values that change with the phase. Optional support for The Mutants and Cry of Fear Monster NPCs.
+description=Day and night with special moons and suns, defined in sandbox options. Each can change sandbox values, switch The Mutants off and announce itself. A blood moon by default. Optional support for The Mutants and Cry of Fear Monster NPCs.
 poster=poster.png
-modversion=0.2.0
+modversion=0.3.0
 versionMin=42.20.2
 loadModAfter=PZTheMutants,CryOfFearMonsters

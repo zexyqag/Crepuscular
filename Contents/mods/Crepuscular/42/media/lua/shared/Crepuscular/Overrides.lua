@@ -1,20 +1,6 @@
 local Log = require "Crepuscular/Log"
-local Settings = require "Crepuscular/Settings"
 
 local Overrides = {}
-
-local LISTS = { "DayOverrides", "NightOverrides", "BloodMoonOverrides" }
-
--- Later lists win.
-local PHASE_LISTS = {
-    day = { "DayOverrides" },
-    night = { "NightOverrides" },
-    bloodmoon = { "NightOverrides", "BloodMoonOverrides" },
-}
-
-local function trim(text)
-    return string.match(text, "^%s*(.-)%s*$")
-end
 
 local function finite(n)
     return n ~= nil and n == n and n ~= math.huge and n ~= -math.huge
@@ -25,7 +11,7 @@ local function numeric(kind)
 end
 
 -- The value as the option's own type, or nil if the option can't hold it. Checked here so that a
--- bad value shows up at once, not only when its phase comes.
+-- bad value shows up at once, not only when its definition applies.
 local function convert(option, text)
     local kind = option:getType()
     if kind == "boolean" then
@@ -57,62 +43,36 @@ local function describe(option)
     return kind
 end
 
-local function skip(problems, list, name, reason)
-    problems[name] = reason
-    Log.warnOnce(list .. " " .. name .. " " .. reason, list .. ": skipped " .. name .. ", " .. reason)
-end
-
-local function parse(list, problems)
-    local entries = {}
-    for entry in string.gmatch(Settings.overrides(list), "[^;]+") do
-        entry = trim(entry)
-        if entry ~= "" then
-            local name, text = string.match(entry, "^([^=]-)%s*=%s*(.-)$")
-            if name == nil or name == "" then
-                skip(problems, list, entry, "not Table.Option=value")
+-- The set. entries of a definition as typed values. Entries the game can't take are left out
+-- with a warning: the option may belong to a mod that isn't loaded.
+function Overrides.check(label, entries, warnings)
+    local values = {}
+    local names = {}
+    for name in pairs(entries) do
+        names[#names + 1] = name
+    end
+    table.sort(names)
+    for _, name in ipairs(names) do
+        local text = entries[name]
+        local option = getSandboxOptions():getOptionByName(name)
+        local why = nil
+        if option == nil then
+            why = "no such sandbox option"
+        elseif string.sub(name, 1, 12) == "Crepuscular." then
+            why = "Crepuscular's own options can't be set"
+        else
+            local value = convert(option, text)
+            if value == nil then
+                why = "'" .. text .. "' is not a valid " .. describe(option)
             else
-                entries[name] = text
+                values[name] = value
             end
         end
-    end
-    return entries
-end
-
--- Reads the three lists. Returns the set of option names they validly mention, and for each
--- list the typed value per name. Invalid entries are left out and recorded in problems.
-function Overrides.read(problems)
-    local names, lists = {}, {}
-    for _, list in ipairs(LISTS) do
-        local values = {}
-        for name, text in pairs(parse(list, problems)) do
-            local option = getSandboxOptions():getOptionByName(name)
-            if option == nil then
-                skip(problems, list, name, "no such sandbox option")
-            elseif string.sub(name, 1, 12) == "Crepuscular." then
-                skip(problems, list, name, "Crepuscular's own options can't change by phase")
-            else
-                local value = convert(option, text)
-                if value == nil then
-                    skip(problems, list, name, "'" .. text .. "' is not a valid " .. describe(option))
-                else
-                    names[name] = true
-                    values[name] = value
-                end
-            end
-        end
-        lists[list] = values
-    end
-    return names, lists
-end
-
-function Overrides.forPhase(phase, lists)
-    local wanted = {}
-    for _, list in ipairs(PHASE_LISTS[phase]) do
-        for name, value in pairs(lists[list]) do
-            wanted[name] = value
+        if why ~= nil then
+            warnings[#warnings + 1] = label .. ": set." .. name .. ": " .. why
         end
     end
-    return wanted
+    return values
 end
 
 function Overrides.current(name)

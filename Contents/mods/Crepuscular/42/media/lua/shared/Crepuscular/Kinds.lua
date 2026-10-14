@@ -63,10 +63,10 @@ function Kinds.cryOfFearLoaded()
     return cryOfFearIdentity() ~= nil
 end
 
--- The Cry of Fear monster's name, or nil; always nil while the adapter is off.
+-- The Cry of Fear monster's name, or nil.
 function Kinds.cryOfFear(z)
     local identity = cryOfFearIdentity()
-    if identity == nil or not Settings.cryOfFearAdapter() then
+    if identity == nil then
         return nil
     end
     return identity.name(z)

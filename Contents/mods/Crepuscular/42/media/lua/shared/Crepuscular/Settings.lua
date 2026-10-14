@@ -6,19 +6,20 @@ local DEFAULTS = {
     NightMode = 1,
     NightStartHour = 20,
     NightEndHour = 4,
-    BloodMoonChance = 50,
-    BloodMoonAnnounce = true,
-    BloodMoonMutants = true,
-    MutantsAdapter = true,
-    MutantsWhen = 1,
+    Day = "",
+    Night = "off=mutants",
+    Events1 = "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
+    Events2 = "",
+    Events3 = "",
+    Events4 = "",
+    Events5 = "",
+    Events6 = "",
+    Events7 = "",
+    Events8 = "",
     MutantKeepDistance = 40,
     MutantRemovalsPerMinute = 50,
     MutantRequeue = false,
-    CryOfFearAdapter = true,
     ExcludedOutfits = "",
-    DayOverrides = "",
-    NightOverrides = "",
-    BloodMoonOverrides = "",
 }
 
 local function invalid(name, value)
@@ -72,25 +73,9 @@ function Settings.nightEndHour()
     return integer("NightEndHour", 0, 23)
 end
 
-function Settings.bloodMoonChance()
-    return integer("BloodMoonChance", 0, 100)
-end
-
-function Settings.bloodMoonAnnounce()
-    return boolean("BloodMoonAnnounce")
-end
-
-function Settings.bloodMoonMutants()
-    return boolean("BloodMoonMutants")
-end
-
-function Settings.mutantsAdapter()
-    return boolean("MutantsAdapter")
-end
-
--- 1 = by day, 2 = by night, 3 = always, 4 = blood moons only.
-function Settings.mutantsWhen()
-    return integer("MutantsWhen", 1, 4)
+-- name is Day, Night or Events1 to Events8.
+function Settings.definition(name)
+    return text(name)
 end
 
 function Settings.mutantKeepDistance()
@@ -105,18 +90,9 @@ function Settings.mutantRequeue()
     return boolean("MutantRequeue")
 end
 
-function Settings.cryOfFearAdapter()
-    return boolean("CryOfFearAdapter")
-end
-
 -- Comma-separated outfit name prefixes.
 function Settings.excludedOutfits()
     return text("ExcludedOutfits")
-end
-
--- name is DayOverrides, NightOverrides or BloodMoonOverrides.
-function Settings.overrides(name)
-    return text(name)
 end
 
 return Settings

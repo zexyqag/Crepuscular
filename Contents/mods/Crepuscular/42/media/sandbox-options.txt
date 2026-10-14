@@ -29,47 +29,84 @@ option Crepuscular.NightEndHour
     translation = Crepuscular_NightEndHour,
 }
 
-option Crepuscular.BloodMoonChance
+option Crepuscular.Day
 {
-    type = integer,
-    min = 0,
-    max = 100,
-    default = 50,
+    type = string,
+    default = ,
     page = Crepuscular,
-    translation = Crepuscular_BloodMoonChance,
+    translation = Crepuscular_Day,
 }
 
-option Crepuscular.BloodMoonAnnounce
+option Crepuscular.Night
 {
-    type = boolean,
-    default = true,
+    type = string,
+    default = off=mutants,
     page = Crepuscular,
-    translation = Crepuscular_BloodMoonAnnounce,
+    translation = Crepuscular_Night,
 }
 
-option Crepuscular.BloodMoonMutants
+option Crepuscular.Events1
 {
-    type = boolean,
-    default = true,
+    type = string,
+    default = id=bloodmoon;track=moon;moon=full;chance=50;prio=10;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c,
     page = Crepuscular,
-    translation = Crepuscular_BloodMoonMutants,
+    translation = Crepuscular_Events1,
 }
 
-option Crepuscular.MutantsAdapter
+option Crepuscular.Events2
 {
-    type = boolean,
-    default = true,
+    type = string,
+    default = ,
     page = Crepuscular,
-    translation = Crepuscular_MutantsAdapter,
+    translation = Crepuscular_Events2,
 }
 
-option Crepuscular.MutantsWhen
+option Crepuscular.Events3
 {
-    type = enum,
-    numValues = 4,
-    default = 1,
+    type = string,
+    default = ,
     page = Crepuscular,
-    translation = Crepuscular_MutantsWhen,
+    translation = Crepuscular_Events3,
+}
+
+option Crepuscular.Events4
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_Events4,
+}
+
+option Crepuscular.Events5
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_Events5,
+}
+
+option Crepuscular.Events6
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_Events6,
+}
+
+option Crepuscular.Events7
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_Events7,
+}
+
+option Crepuscular.Events8
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_Events8,
 }
 
 option Crepuscular.MutantKeepDistance
@@ -100,44 +137,12 @@ option Crepuscular.MutantRequeue
     translation = Crepuscular_MutantRequeue,
 }
 
-option Crepuscular.CryOfFearAdapter
-{
-    type = boolean,
-    default = true,
-    page = Crepuscular,
-    translation = Crepuscular_CryOfFearAdapter,
-}
-
 option Crepuscular.ExcludedOutfits
 {
     type = string,
     default = ,
     page = Crepuscular,
     translation = Crepuscular_ExcludedOutfits,
-}
-
-option Crepuscular.DayOverrides
-{
-    type = string,
-    default = ,
-    page = Crepuscular,
-    translation = Crepuscular_DayOverrides,
-}
-
-option Crepuscular.NightOverrides
-{
-    type = string,
-    default = ,
-    page = Crepuscular,
-    translation = Crepuscular_NightOverrides,
-}
-
-option Crepuscular.BloodMoonOverrides
-{
-    type = string,
-    default = ,
-    page = Crepuscular,
-    translation = Crepuscular_BloodMoonOverrides,
 }
 
 option Crepuscular.Verbose

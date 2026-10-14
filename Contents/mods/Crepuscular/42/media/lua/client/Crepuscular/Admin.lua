@@ -1,6 +1,6 @@
 local State = require "Crepuscular/State"
 
-local PHASES = { "auto", "day", "night", "bloodmoon" }
+local PHASES = { "auto", "day", "night" }
 
 local function allowed(player)
     if not isClient() or getDebug() then
@@ -20,8 +20,8 @@ local function show(reply)
     end
     local args = {}
     for i, arg in ipairs(reply.args or {}) do
-        if type(arg) == "string" then
-            args[i] = getText(arg)
+        if type(arg) == "table" then
+            args[i] = getText(arg.key)
         else
             args[i] = arg
         end
@@ -56,10 +56,39 @@ local function fill(playerIndex, context, worldObjects, test)
     for _, phase in ipairs(PHASES) do
         force:addOption(getText("IGUI_Crepuscular_Phase_" .. phase), playerIndex, send, { command = "force", phase = phase })
     end
-    menu:addOption(getText("ContextMenu_Crepuscular_Roll"), playerIndex, send, { command = "roll" })
+    local state = ModData.get(State.NAME)
+    if state ~= nil and #state.ids > 0 then
+        local events = ISContextMenu:getNew(menu)
+        menu:addSubMenu(menu:addOption(getText("ContextMenu_Crepuscular_Start")), events)
+        for _, id in ipairs(state.ids) do
+            events:addOption(id, playerIndex, send, { command = "start", id = id })
+        end
+    end
+    menu:addOption(getText("ContextMenu_Crepuscular_End"), playerIndex, send, { command = "end" })
+    menu:addOption(getText("ContextMenu_Crepuscular_Redecide"), playerIndex, send, { command = "redecide" })
 end
 
 Events.OnFillWorldObjectContextMenu.Add(fill)
+
+-- The number of definitions with errors last shown to this game's admins.
+local shownErrors = 0
+
+local function errors(state)
+    if state.errors == shownErrors then
+        return
+    end
+    for i = 0, getNumActivePlayers() - 1 do
+        local player = getSpecificPlayer(i)
+        if player ~= nil then
+            if state.errors > 0 and allowed(player) then
+                player:setHaloNote(getText("IGUI_Crepuscular_Errors", state.errors), 255, 160, 60, 500)
+            end
+            shownErrors = state.errors
+        end
+    end
+end
+
+State.listen(errors)
 
 if isClient() then
     Events.OnServerCommand.Add(function(module, command, args)

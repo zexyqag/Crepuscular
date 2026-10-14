@@ -2,5 +2,7 @@
     "ContextMenu_Crepuscular": "Crepuscular",
     "ContextMenu_Crepuscular_Status": "Status",
     "ContextMenu_Crepuscular_Force": "Force phase",
-    "ContextMenu_Crepuscular_Roll": "Roll blood moon now"
+    "ContextMenu_Crepuscular_Start": "Start event",
+    "ContextMenu_Crepuscular_End": "End event",
+    "ContextMenu_Crepuscular_Redecide": "Re-decide this occasion"
 }

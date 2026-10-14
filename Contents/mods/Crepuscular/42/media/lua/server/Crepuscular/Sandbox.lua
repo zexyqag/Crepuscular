@@ -5,16 +5,16 @@ local Overrides = require "Crepuscular/Overrides"
 
 -- Base values live in the server-only global ModData table CrepuscularBase:
 -- { [option name] = { base = value, applied = value while an override is in force } }.
--- The game saves the sandbox options with the world, so a save made during a phase would
--- otherwise keep that phase's values for good.
+-- The game saves the sandbox options with the world, so a save made while a definition applies
+-- would otherwise keep its values for good.
 local Sandbox = {}
 
 Sandbox.STORE = "CrepuscularBase"
 
--- Entries skipped by the last sync, name -> reason, for the status report.
+-- Values the game refused at the last sync, name -> reason, for the status report.
 Sandbox.problems = {}
 
--- name -> value the option refused; not tried again until the list asks for another value.
+-- name -> value the option refused; not tried again until another value is wanted.
 local refused = {}
 
 local function exists(name)
@@ -31,15 +31,14 @@ local function restoreBase(name, entry)
     return true
 end
 
--- Puts every option named in the lists at its value for this phase. Returns the current value of
--- each option it tracks or just released, and whether any value changed.
--- After a load, an option still at its stored applied value was saved during a phase and gets its
--- base back when the phase ends; any other value was changed while the game was stopped, for
--- example in the server's sandbox file, and becomes the base.
-function Sandbox.sync(phase)
+-- names: every option any definition sets; wanted: name -> value for the definition in effect,
+-- described by label. Returns the current value of each option it tracks or just released, and
+-- whether any value changed.
+-- After a load, an option still at its stored applied value was saved while a definition applied
+-- and gets its base back when that ends; any other value was changed while the game was stopped,
+-- for example in the server's sandbox file, and becomes the base.
+function Sandbox.sync(names, wanted, label)
     local problems = {}
-    local names, lists = Overrides.read(problems)
-    local wanted = Overrides.forPhase(phase, lists)
     local store = ModData.getOrCreate(Sandbox.STORE)
     local values, changed = {}, false
 
@@ -78,7 +77,7 @@ function Sandbox.sync(phase)
         if value ~= nil and live ~= value then
             if Overrides.apply(name, value) then
                 changed = true
-                Log.info(name .. " = " .. tostring(value) .. " for " .. phase)
+                Log.info(name .. " = " .. tostring(value) .. " for " .. label)
             else
                 refused[name] = value
                 problems[name] = "the option refuses " .. tostring(value)

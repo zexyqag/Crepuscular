@@ -1,5 +1,4 @@
 local Log = require "Crepuscular/Log"
-local Settings = require "Crepuscular/Settings"
 local State = require "Crepuscular/State"
 local Overrides = require "Crepuscular/Overrides"
 local Kinds = require "Crepuscular/Kinds"
@@ -8,22 +7,38 @@ local Kinds = require "Crepuscular/Kinds"
 -- where the server's mutant was.
 local OUT_RANGE = 30
 
--- id of the last blood moon this game has shown.
+-- Serial of the last announcement this game has shown.
 local announced = nil
 
+local HEX = "0123456789abcdef"
+
+-- One colour channel of rrggbb, from 1-based position i.
+local function channel(color, i)
+    local high = string.find(HEX, string.sub(color, i, i), 1, true) - 1
+    local low = string.find(HEX, string.sub(color, i + 1, i + 1), 1, true) - 1
+    return high * 16 + low
+end
+
 local function announce(state)
-    if state.phase ~= "bloodmoon" or state.bloodMoon.id == announced or not Settings.bloodMoonAnnounce() then
+    local line = state.announce
+    if line == nil or line.serial == announced then
         return
     end
-    local text = getText("IGUI_Crepuscular_BloodMoon")
+    local text = line.text
+    if string.sub(text, 1, 1) == "@" then
+        text = getText(string.sub(text, 2))
+    end
+    local r, g, b = channel(line.color, 1), channel(line.color, 3), channel(line.color, 5)
     for i = 0, getNumActivePlayers() - 1 do
         local player = getSpecificPlayer(i)
         if player ~= nil then
-            player:setHaloNote(text, 255, 60, 60, 500)
-            announced = state.bloodMoon.id
+            player:setHaloNote(text, r, g, b, 500)
+            announced = line.serial
         end
     end
 end
+
+State.listen(announce)
 
 -- The server removed these mutants; the game doesn't remove this game's copies of zombies a script
 -- removes, and the copy this game runs would go on attacking.
@@ -67,8 +82,6 @@ if isClient() then
         end
         ModData.add(State.NAME, state)
         Overrides.applyAll(state.sandbox)
-        announce(state)
+        State.notify(state)
     end)
-else
-    State.listen(announce)
 end

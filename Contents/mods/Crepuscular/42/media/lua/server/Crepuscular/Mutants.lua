@@ -5,9 +5,10 @@ local Settings = require "Crepuscular/Settings"
 local Phase = require "Crepuscular/Phase"
 local State = require "Crepuscular/State"
 local Kinds = require "Crepuscular/Kinds"
+local Clock = require "Crepuscular/Clock"
 
--- The Mutants adapter: a gate on new mutants, removal of far mutants outside the window, and an
--- optional requeue of loaded zombies when the window opens.
+-- The Mutants adapter: a gate on new mutants, removal of far mutants while the definition in
+-- effect has off=mutants, and an optional requeue of loaded zombies when they come back on.
 local Mutants = {}
 
 local OWNER = "Crepuscular"
@@ -23,32 +24,20 @@ local gated = nil
 local original = nil
 
 local function active()
-    return Kinds.started() and Kinds.mutantsApi() ~= nil and Settings.mutantsAdapter()
+    return Kinds.started() and Kinds.mutantsApi() ~= nil
 end
 
--- Whether The Mutants may make new mutants now. Follows the day/night phase, forced phases included.
-local function windowOpen()
-    local phase = ModData.get(State.NAME).phase
-    if phase == "bloodmoon" and Settings.bloodMoonMutants() then
-        return true
-    end
-    local when = Settings.mutantsWhen()
-    if when == 1 then
-        return phase == "day"
-    elseif when == 2 then
-        return phase ~= "day"
-    elseif when == 3 then
-        return true
-    end
-    return phase == "bloodmoon"
+-- Whether The Mutants may make new mutants now: the definition in effect, forced phases included.
+local function mutantsOn()
+    return not ModData.get(State.NAME).effects.off.mutants
 end
 
 local function claim(z)
     if not Kinds.started() then
         return "the game has not started"
     end
-    if not windowOpen() then
-        return "outside the Mutants window"
+    if not mutantsOn() then
+        return "mutants are off"
     end
     local monster = Kinds.cryOfFear(z)
     if monster ~= nil then
@@ -64,7 +53,7 @@ end
 -- The Mutants calls this before it turns a zombie into a mutant; a claimed zombie stays normal and
 -- is asked again when it is next created or loaded.
 local function isClaimed(z, outfitName)
-    if z ~= nil and Settings.mutantsAdapter() then
+    if z ~= nil then
         local reason = claim(z)
         if reason ~= nil then
             return true, OWNER, reason
@@ -178,7 +167,7 @@ local function cleanup()
     -- Sent at once, as the server may give a removed zombie's online ID to a new one. Does nothing
     -- in single player.
     sendServerCommand(State.MODULE, "out", { list = out })
-    Log.info("removed " .. #doomed .. " mutants outside the Mutants window")
+    Log.info("removed " .. #doomed .. " mutants while they are off")
 end
 
 local function ordinary(z)
@@ -216,21 +205,21 @@ local function requeue()
 end
 
 local function stamp()
-    local now = Phase.now()
-    return string.format("%s %02d:%02d", Phase.key(now), now.hour, getGameTime():getMinutes())
+    local now = Clock.now()
+    return Phase.stamp(now, now.hours)
 end
 
--- nil until the first minute after the start, so a game loaded inside the window doesn't requeue.
-local wasOpen = nil
+-- nil until the first minute after the start, so a game loaded while mutants are on doesn't requeue.
+local wasOn = nil
 
 local function minute()
     if not active() then
-        wasOpen, cursor = nil, nil
+        wasOn, cursor = nil, nil
         return
     end
-    local open = windowOpen()
+    local open = mutantsOn()
     if open then
-        if wasOpen == false and Settings.mutantRequeue() then
+        if wasOn == false and Settings.mutantRequeue() then
             cursor = 0
             lastRequeue = { began = stamp(), offered = 0, finished = false }
         end
@@ -241,12 +230,10 @@ local function minute()
         cursor = nil
         cleanup()
     end
-    wasOpen = open
+    wasOn = open
 end
 
 Events.EveryOneMinute.Add(minute)
-
-local WHEN = { "by day", "by night", "always", "blood moons only" }
 
 function Mutants.status()
     local api, why = Kinds.mutantsApi()
@@ -256,16 +243,13 @@ function Mutants.status()
         end
         return { "The Mutants: off, " .. why }
     end
-    if not Settings.mutantsAdapter() then
-        return { "The Mutants: off, MutantsAdapter is false" }
-    end
     local gate = "gated"
     if gated == nil then
         gate = "not gated, it has no ForeignOwnership.isClaimed"
     end
-    local window = "closed"
-    if windowOpen() then
-        window = "open"
+    local now = "off now"
+    if mutantsOn() then
+        now = "on now"
     end
     local last = "none this session"
     if lastRequeue ~= nil then
@@ -275,8 +259,7 @@ function Mutants.status()
         end
     end
     return {
-        "The Mutants: on, " .. gate .. "; window " .. window .. " (" .. WHEN[Settings.mutantsWhen()]
-            .. (Settings.bloodMoonMutants() and ", open on blood moons" or "") .. ")",
+        "The Mutants: " .. gate .. "; mutants " .. now,
         "The Mutants: " .. removed .. " mutants removed this session; last requeue " .. last,
     }
 end

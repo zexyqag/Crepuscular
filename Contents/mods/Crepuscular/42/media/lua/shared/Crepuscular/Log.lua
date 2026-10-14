@@ -31,4 +31,12 @@ function Log.warnOnce(key, message)
     Log.warn(message)
 end
 
+function Log.errorOnce(key, message)
+    if warned[key] then
+        return
+    end
+    warned[key] = true
+    Log.error(message)
+end
+
 return Log
