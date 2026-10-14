@@ -1,0 +1,6 @@
+name=Crepuscular
+id=Crepuscular
+description=Day, night and blood moon phases, with sandbox values that change with the phase.
+poster=poster.png
+modversion=0.1.0
+versionMin=42.20.2

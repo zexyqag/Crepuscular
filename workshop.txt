@@ -1,0 +1,12 @@
+version=1
+id=
+title=Crepuscular
+description=Crepuscular divides the world clock into day, night and blood moon, and can change sandbox options for each of them.
+description=
+description=Night runs on fixed hours (20:00 to 04:00 by default) or follows the game's own seasonal dusk and dawn.
+description=Once per full moon, a chance (50% by default) is rolled for a blood moon. It lasts until that night ends, and every player sees a line on screen when it begins.
+description=Day, night and blood moon each have their own list of sandbox values, for example ZombieLore.Speed=3. The values switch with the phase, and the base values come back when it ends.
+description=
+description=Works in single player and multiplayer. Admins get a Crepuscular entry in the right-click menu to see the status, force a phase or roll a blood moon.
+tags=Build 42;Multiplayer;Balance
+visibility=unlisted

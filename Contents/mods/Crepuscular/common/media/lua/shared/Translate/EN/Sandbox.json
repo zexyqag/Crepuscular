@@ -1,0 +1,23 @@
+{
+    "Sandbox_Crepuscular": "Crepuscular",
+    "Sandbox_Crepuscular_NightMode": "Night mode",
+    "Sandbox_Crepuscular_NightMode_tooltip": "How night is decided. Fixed hours: night runs between the two hours below, every day of the year, whatever the Day/Night Cycle setting. Seasonal night: the game's own dusk and dawn, which move with the seasons and follow the Day/Night Cycle setting (endless day has no night, endless night is always night).",
+    "Sandbox_Crepuscular_NightMode_option1": "Fixed hours",
+    "Sandbox_Crepuscular_NightMode_option2": "Seasonal night",
+    "Sandbox_Crepuscular_NightStartHour": "Night starts at",
+    "Sandbox_Crepuscular_NightStartHour_tooltip": "Hour of the day, 0 to 23, at which night begins when Night mode is Fixed hours. Night can run past midnight. If both hours are the same there is no night at all, and the log says so.",
+    "Sandbox_Crepuscular_NightEndHour": "Night ends at",
+    "Sandbox_Crepuscular_NightEndHour_tooltip": "Hour of the day, 0 to 23, at which night ends when Night mode is Fixed hours.",
+    "Sandbox_Crepuscular_BloodMoonChance": "Blood moon chance",
+    "Sandbox_Crepuscular_BloodMoonChance_tooltip": "Chance in %%, 0 to 100, that a full moon brings a blood moon. It is rolled once per full moon, when the first night on a full-moon date begins, and the blood moon lasts until that night ends. 0 never rolls, 100 gives one every full moon.",
+    "Sandbox_Crepuscular_BloodMoonAnnounce": "Announce blood moons",
+    "Sandbox_Crepuscular_BloodMoonAnnounce_tooltip": "Shows a line over each player when a blood moon begins.",
+    "Sandbox_Crepuscular_DayOverrides": "Day sandbox values",
+    "Sandbox_Crepuscular_DayOverrides_tooltip": "Sandbox options to change while it is day. Write Table.Option=value;Table.Option=value, for example ZombieLore.Speed=3;ZombieLore.Toughness=1, and Option=value for an option without a table, for example HoursForCorpseRemoval=24. A value is a number, true or false, or text. When day ends the options go back to their base values. Unknown names and values the option refuses are logged and skipped. Options the game reads live change at once; options read when a zombie is created only affect new zombies; options another mod reads once at startup don't change.",
+    "Sandbox_Crepuscular_NightOverrides": "Night sandbox values",
+    "Sandbox_Crepuscular_NightOverrides_tooltip": "Sandbox options to change while it is night, blood moons included. Write Table.Option=value;Table.Option=value, or Option=value for an option without a table. A value is a number, true or false, or text. When night ends the options go back to their base values. Unknown names and values the option refuses are logged and skipped. Options the game reads live change at once; options read when a zombie is created only affect new zombies; options another mod reads once at startup don't change.",
+    "Sandbox_Crepuscular_BloodMoonOverrides": "Blood moon sandbox values",
+    "Sandbox_Crepuscular_BloodMoonOverrides_tooltip": "Sandbox options to change during a blood moon, applied on top of the night values: an option in both lists takes this value. Write Table.Option=value;Table.Option=value, or Option=value for an option without a table. A value is a number, true or false, or text. When the blood moon ends the options go back to their base values. Unknown names and values the option refuses are logged and skipped. Options the game reads live change at once; options read when a zombie is created only affect new zombies; options another mod reads once at startup don't change.",
+    "Sandbox_Crepuscular_Verbose": "Verbose log",
+    "Sandbox_Crepuscular_Verbose_tooltip": "Writes phase changes, blood moon rolls and sandbox value changes to the log, prefixed [Crepuscular]. Warnings and errors are always logged."
+}

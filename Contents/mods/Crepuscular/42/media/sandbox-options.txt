@@ -1,0 +1,80 @@
+VERSION = 1,
+
+option Crepuscular.NightMode
+{
+    type = enum,
+    numValues = 2,
+    default = 1,
+    page = Crepuscular,
+    translation = Crepuscular_NightMode,
+}
+
+option Crepuscular.NightStartHour
+{
+    type = integer,
+    min = 0,
+    max = 23,
+    default = 20,
+    page = Crepuscular,
+    translation = Crepuscular_NightStartHour,
+}
+
+option Crepuscular.NightEndHour
+{
+    type = integer,
+    min = 0,
+    max = 23,
+    default = 4,
+    page = Crepuscular,
+    translation = Crepuscular_NightEndHour,
+}
+
+option Crepuscular.BloodMoonChance
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 50,
+    page = Crepuscular,
+    translation = Crepuscular_BloodMoonChance,
+}
+
+option Crepuscular.BloodMoonAnnounce
+{
+    type = boolean,
+    default = true,
+    page = Crepuscular,
+    translation = Crepuscular_BloodMoonAnnounce,
+}
+
+option Crepuscular.DayOverrides
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_DayOverrides,
+}
+
+option Crepuscular.NightOverrides
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_NightOverrides,
+}
+
+option Crepuscular.BloodMoonOverrides
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_BloodMoonOverrides,
+}
+
+option Crepuscular.Verbose
+{
+    type = boolean,
+    default = false,
+    page = Crepuscular,
+    translation = Crepuscular_Verbose,
+}
