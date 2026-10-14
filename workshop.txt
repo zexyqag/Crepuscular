@@ -1,12 +1,15 @@
 version=1
 id=
 title=Crepuscular
-description=Crepuscular divides the world clock into day, night and blood moon, and can change sandbox options for each of them.
+description=Crepuscular divides the world clock into day, night and blood moon, and can change sandbox options for each of them. It can also decide when The Mutants makes mutants.
 description=
 description=Night runs on fixed hours (20:00 to 04:00 by default) or follows the game's own seasonal dusk and dawn.
 description=Once per full moon, a chance (50% by default) is rolled for a blood moon. It lasts until that night ends, and every player sees a line on screen when it begins.
 description=Day, night and blood moon each have their own list of sandbox values, for example ZombieLore.Speed=3. The values switch with the phase, and the base values come back when it ends.
 description=
-description=Works in single player and multiplayer. Admins get a Crepuscular entry in the right-click menu to see the status, force a phase or roll a blood moon.
+description=The Mutants (optional): you choose when it may make new mutants: by day (the default), by night, always, or on blood moons only, and a blood moon can keep them on all night. At other times it makes none, and mutants with no target and no player nearby (40 tiles by default) are removed from the server and from every player's game. Zombies already loaded can be offered to The Mutants as soon as mutants become active.
+description=Cry of Fear Monster NPCs (optional): its monsters are never turned into mutants, and the log warns if its Night only option is off. Outfits of other monster mods can be listed so that they are never turned into mutants either.
+description=
+description=Works in single player and multiplayer, with or without these mods. Admins get a Crepuscular entry in the right-click menu to see the status, force a phase or roll a blood moon.
 tags=Build 42;Multiplayer;Balance
 visibility=unlisted

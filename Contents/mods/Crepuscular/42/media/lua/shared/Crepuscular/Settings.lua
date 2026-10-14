@@ -8,6 +8,14 @@ local DEFAULTS = {
     NightEndHour = 4,
     BloodMoonChance = 50,
     BloodMoonAnnounce = true,
+    BloodMoonMutants = true,
+    MutantsAdapter = true,
+    MutantsWhen = 1,
+    MutantKeepDistance = 40,
+    MutantRemovalsPerMinute = 50,
+    MutantRequeue = false,
+    CryOfFearAdapter = true,
+    ExcludedOutfits = "",
     DayOverrides = "",
     NightOverrides = "",
     BloodMoonOverrides = "",
@@ -70,6 +78,40 @@ end
 
 function Settings.bloodMoonAnnounce()
     return boolean("BloodMoonAnnounce")
+end
+
+function Settings.bloodMoonMutants()
+    return boolean("BloodMoonMutants")
+end
+
+function Settings.mutantsAdapter()
+    return boolean("MutantsAdapter")
+end
+
+-- 1 = by day, 2 = by night, 3 = always, 4 = blood moons only.
+function Settings.mutantsWhen()
+    return integer("MutantsWhen", 1, 4)
+end
+
+function Settings.mutantKeepDistance()
+    return integer("MutantKeepDistance", 0, 300)
+end
+
+function Settings.mutantRemovalsPerMinute()
+    return integer("MutantRemovalsPerMinute", 1, 500)
+end
+
+function Settings.mutantRequeue()
+    return boolean("MutantRequeue")
+end
+
+function Settings.cryOfFearAdapter()
+    return boolean("CryOfFearAdapter")
+end
+
+-- Comma-separated outfit name prefixes.
+function Settings.excludedOutfits()
+    return text("ExcludedOutfits")
 end
 
 -- name is DayOverrides, NightOverrides or BloodMoonOverrides.

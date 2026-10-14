@@ -47,6 +47,75 @@ option Crepuscular.BloodMoonAnnounce
     translation = Crepuscular_BloodMoonAnnounce,
 }
 
+option Crepuscular.BloodMoonMutants
+{
+    type = boolean,
+    default = true,
+    page = Crepuscular,
+    translation = Crepuscular_BloodMoonMutants,
+}
+
+option Crepuscular.MutantsAdapter
+{
+    type = boolean,
+    default = true,
+    page = Crepuscular,
+    translation = Crepuscular_MutantsAdapter,
+}
+
+option Crepuscular.MutantsWhen
+{
+    type = enum,
+    numValues = 4,
+    default = 1,
+    page = Crepuscular,
+    translation = Crepuscular_MutantsWhen,
+}
+
+option Crepuscular.MutantKeepDistance
+{
+    type = integer,
+    min = 0,
+    max = 300,
+    default = 40,
+    page = Crepuscular,
+    translation = Crepuscular_MutantKeepDistance,
+}
+
+option Crepuscular.MutantRemovalsPerMinute
+{
+    type = integer,
+    min = 1,
+    max = 500,
+    default = 50,
+    page = Crepuscular,
+    translation = Crepuscular_MutantRemovalsPerMinute,
+}
+
+option Crepuscular.MutantRequeue
+{
+    type = boolean,
+    default = false,
+    page = Crepuscular,
+    translation = Crepuscular_MutantRequeue,
+}
+
+option Crepuscular.CryOfFearAdapter
+{
+    type = boolean,
+    default = true,
+    page = Crepuscular,
+    translation = Crepuscular_CryOfFearAdapter,
+}
+
+option Crepuscular.ExcludedOutfits
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_ExcludedOutfits,
+}
+
 option Crepuscular.DayOverrides
 {
     type = string,

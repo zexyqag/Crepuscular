@@ -6,6 +6,8 @@ local Phase = require "Crepuscular/Phase"
 local State = require "Crepuscular/State"
 local Sandbox = require "Crepuscular/Sandbox"
 local Clock = require "Crepuscular/Clock"
+local Mutants = require "Crepuscular/Mutants"
+local CryOfFear = require "Crepuscular/CryOfFear"
 
 local Commands = {}
 
@@ -50,6 +52,10 @@ local function status()
         skipped = skipped + 1
         lines[#lines + 1] = "skipped " .. name .. ": " .. reason
     end
+    for _, line in ipairs(Mutants.status()) do
+        lines[#lines + 1] = line
+    end
+    lines[#lines + 1] = CryOfFear.status()
     return {
         text = "IGUI_Crepuscular_Status",
         args = { "IGUI_Crepuscular_Phase_" .. state.phase, overridden, skipped },

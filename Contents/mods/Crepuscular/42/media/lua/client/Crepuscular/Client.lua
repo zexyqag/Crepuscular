@@ -2,6 +2,11 @@ local Log = require "Crepuscular/Log"
 local Settings = require "Crepuscular/Settings"
 local State = require "Crepuscular/State"
 local Overrides = require "Crepuscular/Overrides"
+local Kinds = require "Crepuscular/Kinds"
+
+-- The server may have given the online ID to another zombie by now, so a copy is only removed near
+-- where the server's mutant was.
+local OUT_RANGE = 30
 
 -- id of the last blood moon this game has shown.
 local announced = nil
@@ -20,7 +25,33 @@ local function announce(state)
     end
 end
 
+-- The server removed these mutants; the game doesn't remove this game's copies of zombies a script
+-- removes, and the copy this game runs would go on attacking.
+local function takeOut(list)
+    local byId = {}
+    local zombies = getCell():getZombieList()
+    for i = 0, zombies:size() - 1 do
+        local z = zombies:get(i)
+        byId[z:getOnlineID()] = z
+    end
+    for _, entry in ipairs(list) do
+        local z = byId[entry.id]
+        if z ~= nil and Kinds.isMutant(z) then
+            local dx, dy = z:getX() - entry.x, z:getY() - entry.y
+            if dx * dx + dy * dy <= OUT_RANGE * OUT_RANGE then
+                VirtualZombieManager.instance:removeZombieFromWorld(z)
+            end
+        end
+    end
+end
+
 if isClient() then
+    Events.OnServerCommand.Add(function(module, command, args)
+        if module == State.MODULE and command == "out" then
+            takeOut(args.list)
+        end
+    end)
+
     Events.OnGameStart.Add(function()
         ModData.request(State.NAME)
     end)

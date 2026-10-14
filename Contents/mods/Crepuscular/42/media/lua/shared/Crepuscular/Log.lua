@@ -19,6 +19,10 @@ function Log.warn(message)
     print(PREFIX .. "WARNING: " .. message)
 end
 
+function Log.error(message)
+    print(PREFIX .. "ERROR: " .. message)
+end
+
 function Log.warnOnce(key, message)
     if warned[key] then
         return
