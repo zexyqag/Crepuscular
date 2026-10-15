@@ -1,0 +1,1746 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' file: 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="color-scheme" content="light dark">
+<title>Crepuscular builder</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --fg: #1c2230;
+    --muted: #586071;
+    --border: #d3d8e0;
+    --field: #ffffff;
+    --accent: #3f43a8;
+    --accent-fg: #ffffff;
+    --error: #a8231b;
+    --error-bg: #fdebea;
+    --warn: #7a4f00;
+    --warn-bg: #fff3d4;
+    --ok: #1d6b3a;
+    --day: #fff8e6;
+    --night: #e9ecf8;
+    --focus: #1a5fd0;
+    --chip-border: rgba(0, 0, 0, 0.25);
+    color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #111318;
+        --card: #1a1d24;
+        --fg: #e5e7ec;
+        --muted: #a4abb8;
+        --border: #363c49;
+        --field: #12151b;
+        --accent: #a7abff;
+        --accent-fg: #14152e;
+        --error: #ff9b93;
+        --error-bg: #3b1c1a;
+        --warn: #ffd27a;
+        --warn-bg: #352b12;
+        --ok: #8fd9a8;
+        --day: #2a2617;
+        --night: #1c2236;
+        --focus: #8ab4ff;
+        --chip-border: rgba(255, 255, 255, 0.3);
+        color-scheme: dark;
+    }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+    overflow-wrap: anywhere;
+}
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 48px; }
+header { padding: 20px 0 8px; }
+h1 { font-size: 1.5rem; margin: 0 0 4px; }
+h2 { font-size: 1.2rem; margin: 0 0 8px; }
+h3 { font-size: 1.05rem; margin: 16px 0 6px; }
+p { margin: 6px 0; }
+.muted, .help { color: var(--muted); }
+.help { font-size: 0.9rem; margin: 2px 0 0; }
+a { color: var(--accent); }
+code, textarea, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 0.9rem; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+[role="tablist"] {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    border-bottom: 1px solid var(--border); margin: 8px 0 16px;
+    position: sticky; top: 0; background: var(--bg); z-index: 2; padding-top: 4px;
+}
+[role="tab"] {
+    border: 1px solid transparent; border-bottom: none; background: none; color: var(--fg);
+    padding: 8px 14px; font: inherit; cursor: pointer; border-radius: 6px 6px 0 0; margin-bottom: -1px;
+}
+[role="tab"][aria-selected="true"] { background: var(--card); border-color: var(--border); font-weight: 600; }
+.badge {
+    display: inline-block; min-width: 1.4em; padding: 0 6px; border-radius: 999px; font-size: 0.8rem;
+    text-align: center; line-height: 1.5; vertical-align: 1px; margin-left: 4px;
+}
+.badge.error { background: var(--error-bg); color: var(--error); }
+.badge.warn { background: var(--warn-bg); color: var(--warn); }
+
+.card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; margin: 0 0 16px;
+}
+.row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: flex-end; margin-top: 8px; }
+.row > * { min-width: 0; }
+label, .label { display: block; font-weight: 600; font-size: 0.95rem; }
+input[type="text"], input[type="number"], input[type="date"], input[type="time"], select, textarea {
+    font: inherit; color: var(--fg); background: var(--field);
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; max-width: 100%;
+}
+textarea { width: 100%; min-height: 4.5em; resize: vertical; line-height: 1.35; }
+textarea.big { min-height: 7em; }
+input.small { width: 6.5em; }
+input.tiny { width: 4.5em; }
+input.wide, select.wide { width: 100%; }
+button {
+    font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 12px; cursor: pointer;
+}
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button:disabled { opacity: 0.5; cursor: default; }
+.buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+
+fieldset { border: 1px solid var(--border); border-radius: 6px; margin: 12px 0 0; padding: 8px 12px 12px; min-width: 0; }
+legend { font-weight: 700; padding: 0 4px; }
+.field { margin: 10px 0 0; }
+.field:first-of-type { margin-top: 4px; }
+.checks { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 0; padding: 0; border: none; }
+.checks label, .inline { display: inline-flex; align-items: center; gap: 4px; font-weight: 400; }
+.choice { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+
+.msg { margin: 4px 0 0; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; }
+.msg.error { background: var(--error-bg); color: var(--error); }
+.msg.warn { background: var(--warn-bg); color: var(--warn); }
+.msg.info { background: var(--night); color: var(--fg); }
+ul.msgs { list-style: none; padding: 0; margin: 4px 0; }
+
+.meter { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); margin: 4px 0; }
+.meter .bar { flex: 1 1 80px; max-width: 220px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.meter .fill { height: 100%; background: var(--ok); }
+.meter.amber .fill { background: #d99a00; }
+.meter.red .fill { background: var(--error); }
+.meter.amber .num { color: var(--warn); }
+.meter.red .num { color: var(--error); font-weight: 700; }
+
+details.event { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card); }
+details.event > summary {
+    padding: 8px 10px; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+}
+details.event > .body { padding: 0 12px 12px; border-top: 1px solid var(--border); }
+details.tip > summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+details.tip p { font-size: 0.9rem; color: var(--muted); }
+.chip {
+    display: inline-block; max-width: 100%; padding: 0 6px; border-radius: 4px; border: 1px solid var(--chip-border);
+    font-size: 0.85rem; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.swatch { display: inline-block; width: 0.9em; height: 0.9em; border-radius: 3px; border: 1px solid var(--chip-border); vertical-align: -1px; }
+.setrow { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto; gap: 6px; margin: 6px 0 0; align-items: center; }
+.setrow input { width: 100%; }
+.kindrow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto; gap: 6px; margin: 6px 0 0; align-items: center; }
+.kindrow input { width: 100%; }
+pre.out { white-space: pre-wrap; word-break: break-all; background: var(--field); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin: 6px 0; max-height: 26em; overflow: auto; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 8px 0; font-size: 0.9rem; }
+.month { margin: 18px 0; }
+.month h3 { margin: 0 0 6px; }
+.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.dow { font-size: 0.75rem; color: var(--muted); text-align: center; }
+.cell {
+    display: block; width: 100%; min-height: 4.2em; padding: 2px 3px 3px; text-align: left; border-radius: 4px;
+    border: 1px solid var(--border); background: var(--card); font-size: 0.75rem; line-height: 1.25; overflow: hidden;
+}
+.cell[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 0; }
+.cell { overflow-wrap: normal; }
+.cell .top { display: flex; justify-content: space-between; gap: 2px; white-space: nowrap; overflow: hidden; }
+.cell .date { font-weight: 700; }
+.cell .moonname { color: var(--muted); font-size: 0.7rem; }
+.cell .moonname.first { color: var(--fg); font-weight: 700; }
+.occ { display: block; margin-top: 2px; padding: 0 2px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.occ.day { background: var(--day); }
+.occ.night { background: var(--night); }
+.occ .chip { font-size: 0.7rem; padding: 0 3px; }
+.occ .cont { opacity: 0.8; font-style: italic; }
+.blank { visibility: hidden; }
+.detail { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; margin: 8px 0 0; background: var(--card); }
+.detail h4 { margin: 10px 0 4px; font-size: 1rem; }
+.log { font-size: 0.85rem; margin: 4px 0; padding-left: 1.2em; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.scroll { overflow-x: auto; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 560px) {
+    .cell { min-height: 3.6em; font-size: 0.68rem; padding: 1px 2px 2px; }
+    .occ .chip { font-size: 0.64rem; padding: 0 2px; }
+    .cell .moonname { font-size: 0.58rem; }
+    .setrow, .kindrow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .setrow button, .kindrow button { grid-column: span 2; justify-self: start; }
+    [role="tab"] { padding: 8px 10px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+    <h1>Crepuscular builder</h1>
+    <p class="muted" id="about"></p>
+</header>
+<div id="app"></div>
+<noscript><p>This page needs JavaScript; it runs entirely in your browser and sends nothing anywhere.</p></noscript>
+</div>
+<script src="events.js"></script>
+<script>
+(function () {
+    "use strict";
+    var C = window.Crepuscular;
+    var Defs = C.Defs, Text = C.Text;
+    var STORE = "crepuscular-builder";
+
+    // ---------------------------------------------------------------- in-game texts (EN translations)
+    var EVENTS_MORE = "More events, written as in Events 1. The option an event is in only matters between events with the same prio: earlier ones are tried first.";
+    var TEXT = {
+        NightMode: { name: "Night mode", options: ["Fixed hours", "Seasonal night"], tooltip: "How night is decided. Fixed hours: night runs between the two hours below, every day of the year, whatever the Day/Night Cycle setting. Seasonal night: the game's own dusk and dawn, which move with the seasons and follow the Day/Night Cycle setting (endless day has no night, endless night is always night)." },
+        NightStartHour: { name: "Night starts at", tooltip: "Hour of the day, 0 to 23, at which night begins when Night mode is Fixed hours. Night can run past midnight. If both hours are the same there is no night at all, and the log says so." },
+        NightEndHour: { name: "Night ends at", tooltip: "Hour of the day, 0 to 23, at which night ends when Night mode is Fixed hours." },
+        Day: { name: "Day", tooltip: "What changes by day while no event runs. Fields are key=value, separated by ;. off=cof,mutants turns those monster kinds off (off=none turns none off): far ones are removed, The Mutants makes no new mutants and Cry of Fear Monster NPCs spawns nothing new. A kind no definition turns off is left alone. For Cry of Fear monsters only at night, write off=cof here and keep its own Night only option off; as with that option, each time cof is on again every Cry of Fear home may be filled again, so killed monsters come back too. set.Table.Option=value changes a sandbox option, for example set.ZombieLore.Toughness=1, or set.Option=value for an option without a table, for example set.HoursForCorpseRemoval=24; it goes back to its base value when the day ends. say=text shows a line to every player when the day begins (say=@Key shows that translation), and color=rrggbb gives its colour. A sun event starts from these values. A bad field is skipped and logged, and the rest applies." },
+        Night: { name: "Night", tooltip: "What changes by night while no event runs, written as for Day: off=mutants,cof or off=none, set.Table.Option=value, say=text and color=rrggbb. The values go back to their base when the night ends. A moon event starts from these values, even when it runs into the day. The default, off=mutants, keeps The Mutants from making mutants at night and removes far mutants." },
+        Events1: { name: "Events 1", tooltip: "Moons and suns: special nights and days. Events are separated by |, fields by ;. Each event needs id=name (letters a-z, digits and _) and track=moon (decided when night begins) or track=sun (decided when day begins). Conditions, which must all hold: moon=full (the first night of a full moon; also new, waxingcrescent, firstquarter, waxinggibbous, waninggibbous, thirdquarter, waningcrescent), date=10-31 or date=12-20..01-05, month=6..8, season=summer, every=30 (every 30 days since the world began; every=30+5 shifts it by 5), mindays=30 and maxdays=365 (days since the world began), nth=4 (every 4th time its calendar conditions hold), after=id (the first time after that event ended), cooldown=20d or 36h, weather=rain, snow, storm, fog or clear, tempmin=0 and tempmax=30 (degrees C), chance=50. A list such as moon=full,new holds when any item does. Timing: at=HH:MM starts it later in its night or day, and for=phase (the default), 2p (phases), 6h or 3.5d sets how long it lasts. prio=10: when several events qualify, the highest is tried first. Effects: off, set., say and color, as in Day and Night; a moon starts from Night and a sun from Day. One event runs at a time, and nothing else is decided while it runs. An event with an error is skipped and logged. Keep each option under 32000 bytes." },
+        Kinds: { name: "Monster kinds", tooltip: "Monsters of other mods, told by their outfit: name=prefix,prefix;name=prefix, for example wraiths=ZW_,Wraith;husks=Husk_. A zombie whose outfit name starts with one of the prefixes (upper and lower case don't matter) belongs to that kind. Names are made of a-z, 0-9 and _. cof (Cry of Fear Monster NPCs) and mutants (The Mutants) are built in, and other mods can add kinds of their own. Put a kind in off= of Day, Night or an event to remove its far members while that applies; it can't keep a mod from turning zombies into its monsters. When The Mutants is loaded, members of every kind are never turned into mutants." },
+    };
+    Defs.SLOTS.slice(1).forEach(function (slot) {
+        TEXT[slot] = { name: "Events " + slot.slice(6), tooltip: EVENTS_MORE };
+    });
+    var SAY_KEYS = { "@IGUI_Crepuscular_BloodMoon": "The moon rises red. A blood moon has begun." };
+
+    var MOONS = ["new", "waxingcrescent", "firstquarter", "waxinggibbous", "full", "waninggibbous", "thirdquarter", "waningcrescent"];
+    var MOON_LABELS = ["new", "waxing crescent", "first quarter", "waxing gibbous", "full", "waning gibbous", "third quarter", "waning crescent"];
+    var SEASON_NAMES = ["spring", "summer", "autumn", "winter"];
+    var SEASON_NUMBERS = { spring: [1], summer: [2, 3], autumn: [4], winter: [5] };
+    var WEATHERS = ["rain", "snow", "storm", "fog", "clear"];
+    var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var COF_LEVELS = ["None", "Rare", "Uncommon", "Normal", "High"];
+    var COF_MONSTERS = Object.keys(C.COF_OPTIONS).filter(function (k) { return C.COF_OPTIONS[k].type === "enum"; }).map(function (k) { return k.slice(11); });
+    var BUILTIN_KINDS = ["cof", "mutants"];
+
+    // Where a new field goes, so written text reads like the mod's own examples.
+    var KEY_ORDER = ["id", "track", "moon", "date", "month", "season", "every", "nth", "mindays", "maxdays", "after",
+        "cooldown", "weather", "tempmin", "tempmax", "chance", "at", "for", "prio", "off", "set.", "say", "color"];
+    var EVENT_KEYS = KEY_ORDER.filter(function (k) { return k !== "set."; });
+    var BASE_KEYS = ["off", "say", "color"];
+
+    var HELP = {
+        id: "Required. Letters a-z, digits and _, unique across all Events options. Counters and chains are kept by id.",
+        track: "Required. moon: decided when night begins. sun: decided when day begins.",
+        at: "HH or HH:MM: starts it later in its night or day. With fixed hours it must fall inside the night (moon) or the day (sun).",
+        "for": "How long it lasts: its phase (the default), a number of phases (2 = this one and the next, up to 60), hours or days (3.5 days = 84 hours), up to 30 days in all.",
+        prio: "When several events qualify, the highest is tried first; between equal ones the earlier. Whole number, -999 to 999; 0 if empty.",
+        moon: "The first night (or day) of that moon phase, as the game computes it for the date. Several boxes: any of them.",
+        date: "MM-DD or MM-DD..MM-DD, which may wrap the year end, separated by commas: 10-31, 12-20..01-05.",
+        month: "The month of the night's or day's date. Ranges like November to February wrap.",
+        season: "The game's season at the decision. The calendar here only approximates it (≈).",
+        every: "Every N days since the world began (N 2 to 3650); a shift K below N moves it: N=30, K=5 is days 5, 35, 65 …",
+        nth: "Every Nth time its other calendar conditions hold (N 1 to 1000), even when another event won or one was running; K (1 to N) is the first hit: N=4, K=1 fires on the 1st, 5th, 9th …",
+        mindays: "Days since the world began, 0 to 36500, counted at noon of the night's or day's date.",
+        maxdays: "Days since the world began, 0 to 36500, at most.",
+        after: "Event ids, separated by commas: the first night or day of this track decided after one of them ended. It still has to win, so give it the highest prio.",
+        cooldown: "At least this long since its last start, up to 3650 days.",
+        weather: "At the decision: rain, snow, storm, fog (intensity 0.5 or more) or clear (none of these). Several: any.",
+        tempmin: "Temperature at the decision, °C, -80 to 80: at least this.",
+        tempmax: "Temperature at the decision, °C, -80 to 80: at most this.",
+        chance: "Percent, 0 to 100, decimals allowed. Rolled only when it is the highest candidate left; empty means always.",
+        say: "A line shown to every player when it starts; @Key shows that translation. ; and | can't be part of it.",
+        color: "The colour of that line; white when not set.",
+    };
+
+    // ---------------------------------------------------------------- state
+    function fresh() {
+        var values = {};
+        C.OPTION_ORDER.forEach(function (name) { values[name] = C.DEFAULTS[name]; });
+        return {
+            values: values,
+            registered: "",
+            tab: "defs",
+            open: {},
+            showAll: false,
+            cal: {
+                start: "1993-07-09", time: "09:00", dawn: "06:00", dusk: "21:00", cycle: "normal",
+                from: "", months: "6", seed: "1", view: "outcome",
+                rain: "25", snow: "25", storm: "25", fog: "25", winter: "0", summer: "25", selected: "",
+            },
+            importText: "", importAs: "detect", importTarget: "Events1", importReset: true, importReport: null,
+            stats: null, notice: null,
+            // Definitions whose off= is set to "these kinds" before any kind is ticked.
+            offList: {},
+        };
+    }
+
+    function load() {
+        var s = fresh();
+        try {
+            var saved = JSON.parse(window.localStorage.getItem(STORE) || "null");
+            if (saved && typeof saved === "object") {
+                C.OPTION_ORDER.forEach(function (name) {
+                    var v = saved.values ? saved.values[name] : undefined;
+                    var ok = typeof C.DEFAULTS[name] === "string" ? typeof v === "string"
+                        : v === Math.floor(v) && v >= (name === "NightMode" ? 1 : 0) && v <= (name === "NightMode" ? 2 : 23);
+                    if (ok) { s.values[name] = v; }
+                });
+                if (typeof saved.registered === "string") { s.registered = saved.registered; }
+                if (["defs", "cal", "import", "export"].indexOf(saved.tab) >= 0) { s.tab = saved.tab; }
+                s.showAll = saved.showAll === true;
+                Object.keys(s.cal).forEach(function (k) {
+                    if (saved.cal && typeof saved.cal[k] === typeof s.cal[k]) { s.cal[k] = saved.cal[k]; }
+                });
+            }
+        } catch (e) {
+            return s;
+        }
+        return s;
+    }
+
+    function save() {
+        try {
+            window.localStorage.setItem(STORE, JSON.stringify({
+                values: state.values, registered: state.registered, tab: state.tab, showAll: state.showAll, cal: state.cal,
+            }));
+        } catch (e) {
+            return;
+        }
+    }
+
+    var state = load();
+
+    function registeredList() {
+        return state.registered.split(",").map(function (x) { return x.trim().toLowerCase(); }).filter(function (x) { return x !== ""; });
+    }
+
+    var checked = null, checkedKey = null;
+    function check() {
+        var key = JSON.stringify([state.values, state.registered]);
+        if (key !== checkedKey) {
+            checked = C.check(state.values, registeredList());
+            checkedKey = key;
+        }
+        return checked;
+    }
+
+    // ---------------------------------------------------------------- DOM helpers
+    function h(tag, props) {
+        var el = document.createElement(tag);
+        var value;
+        if (props) {
+            Object.keys(props).forEach(function (k) {
+                var v = props[k];
+                if (v === null || v === undefined || v === false) { return; }
+                if (k === "value") { value = v; return; }
+                if (k === "checked") { el.checked = true; el.setAttribute("checked", ""); return; }
+                el.setAttribute(k, v === true ? "" : String(v));
+            });
+        }
+        for (var i = 2; i < arguments.length; i++) { add(el, arguments[i]); }
+        if (value !== undefined) { el.value = value; }
+        return el;
+    }
+
+    function add(el, c) {
+        if (c === null || c === undefined || c === false) { return; }
+        if (Array.isArray(c)) { c.forEach(function (x) { add(el, x); }); return; }
+        el.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
+    }
+
+    // Brings the live tree in line with a freshly built one, keeping focused fields as the user has them.
+    function morph(a, b) {
+        if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName
+            || (a.nodeType === 1 && a.getAttribute("data-key") !== b.getAttribute("data-key"))) {
+            a.parentNode.replaceChild(b, a);
+            return;
+        }
+        if (a.nodeType !== 1) {
+            if (a.nodeValue !== b.nodeValue) { a.nodeValue = b.nodeValue; }
+            return;
+        }
+        var i, name;
+        // Only the event list's details follow the state; others stay as the reader left them.
+        var own = a.nodeName === "DETAILS" && !a.hasAttribute("data-ev");
+        for (i = a.attributes.length - 1; i >= 0; i--) {
+            name = a.attributes[i].name;
+            if (!b.hasAttribute(name) && !(own && name === "open")) { a.removeAttribute(name); }
+        }
+        for (i = 0; i < b.attributes.length; i++) {
+            name = b.attributes[i].name;
+            if (a.getAttribute(name) !== b.attributes[i].value && !(own && name === "open")) { a.setAttribute(name, b.attributes[i].value); }
+        }
+        if (a.nodeName !== "TEXTAREA") {
+            var bc = Array.prototype.slice.call(b.childNodes), ac = Array.prototype.slice.call(a.childNodes);
+            for (i = 0; i < bc.length; i++) {
+                if (i < ac.length) { morph(ac[i], bc[i]); } else { a.appendChild(bc[i]); }
+            }
+            for (i = bc.length; i < ac.length; i++) { a.removeChild(ac[i]); }
+        }
+        if (a.nodeName === "INPUT" || a.nodeName === "TEXTAREA" || a.nodeName === "SELECT") {
+            if (a !== document.activeElement && a.value !== b.value) { a.value = b.value; }
+            if (a.type === "checkbox" || a.type === "radio") { a.checked = b.checked; }
+        }
+        if (a.nodeName === "DETAILS" && !own) { a.open = b.open; }
+    }
+
+    function idOf() {
+        return Array.prototype.join.call(arguments, "-").replace(/[^A-Za-z0-9_-]/g, "_");
+    }
+
+    function textInput(id, value, attrs) {
+        var p = { type: "text", id: id, value: value, autocomplete: "off", spellcheck: "false" };
+        Object.keys(attrs || {}).forEach(function (k) { p[k] = attrs[k]; });
+        return h("input", p);
+    }
+
+    function select(id, value, options, attrs) {
+        var p = { id: id };
+        Object.keys(attrs || {}).forEach(function (k) { p[k] = attrs[k]; });
+        return h("select", p, options.map(function (o) {
+            return h("option", { value: o[0], selected: String(o[0]) === String(value) }, o[1]);
+        }));
+    }
+
+    function msgList(errors, warnings) {
+        if (errors.length === 0 && warnings.length === 0) { return null; }
+        return h("ul", { "class": "msgs" },
+            errors.map(function (m) { return h("li", { "class": "msg error" }, m); }),
+            warnings.map(function (m) { return h("li", { "class": "msg warn" }, m); }));
+    }
+
+    function meter(bytes) {
+        var level = bytes > Defs.LIMIT ? "red" : bytes >= 16000 ? "amber" : "";
+        return h("div", { "class": "meter " + level },
+            h("span", { "class": "bar", "aria-hidden": "true" }, h("span", { "class": "fill", style: "display:block;width:" + Math.min(100, bytes / Defs.LIMIT * 100).toFixed(1) + "%" })),
+            h("span", { "class": "num" }, bytes.toLocaleString("en") + " of 32,000 bytes"
+                + (level === "red" ? ": over the limit" : level === "amber" ? ": half full" : "")));
+    }
+
+    function tip(name) {
+        return h("details", { "class": "tip" }, h("summary", null, "In-game tooltip"), h("p", null, TEXT[name].tooltip));
+    }
+
+    // The event's colour with black or white text, whichever contrasts more.
+    function chipStyle(color) {
+        var hex = /^[0-9a-f]{6}$/.test(color || "") ? color : "8a8fa8";
+        var lum = [0, 2, 4].map(function (i) {
+            var c = parseInt(hex.slice(i, i + 2), 16) / 255;
+            return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+        });
+        var l = 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];
+        return "background:#" + hex + ";color:" + ((l + 0.05) / 0.05 >= 1.05 / (l + 0.05) ? "#000" : "#fff");
+    }
+
+    // ---------------------------------------------------------------- definitions model
+    function lowerName(f) {
+        return f.eq ? f.name.toLowerCase() : null;
+    }
+
+    function rank(f) {
+        var n = lowerName(f);
+        if (n !== null && n.slice(0, 4) === "set.") { return KEY_ORDER.indexOf("set."); }
+        var r = KEY_ORDER.indexOf(n);
+        return r < 0 ? KEY_ORDER.length : r;
+    }
+
+    function setField(fields, key, value) {
+        var at = -1;
+        for (var i = 0; i < fields.length; i++) {
+            if (lowerName(fields[i]) === key) { at = i; break; }
+        }
+        if (value === null || value === "") {
+            if (at >= 0) { fields.splice(at, 1); }
+            return;
+        }
+        if (at >= 0) {
+            fields[at].value = value;
+            return;
+        }
+        var r = KEY_ORDER.indexOf(key), pos = fields.length;
+        for (var j = 0; j < fields.length; j++) {
+            if (rank(fields[j]) > r) { pos = j; break; }
+        }
+        fields.splice(pos, 0, { name: key, value: value, eq: true });
+    }
+
+    function getField(fields, key) {
+        for (var i = 0; i < fields.length; i++) {
+            if (lowerName(fields[i]) === key) { return fields[i].value; }
+        }
+        return null;
+    }
+
+    function rawField(text) {
+        var eq = text.indexOf("=");
+        if (eq < 0) { return { name: "", value: text.trim(), eq: false }; }
+        return { name: text.slice(0, eq).trim(), value: text.slice(eq + 1).trim(), eq: true };
+    }
+
+    // Which fields the form shows by key, which as set. rows, and which only as raw text.
+    function classify(fields, keys) {
+        var used = {}, sets = [], others = [];
+        fields.forEach(function (f, fi) {
+            var n = lowerName(f);
+            if (n !== null && /[\x00-\x1f\x7f]/.test(f.name + f.value)) {
+                others.push(fi);
+            } else if (n !== null && n.slice(0, 4) === "set.") {
+                var k = "set." + f.name.slice(4);
+                if (used[k] === undefined) { used[k] = fi; sets.push(fi); } else { others.push(fi); }
+            } else if (n !== null && keys.indexOf(n) >= 0 && used[n] === undefined) {
+                used[n] = fi;
+            } else {
+                others.push(fi);
+            }
+        });
+        return { used: used, setRows: sets, others: others };
+    }
+
+    function eventList() {
+        var list = [];
+        Defs.SLOTS.forEach(function (slot) {
+            Text.events(state.values[slot]).forEach(function (text, i) {
+                list.push({ slot: slot, index: i, text: text });
+            });
+        });
+        return list;
+    }
+
+    function setEvents(list) {
+        Defs.SLOTS.forEach(function (slot) {
+            state.values[slot] = list.filter(function (e) { return e.slot === slot; }).map(function (e) { return e.text; }).join("|");
+        });
+    }
+
+    function editDef(owner, fn) {
+        if (owner.slot) {
+            var texts = Text.events(state.values[owner.slot]);
+            var fields = Text.fields(texts[owner.index]);
+            fn(fields);
+            texts[owner.index] = Text.join(fields) || "id=";
+            state.values[owner.slot] = texts.join("|");
+        } else {
+            var f = Text.fields(state.values[owner.name]);
+            fn(f);
+            state.values[owner.name] = Text.join(f);
+        }
+    }
+
+    function ownerOf(el) {
+        var box = el.closest("[data-owner]");
+        if (!box) { return null; }
+        var o = box.getAttribute("data-owner").split(":");
+        return o.length === 2 ? { slot: o[0], index: Number(o[1]) } : { name: o[0] };
+    }
+
+    // Messages of one definition, split by the key they name.
+    function messagesOf(label, chk) {
+        var prefix = label + ": ";
+        function pick(list) {
+            return list.filter(function (m) { return m.slice(0, prefix.length) === prefix; }).map(function (m) { return m.slice(prefix.length); });
+        }
+        return { errors: pick(chk.errors), warnings: pick(chk.warnings) };
+    }
+
+    function forKey(msgs, key) {
+        var p = key + ": ";
+        function f(list) {
+            return list.filter(function (m) { return m.slice(0, p.length) === p; }).map(function (m) { return key + ": " + m.slice(p.length); });
+        }
+        return { errors: f(msgs.errors), warnings: f(msgs.warnings) };
+    }
+
+    function restOf(msgs, shown) {
+        function f(list) {
+            return list.filter(function (m) {
+                return !shown.some(function (k) { return m.slice(0, k.length + 2) === k + ": "; });
+            });
+        }
+        return { errors: f(msgs.errors), warnings: f(msgs.warnings) };
+    }
+
+    // ---------------------------------------------------------------- field controls
+    var FORBIDDEN = /[;|\x00-\x1f\x7f]/g;
+
+    function fieldBox(owner, key, labelText, help, controls, msgs) {
+        var id = idOf("f", owner, key);
+        var m = forKey(msgs, key);
+        return h("div", { "class": "field", "data-field": key, "data-key": "field-" + key },
+            labelText === null ? null : h("label", { "for": id }, labelText),
+            controls(id),
+            help ? h("p", { "class": "help", id: id + "-help" }, help) : null,
+            msgList(m.errors, m.warnings));
+    }
+
+    function textField(owner, fields, key, labelText, attrs, msgs) {
+        return fieldBox(owner, key, labelText, HELP[key], function (id) {
+            var a = { "data-act": "text", "aria-describedby": id + "-help" };
+            Object.keys(attrs || {}).forEach(function (k) { a[k] = attrs[k]; });
+            return textInput(id, getField(fields, key) || "", a);
+        }, msgs);
+    }
+
+    function checksField(owner, fields, key, labelText, items, isOn, msgs, ownerKey) {
+        var raw = getField(fields, key);
+        var m = forKey(msgs, key);
+        var id = idOf("f", ownerKey, key);
+        if (raw !== null && m.errors.length > 0) {
+            return fieldBox(ownerKey, key, labelText, HELP[key], function (fid) {
+                return h("div", null, textInput(fid, raw, { "data-act": "text" }),
+                    h("button", { type: "button", "data-act": "clear", "data-k": key }, "Clear"));
+            }, msgs);
+        }
+        return h("div", { "class": "field", "data-field": key, "data-key": "field-" + key },
+            h("fieldset", { "class": "checks", "aria-describedby": id + "-help" },
+                h("legend", { "class": "label" }, labelText),
+                items.map(function (it, i) {
+                    return h("label", null, h("input", { type: "checkbox", id: id + "-" + i, value: it[0], "data-act": "checks", checked: isOn(it[0]) }), it[1]);
+                })),
+            h("p", { "class": "help", id: id + "-help" }, HELP[key]),
+            msgList(m.errors, m.warnings));
+    }
+
+    function splitAmount(raw) {
+        var m = /^(.*?) *([hdp])$/i.exec(raw || "");
+        return m ? { amount: m[1], unit: m[2].toLowerCase() } : null;
+    }
+
+    function forField(ownerKey, fields, msgs) {
+        var raw = getField(fields, "for");
+        var kind = "phase", amount = "";
+        if (raw !== null) {
+            var a = splitAmount(raw);
+            if (raw.toLowerCase() === "phase") { kind = "phase"; }
+            else if (a && a.unit === "p") { kind = "p"; amount = a.amount; }
+            else if (a) { kind = a.unit; amount = a.amount; }
+            else { kind = "raw"; amount = raw; }
+        }
+        return fieldBox(ownerKey, "for", "Lasts", HELP["for"], function (id) {
+            return h("div", { "class": "row" },
+                select(id, kind, [["phase", "its phase (default)"], ["p", "phases"], ["h", "hours"], ["d", "days"]].concat(kind === "raw" ? [["raw", "as written"]] : []),
+                    { "data-act": "for", "data-part": "kind" }),
+                kind === "phase" ? null : textInput(id + "-n", amount, { "class": "small", inputmode: "decimal", "data-act": "for", "data-part": "amount", "aria-label": "Amount" }));
+        }, msgs);
+    }
+
+    function cycleField(ownerKey, fields, key, labelText, msgs) {
+        var raw = getField(fields, key) || "";
+        var parts = raw.split("+");
+        var n = parts[0].trim(), k = parts.length > 1 ? parts.slice(1).join("+").trim() : "";
+        return fieldBox(ownerKey, key, null, HELP[key], function (id) {
+            return h("div", { "class": "row" },
+                h("div", null, h("label", { "for": id }, labelText + ": N"), textInput(id, n, { "class": "tiny", inputmode: "numeric", "data-act": "cycle", "data-part": "n" })),
+                h("div", null, h("label", { "for": id + "-k" }, "K (optional)"), textInput(id + "-k", k, { "class": "tiny", inputmode: "numeric", "data-act": "cycle", "data-part": "k" })));
+        }, msgs);
+    }
+
+    function cooldownField(ownerKey, fields, msgs) {
+        var raw = getField(fields, "cooldown");
+        var a = splitAmount(raw);
+        var unit = a && a.unit !== "p" ? a.unit : "d", amount = a && a.unit !== "p" ? a.amount : (raw || "");
+        return fieldBox(ownerKey, "cooldown", "Cooldown", HELP.cooldown, function (id) {
+            return h("div", { "class": "row" },
+                textInput(id, amount, { "class": "small", inputmode: "decimal", "data-act": "cooldown", "data-part": "amount" }),
+                select(id + "-u", unit, [["d", "days"], ["h", "hours"]], { "data-act": "cooldown", "data-part": "unit", "aria-label": "Unit" }));
+        }, msgs);
+    }
+
+    function kindNames(chk) {
+        var names = BUILTIN_KINDS.slice();
+        chk.defs.kinds.forEach(function (k) { if (names.indexOf(k.name) < 0) { names.push(k.name); } });
+        registeredList().forEach(function (k) { if (names.indexOf(k) < 0) { names.push(k); } });
+        return names;
+    }
+
+    function offField(ownerKey, fields, msgs, chk, isEvent) {
+        var raw = getField(fields, "off");
+        var mode = raw === null ? (state.offList[ownerKey] ? "list" : "inherit") : raw.trim().toLowerCase() === "none" ? "none" : "list";
+        var items = mode === "list" && raw !== null ? raw.split(",").map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean) : [];
+        var names = kindNames(chk);
+        var others = items.filter(function (x) { return names.indexOf(x) < 0; });
+        var id = idOf("f", ownerKey, "off");
+        var m = forKey(msgs, "off");
+        var inherit = isEvent ? "not set: as its track's base (Night for a moon, Day for a sun)" : "not set: no kind is off";
+        return h("div", { "class": "field", "data-field": "off", "data-key": "field-off" },
+            h("fieldset", { "class": "checks" },
+                h("legend", { "class": "label" }, "Monster kinds that are off"),
+                h("div", { "class": "choice" },
+                    [["inherit", inherit], ["none", "none (off=none)"], ["list", "these:"]].map(function (o) {
+                        return h("label", null, h("input", { type: "radio", name: id, id: id + "-" + o[0], value: o[0], "data-act": "off", "data-part": "mode", checked: mode === o[0] }), o[1]);
+                    })),
+                h("div", { "class": "checks" },
+                    names.map(function (k) {
+                        return h("label", null, h("input", { type: "checkbox", id: id + "-k-" + k, value: k, "data-act": "off", "data-part": "kind", checked: items.indexOf(k) >= 0, disabled: mode !== "list" }), k);
+                    })),
+                h("div", { "class": "field" },
+                    h("label", { "for": id + "-other" }, "Other kind names"),
+                    textInput(id + "-other", others.join(","), { "class": "wide", "data-act": "off", "data-part": "other", disabled: mode !== "list", placeholder: "kinds other mods register" }))),
+            h("p", { "class": "help" }, "Far members of these kinds are removed while this applies; The Mutants makes no new mutants and Cry of Fear spawns nothing new. Kinds no definition turns off are left alone."),
+            msgList(m.errors, m.warnings));
+    }
+
+    function colorField(ownerKey, fields, msgs) {
+        var raw = getField(fields, "color");
+        var valid = raw !== null && /^[0-9a-fA-F]{6}$/.test(raw);
+        return fieldBox(ownerKey, "color", null, HELP.color, function (id) {
+            return h("div", { "class": "row" },
+                h("label", { "class": "inline", "for": id + "-on" }, h("input", { type: "checkbox", id: id + "-on", "data-act": "color", "data-part": "on", checked: raw !== null }), "Colour"),
+                h("input", { type: "color", id: id, value: "#" + (valid ? raw.toLowerCase() : "ffffff"), "data-act": "color", "data-part": "picker", "aria-label": "Colour picker", disabled: raw === null }),
+                textInput(id + "-hex", raw || "", { "class": "small", "data-act": "color", "data-part": "hex", placeholder: "rrggbb", "aria-label": "Colour as rrggbb", disabled: raw === null }));
+        }, msgs);
+    }
+
+    function sayField(ownerKey, fields, msgs) {
+        var raw = getField(fields, "say");
+        var known = raw !== null ? SAY_KEYS[raw] : undefined;
+        var box = textField(ownerKey, fields, "say", "Announcement", { "class": "wide" }, msgs);
+        if (known) { box.appendChild(h("p", { "class": "help" }, "Shows: “" + known + "”")); }
+        return box;
+    }
+
+    function setRows(ownerKey, fields, cls, msgs) {
+        var cof = {};
+        cls.setRows.forEach(function (fi) {
+            var name = fields[fi].name.slice(4);
+            if (name.slice(0, 11) === "COF_Spawns.") { cof[name.slice(11)] = fields[fi].value; }
+        });
+        var id = idOf("f", ownerKey, "set");
+        return h("fieldset", { "data-key": "set" },
+            h("legend", null, "Sandbox values"),
+            h("p", { "class": "help" }, "Each row changes one sandbox option while this applies, by its name as in SandboxVars (ZombieLore.Toughness, HoursForCorpseRemoval); it goes back to its base value afterwards. The game checks the name and the value when it loads; options of mods that aren't loaded are skipped with a warning."),
+            cls.setRows.map(function (fi, r) {
+                var f = fields[fi];
+                var option = f.name.slice(4);
+                var m = forKey(msgs, "set." + option);
+                return h("div", { "data-set": fi, "data-key": "set-" + r },
+                    h("div", { "class": "setrow" },
+                        textInput(id + "-" + r + "-o", option, { "data-act": "setname", placeholder: "Table.Option", "aria-label": "Option name" }),
+                        textInput(id + "-" + r + "-v", f.value, { "data-act": "setvalue", placeholder: "value", "aria-label": "Value of " + (option || "the option") }),
+                        h("button", { type: "button", "data-act": "setdel", "aria-label": "Remove " + (option || "this row") }, "Remove")),
+                    msgList(m.errors, m.warnings));
+            }),
+            h("div", { "class": "buttons" }, h("button", { type: "button", "data-act": "setadd" }, "Add a sandbox value")),
+            h("details", { "class": "tip", open: Object.keys(cof).length > 0 },
+                h("summary", null, "Cry of Fear spawn levels"),
+                h("p", null, "Levels for Cry of Fear Monster NPCs while this applies (set.COF_Spawns.*). While cof is off, Crepuscular sets them all to None anyway."),
+                h("div", { "class": "row" }, COF_MONSTERS.map(function (name) {
+                    var sid = id + "-cof-" + name;
+                    return h("div", null, h("label", { "for": sid }, name),
+                        select(sid, cof[name] === undefined ? "" : cof[name], [["", "not set"]].concat(COF_LEVELS.map(function (l, i) { return [String(i + 1), (i + 1) + " " + l]; }))
+                            .concat(cof[name] !== undefined && !/^[1-5]$/.test(cof[name]) ? [[cof[name], cof[name] + " (as written)"]] : []),
+                            { "data-act": "cof", "data-k": name }));
+                }))));
+    }
+
+    function otherFields(ownerKey, fields, cls) {
+        if (cls.others.length === 0) { return null; }
+        var id = idOf("f", ownerKey, "other");
+        return h("fieldset", { "data-key": "other" },
+            h("legend", null, "Other fields"),
+            h("p", { "class": "help" }, "Fields the form doesn't show: unknown or repeated keys, keys this definition can't have, and text that isn't key=value. The messages above say what is wrong with them."),
+            cls.others.map(function (fi, r) {
+                var f = fields[fi];
+                return h("div", { "class": "setrow", "data-other": fi, "data-key": "other-" + r },
+                    textInput(id + "-" + r, f.eq ? f.name + "=" + f.value : f.value, { "data-act": "other", "aria-label": "Field " + (r + 1), style: "grid-column: span 2" }),
+                    h("button", { type: "button", "data-act": "otherdel" }, "Remove"));
+            }));
+    }
+
+    function eventForm(ev, def, chk, g, count) {
+        var ownerKey = ev.slot + ":" + ev.index;
+        var fields = Text.fields(ev.text);
+        var cls = classify(fields, EVENT_KEYS);
+        var msgs = messagesOf(def.label, chk);
+        var shown = EVENT_KEYS.concat(cls.setRows.map(function (fi) { return "set." + fields[fi].name.slice(4); }));
+        var rest = restOf(msgs, shown);
+        var on = function (set) { return function (v) { return set !== undefined && set[v] === true; }; };
+        var seasonOn = function (name) { return def.season !== undefined && SEASON_NUMBERS[name].every(function (n) { return def.season[n]; }); };
+        var monthOn = function (v) { return def.month !== undefined && def.month[v] === true; };
+        var moonOn = function (v) { return def.moon !== undefined && def.moon[MOONS.indexOf(v)] === true; };
+        var ids = chk.defs.definitions.map(function (d) { return d.id; }).filter(function (x, i, a) { return x && x !== def.id && a.indexOf(x) === i; });
+        return h("div", { "class": "body", "data-owner": ownerKey },
+            h("div", { "class": "buttons" },
+                h("button", { type: "button", "data-act": "up", disabled: g === 0 }, "Move up"),
+                h("button", { type: "button", "data-act": "down", disabled: g === count - 1 }, "Move down"),
+                h("button", { type: "button", "data-act": "dup" }, "Duplicate"),
+                h("button", { type: "button", "data-act": "del" }, "Delete"),
+                h("label", { "class": "inline", "for": idOf("f", ownerKey, "slot") }, "In option",
+                    select(idOf("f", ownerKey, "slot"), ev.slot, Defs.SLOTS.map(function (s) { return [s, TEXT[s].name]; }), { "data-act": "slot" }))),
+            msgList(rest.errors, rest.warnings),
+            h("fieldset", { "data-key": "identity" },
+                h("legend", null, "Identity and timing"),
+                textField(ownerKey, fields, "id", "id", {}, msgs),
+                fieldBox(ownerKey, "track", "Track", HELP.track, function (id) {
+                    var track = getField(fields, "track") || "";
+                    return select(id, track.toLowerCase(), [["", "—"], ["moon", "moon (night)"], ["sun", "sun (day)"]]
+                        .concat(["", "moon", "sun"].indexOf(track.toLowerCase()) < 0 ? [[track, track + " (as written)"]] : []),
+                    { "data-act": "track", "aria-describedby": id + "-help" });
+                }, msgs),
+                textField(ownerKey, fields, "at", "Starts at", { "class": "small", placeholder: "HH:MM" }, msgs),
+                forField(ownerKey, fields, msgs),
+                textField(ownerKey, fields, "prio", "Priority", { "class": "small", inputmode: "numeric", placeholder: "0" }, msgs)),
+            h("fieldset", { "data-key": "when" },
+                h("legend", null, "When"),
+                h("p", { "class": "help" }, "All conditions that are set must hold; inside one condition any item will do. With none, it can happen every night (moon) or day (sun)."),
+                checksField(ownerKey, fields, "moon", "Moon phase", MOONS.map(function (m, i) { return [m, MOON_LABELS[i]]; }), moonOn, msgs, ownerKey),
+                textField(ownerKey, fields, "date", "Dates", { "class": "wide", placeholder: "10-31, 12-20..01-05" }, msgs),
+                checksField(ownerKey, fields, "month", "Months", MONTHS.map(function (m, i) { return [String(i + 1), m.slice(0, 3)]; }), function (v) { return monthOn(Number(v)); }, msgs, ownerKey),
+                checksField(ownerKey, fields, "season", "Seasons", SEASON_NAMES.map(function (s) { return [s, s]; }), seasonOn, msgs, ownerKey),
+                cycleField(ownerKey, fields, "every", "Every N days", msgs),
+                cycleField(ownerKey, fields, "nth", "Every Nth time", msgs),
+                h("div", { "class": "row" },
+                    textField(ownerKey, fields, "mindays", "From world day", { "class": "small", inputmode: "numeric" }, msgs),
+                    textField(ownerKey, fields, "maxdays", "To world day", { "class": "small", inputmode: "numeric" }, msgs)),
+                textField(ownerKey, fields, "after", "After", { "class": "wide", placeholder: ids.slice(0, 3).join(",") || "event ids" }, msgs),
+                ids.length ? h("p", { "class": "help" }, "Ids: ", ids.map(function (x) {
+                    return h("button", { type: "button", "data-act": "addafter", "data-k": x, style: "margin:2px;padding:0 6px" }, x);
+                })) : null,
+                cooldownField(ownerKey, fields, msgs),
+                checksField(ownerKey, fields, "weather", "Weather", WEATHERS.map(function (w) { return [w, w]; }), on(def.weather), msgs, ownerKey),
+                h("div", { "class": "row" },
+                    textField(ownerKey, fields, "tempmin", "Min °C", { "class": "small", inputmode: "decimal" }, msgs),
+                    textField(ownerKey, fields, "tempmax", "Max °C", { "class": "small", inputmode: "decimal" }, msgs)),
+                textField(ownerKey, fields, "chance", "Chance %", { "class": "small", inputmode: "decimal", placeholder: "100" }, msgs)),
+            h("fieldset", { "data-key": "monsters" }, h("legend", null, "Monsters"), offField(ownerKey, fields, msgs, chk, true)),
+            setRows(ownerKey, fields, cls, msgs),
+            h("fieldset", { "data-key": "say" }, h("legend", null, "Announcement"), sayField(ownerKey, fields, msgs), colorField(ownerKey, fields, msgs)),
+            otherFields(ownerKey, fields, cls),
+            h("div", { "class": "field" },
+                h("label", { "for": idOf("f", ownerKey, "raw") }, "This event as text"),
+                h("textarea", { id: idOf("f", ownerKey, "raw"), "data-act": "evraw", value: ev.text, spellcheck: "false", rows: 3 })));
+    }
+
+    function baseCard(name, chk) {
+        var fields = Text.fields(state.values[name]);
+        var cls = classify(fields, BASE_KEYS);
+        var msgs = messagesOf(name, chk);
+        var rest = restOf(msgs, BASE_KEYS.concat(cls.setRows.map(function (fi) { return "set." + fields[fi].name.slice(4); })));
+        return h("section", { "class": "card", "data-owner": name, "aria-labelledby": "h-" + name, "data-key": "card-" + name },
+            h("h2", { id: "h-" + name }, TEXT[name].name,
+                msgs.errors.length ? h("span", { "class": "badge error" }, msgs.errors.length + " skipped") : null),
+            h("p", { "class": "help" }, name === "Day" ? "What changes by day while no event runs. A sun event starts from these values." : "What changes by night while no event runs. A moon event starts from these values, even when it runs into the day."),
+            msgList(rest.errors, rest.warnings),
+            offField(name, fields, msgs, chk, false),
+            setRows(name, fields, cls, msgs),
+            h("fieldset", { "data-key": "say" }, h("legend", null, "Announcement"),
+                h("p", { "class": "help" }, "Shown when the " + name.toLowerCase() + " begins, unless an event covers it."),
+                sayField(name, fields, msgs), colorField(name, fields, msgs)),
+            otherFields(name, fields, cls),
+            h("div", { "class": "field" },
+                h("label", { "for": "raw-" + name }, name + " as text"),
+                h("textarea", { id: "raw-" + name, "data-act": "raw", "data-k": name, value: state.values[name], spellcheck: "false", rows: 2 }),
+                meter(chk.sizes[name])),
+            tip(name));
+    }
+
+    function kindsCard(chk) {
+        var fields = Text.fields(state.values.Kinds);
+        var msgs = messagesOf("Kinds", chk);
+        return h("section", { "class": "card", "data-owner": "Kinds", "aria-labelledby": "h-Kinds", "data-key": "card-Kinds" },
+            h("h2", { id: "h-Kinds" }, TEXT.Kinds.name,
+                msgs.errors.length ? h("span", { "class": "badge error" }, msgs.errors.length) : null),
+            h("p", { "class": "help" }, "Monsters of other mods, told by the start of their outfit names (upper and lower case don't matter). cof and mutants are built in."),
+            msgList(msgs.errors, msgs.warnings),
+            fields.map(function (f, fi) {
+                return h("div", { "class": "kindrow", "data-kind": fi, "data-key": "kind-" + fi },
+                    textInput(idOf("kind", fi, "n"), f.eq ? f.name : f.value, { "data-act": "kindname", placeholder: "name", "aria-label": "Kind name" }),
+                    textInput(idOf("kind", fi, "p"), f.eq ? f.value : "", { "data-act": "kindprefix", placeholder: "Prefix_, Other_", "aria-label": "Outfit name prefixes of " + (f.name || "this kind") }),
+                    h("button", { type: "button", "data-act": "kinddel" }, "Remove"));
+            }),
+            h("div", { "class": "buttons" }, h("button", { type: "button", "data-act": "kindadd" }, "Add a kind")),
+            h("div", { "class": "field" },
+                h("label", { "for": "raw-Kinds" }, "Monster kinds as text"),
+                h("textarea", { id: "raw-Kinds", "data-act": "raw", "data-k": "Kinds", value: state.values.Kinds, spellcheck: "false", rows: 2 }),
+                meter(chk.sizes.Kinds)),
+            h("div", { "class": "field" },
+                h("label", { "for": "registered" }, "Kinds other mods register"),
+                textInput("registered", state.registered, { "class": "wide", "data-act": "registered", placeholder: "for example ghosts, wisps", "aria-describedby": "registered-help" }),
+                h("p", { "class": "help", id: "registered-help" }, "Only for this page: names other mods register through Crepuscular's API, so off= can name them without a warning, as in a game where those mods are loaded.")),
+            tip("Kinds"));
+    }
+
+    function clockCard() {
+        var v = state.values;
+        var hours = [];
+        for (var i = 0; i < 24; i++) { hours.push([i, (i < 10 ? "0" : "") + i + ":00"]); }
+        return h("section", { "class": "card", "aria-labelledby": "h-clock", "data-key": "card-clock" },
+            h("h2", { id: "h-clock" }, "Clock"),
+            h("div", { "class": "row" },
+                h("div", null, h("label", { "for": "NightMode" }, TEXT.NightMode.name),
+                    select("NightMode", v.NightMode, [[1, TEXT.NightMode.options[0]], [2, TEXT.NightMode.options[1]]], { "data-act": "clock", "data-k": "NightMode" })),
+                v.NightMode === 1 ? h("div", null, h("label", { "for": "NightStartHour" }, TEXT.NightStartHour.name),
+                    select("NightStartHour", v.NightStartHour, hours, { "data-act": "clock", "data-k": "NightStartHour" })) : null,
+                v.NightMode === 1 ? h("div", null, h("label", { "for": "NightEndHour" }, TEXT.NightEndHour.name),
+                    select("NightEndHour", v.NightEndHour, hours, { "data-act": "clock", "data-k": "NightEndHour" })) : null),
+            h("p", { "class": "help" }, v.NightMode === 1 ? TEXT.NightStartHour.tooltip : TEXT.NightMode.tooltip),
+            h("p", { "class": "help" }, "These are options of the mod too: the export lists them, and at= is checked against the fixed hours."),
+            h("details", { "class": "tip" }, h("summary", null, "In-game tooltip"), h("p", null, TEXT.NightMode.tooltip), h("p", null, TEXT.NightEndHour.tooltip)));
+    }
+
+    function eventsCard(chk) {
+        var list = eventList();
+        var defs = chk.defs.definitions;
+        return h("section", { "class": "card", "aria-labelledby": "h-events", "data-key": "card-events" },
+            h("h2", { id: "h-events" }, "Events", h("span", { "class": "muted" }, " (" + list.length + ")")),
+            h("p", { "class": "help" }, "Moons and suns, in the order the mod reads them: Events 1 first, left to right. Order only matters between events with the same prio. Each one is checked as the mod checks it; one with an error is skipped whole."),
+            h("div", { "class": "buttons" },
+                h("button", { type: "button", "class": "primary", "data-act": "evadd" }, "Add an event"),
+                h("button", { type: "button", "data-act": "pack", disabled: list.length === 0 }, "Pack into the options in order")),
+            list.map(function (ev, g) {
+                var def = defs[g];
+                var key = ev.slot + ":" + ev.index;
+                var open = state.open[key] === true;
+                var msgs = messagesOf(def.label, chk);
+                var track = def.track || "";
+                return h("details", { "class": "event", open: open, "data-ev": key, "data-key": "ev-" + key },
+                    h("summary", null,
+                        h("span", { "class": "swatch", style: chipStyle(def.color).split(";")[0], "aria-hidden": "true" }),
+                        h("strong", null, def.id || "(no valid id)"),
+                        h("span", { "class": "muted" }, (track ? track + " · " : "") + TEXT[ev.slot].name + " #" + (ev.index + 1)),
+                        msgs.errors.length ? h("span", { "class": "badge error" }, msgs.errors.length + (msgs.errors.length === 1 ? " error: skipped" : " errors: skipped")) : null,
+                        msgs.warnings.length ? h("span", { "class": "badge warn" }, msgs.warnings.length + (msgs.warnings.length === 1 ? " warning" : " warnings")) : null),
+                    open ? eventForm(ev, def, chk, g, list.length) : null);
+            }));
+    }
+
+    function slotsCard(chk) {
+        return h("section", { "class": "card", "aria-labelledby": "h-slots", "data-key": "card-slots" },
+            h("h2", { id: "h-slots" }, "Events 1 to 8 as text"),
+            h("p", { "class": "help" }, "Each option as the mod reads it: events separated by |, fields by ;. Edit here or in the forms above; both stay in step. The game stores each option behind a 16-bit byte count, so above 32,767 bytes it silently corrupts the save: keep each under 32,000."),
+            Defs.SLOTS.map(function (slot) {
+                return h("div", { "class": "field", "data-key": "slot-" + slot },
+                    h("label", { "for": "raw-" + slot }, TEXT[slot].name),
+                    h("textarea", { id: "raw-" + slot, "data-act": "raw", "data-k": slot, value: state.values[slot], spellcheck: "false", rows: state.values[slot] ? 3 : 1 }),
+                    meter(chk.sizes[slot]));
+            }),
+            tip("Events1"), tip("Events2"));
+    }
+
+    function summaryCard(chk) {
+        return h("section", { "class": "card", "aria-labelledby": "h-check", "data-key": "card-check" },
+            h("h2", { id: "h-check" }, "As the mod reads it"),
+            h("p", { "aria-live": "polite" }, chk.summary + "."),
+            chk.errors.length + chk.warnings.length === 0 ? h("p", { "class": "muted" }, "No errors or warnings.") :
+                h("details", { "class": "tip", open: chk.errors.length + chk.warnings.length <= 6 },
+                    h("summary", null, chk.errors.length + " errors, " + chk.warnings.length + " warnings, worded as the mod logs them"),
+                    msgList(chk.errors, chk.warnings)),
+            h("p", { "class": "help" }, "Sandbox values (set.) of other mods' options are checked by the game when it loads; this page checks Crepuscular's own and Cry of Fear's spawn levels."),
+            h("div", { "class": "buttons" }, h("button", { type: "button", "data-act": "reset" }, "Start again from the defaults")));
+    }
+
+    function defsPanel(chk) {
+        return [summaryCard(chk), clockCard(), baseCard("Day", chk), baseCard("Night", chk), eventsCard(chk), slotsCard(chk), kindsCard(chk)];
+    }
+
+    // ---------------------------------------------------------------- export
+    function exported() {
+        var names = C.OPTION_ORDER.filter(function (name) {
+            return state.showAll || C.Output.clean(name, state.values[name]) !== C.DEFAULTS[name];
+        });
+        var values = {};
+        C.OPTION_ORDER.forEach(function (name) { values[name] = C.Output.clean(name, state.values[name]); });
+        return { names: names, values: values };
+    }
+
+    function copyButton(target, label) {
+        return h("button", { type: "button", "data-act": "copy", "data-k": target }, label || "Copy");
+    }
+
+    function exportPanel(chk) {
+        var x = exported();
+        var lua = C.Output.lua(x.values, x.names), env = C.Output.env(x.values, x.names);
+        var control = x.names.filter(function (n) { return typeof x.values[n] === "string" && /[\x00-\x1f\x7f]/.test(x.values[n]); });
+        return [
+            h("section", { "class": "card", "data-key": "ex-opts" },
+                h("h2", null, "Export"),
+                h("label", { "class": "inline", "for": "showAll" }, h("input", { type: "checkbox", id: "showAll", "data-act": "showall", checked: state.showAll }), "Show all options, not only the ones that differ from the defaults"),
+                chk.defs.failed > 0 || chk.errors.length ? h("p", { "class": "msg error" }, chk.summary + ": the mod skips definitions with errors. See Definitions.") : null,
+                control.length ? h("p", { "class": "msg error" }, control.join(", ") + " contain a line break or tab inside a field. The game can't write that to SandboxVars.lua; remove it first.") : null,
+                x.names.length === 0 ? h("p", null, "Everything is at its default, so there is nothing to change.") : null),
+            h("section", { "class": "card", "data-key": "ex-game" },
+                h("h2", null, "In the game"),
+                h("p", { "class": "help" }, "Paste each text into its box on the Crepuscular page of the sandbox options."),
+                x.names.map(function (name) {
+                    var v = x.values[name];
+                    var shown = name === "NightMode" ? TEXT.NightMode.options[v - 1] : String(v);
+                    return h("div", { "class": "field", "data-key": "ig-" + name },
+                        h("label", { "for": "ig-" + name }, TEXT[name].name),
+                        typeof v === "string" ? h("textarea", { id: "ig-" + name, readonly: true, value: v, rows: v.length > 120 ? 3 : 1, spellcheck: "false" })
+                            : textInput("ig-" + name, shown, { readonly: true, "class": "small" }),
+                        typeof v === "string" ? h("div", { "class": "buttons" }, copyButton("ig-" + name)) : null);
+                })),
+            h("section", { "class": "card", "data-key": "ex-lua" },
+                h("h2", null, "SandboxVars.lua"),
+                h("p", { "class": "help" }, "With the server stopped, replace these lines inside the Crepuscular = { … } table of the server's SandboxVars.lua (Zomboid/Server/<name>_SandboxVars.lua). Quotes and backslashes are escaped as the game writes them."),
+                h("pre", { "class": "out", id: "out-lua", tabindex: "0" }, lua || "(nothing)"),
+                h("div", { "class": "buttons" }, copyButton("out-lua"))),
+            h("section", { "class": "card", "data-key": "ex-env" },
+                h("h2", null, "Environment lines"),
+                h("p", { "class": "help" }, "For a .env file read by Docker Compose (env_file), as the Project Zomboid server image takes SANDBOX_ settings. Values are in single quotes, so $ and # stay as they are; a value with an apostrophe or a trailing backslash goes in double quotes with \\\", \\\\ and \\$."),
+                h("pre", { "class": "out", id: "out-env", tabindex: "0" }, env || "(nothing)"),
+                h("div", { "class": "buttons" }, copyButton("out-env")))];
+    }
+
+    // ---------------------------------------------------------------- import
+    function importPanel() {
+        var r = state.importReport;
+        var targets = [["Day", "Day"], ["Night", "Night"], ["Kinds", "Monster kinds"], ["add", "Events: add after the last event"]]
+            .concat(Defs.SLOTS.map(function (s) { return [s, TEXT[s].name + " (replace)"]; }));
+        return [h("section", { "class": "card", "data-key": "im" },
+            h("h2", null, "Import"),
+            h("p", { "class": "help" }, "Paste the text of one option, a SandboxVars.lua file or its Crepuscular = { … } table, or SANDBOX_Crepuscular__ lines of an env file. It is read with the mod's own rules, and the Definitions tab shows any error."),
+            h("label", { "for": "importText" }, "Text to import"),
+            h("textarea", { id: "importText", "class": "big", "data-act": "importtext", value: state.importText, spellcheck: "false", rows: 8 }),
+            h("div", { "class": "row" },
+                h("div", null, h("label", { "for": "importAs" }, "Read it as"),
+                    select("importAs", state.importAs, [["detect", "detect (now: " + ({ env: "env lines", lua: "SandboxVars.lua", text: "text of one option" })[C.Import.detect(state.importText)] + ")"],
+                        ["lua", "SandboxVars.lua"], ["env", "env lines"], ["text", "text of one option"]], { "data-act": "importas" })),
+                importKind() === "text" ? h("div", null, h("label", { "for": "importTarget" }, "Into"),
+                    select("importTarget", state.importTarget, targets, { "data-act": "importtarget" })) : null),
+            importKind() !== "text" ? h("label", { "class": "inline", "for": "importReset" },
+                h("input", { type: "checkbox", id: "importReset", "data-act": "importreset", checked: state.importReset }),
+                "Options the text doesn't set go back to their defaults") : null,
+            h("div", { "class": "buttons" }, h("button", { type: "button", "class": "primary", "data-act": "import", disabled: state.importText.trim() === "" }, "Import")),
+            r ? h("div", { "aria-live": "polite" },
+                h("p", { "class": "msg " + (r.problems.length ? "warn" : "info") }, r.summary),
+                msgList([], r.problems)) : null)];
+    }
+
+    function importKind() {
+        return state.importAs === "detect" ? C.Import.detect(state.importText) : state.importAs;
+    }
+
+    function doImport() {
+        var kind = importKind();
+        var text = state.importText;
+        if (kind === "text") {
+            var cleaned = C.Output.clean(state.importTarget === "add" ? "Events1" : state.importTarget, text);
+            if (state.importTarget === "add") {
+                var list = eventList();
+                var slot = list.length ? list[list.length - 1].slot : "Events1";
+                Text.events(cleaned).forEach(function (t) { list.push({ slot: slot, text: t }); });
+                setEvents(list);
+                state.importReport = { summary: "Added " + Text.events(cleaned).length + " events to " + TEXT[slot].name + ".", problems: [] };
+            } else {
+                state.values[state.importTarget] = cleaned;
+                state.importReport = { summary: "Set " + TEXT[state.importTarget].name + ".", problems: [] };
+            }
+        } else {
+            var r = kind === "lua" ? C.Import.lua(text) : C.Import.env(text);
+            var set = Object.keys(r.values);
+            if (state.importReset && set.length) {
+                C.OPTION_ORDER.forEach(function (name) { state.values[name] = C.DEFAULTS[name]; });
+            }
+            set.forEach(function (name) { state.values[name] = C.Output.clean(name, r.values[name]); });
+            var ignored = r.ignored.filter(function (x, i, a) { return a.indexOf(x) === i; });
+            state.importReport = {
+                summary: (set.length ? "Set " + set.join(", ") + "." : "Found no Crepuscular option this page builds.")
+                    + (state.importReset && set.length ? " The others are at their defaults." : "")
+                    + (ignored.length ? " Left out: " + ignored.join(", ") + "." : ""),
+                problems: r.problems,
+            };
+        }
+        state.open = {};
+        state.offList = {};
+        state.stats = null;
+    }
+
+    // ---------------------------------------------------------------- calendar
+    function parseDate(text) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+        if (!m) { return null; }
+        var d = { year: Number(m[1]), month: Number(m[2]) - 1, day: Number(m[3]) };
+        if (d.month < 0 || d.month > 11 || d.day < 1 || d.day > C.Phase.daysInMonth(d.year, d.month)) { return null; }
+        return d;
+    }
+
+    function parseTime(text) {
+        var m = /^(\d{1,2}):(\d{2})/.exec(text || "");
+        if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) { return null; }
+        return Number(m[1]) * 60 + Number(m[2]);
+    }
+
+    function hhmm(minute) {
+        var hh = Math.floor(minute / 60), mm = minute % 60;
+        return (hh < 10 ? "0" : "") + hh + ":" + (mm < 10 ? "0" : "") + mm;
+    }
+
+    var SEASON_OF_MONTH = [5, 5, 1, 1, 1, 2, 2, 2, 4, 4, 4, 5];
+
+    function simRule(cal) {
+        var v = state.values;
+        if (v.NightMode === 1) { return { mode: 1, start: v.NightStartHour, finish: v.NightEndHour }; }
+        return { mode: 2, dawn: parseTime(cal.dawn) / 60, dusk: parseTime(cal.dusk) / 60, endless: cal.cycle === "normal" ? undefined : cal.cycle };
+    }
+
+    function calInputs() {
+        var cal = state.cal;
+        var start = parseDate(cal.start), time = parseTime(cal.time);
+        var problems = [];
+        if (!start) { problems.push("The world start date isn't a date."); }
+        if (time === null) { problems.push("The world start time isn't a time."); }
+        if (state.values.NightMode === 2 && cal.cycle === "normal") {
+            var dawn = parseTime(cal.dawn), dusk = parseTime(cal.dusk);
+            if (dawn === null || dusk === null || dawn >= dusk) { problems.push("Dawn must come before dusk."); }
+        }
+        var from = /^(\d{4})-(\d{2})$/.exec(cal.from || "");
+        var first = from ? { year: Number(from[1]), month: Number(from[2]) - 1 } : start ? { year: start.year, month: start.month } : null;
+        if (first && start && (first.year < start.year || (first.year === start.year && first.month < start.month))) {
+            first = { year: start.year, month: start.month };
+        }
+        var months = Math.max(1, Math.min(36, Math.floor(Number(cal.months)) || 6));
+        ["seed", "rain", "snow", "storm", "fog", "winter", "summer"].forEach(function (k) {
+            if (String(cal[k]).trim() === "" || !isFinite(Number(cal[k]))) { problems.push("The " + k + " field isn't a number."); }
+        });
+        return { start: start, time: time, first: first, months: months, problems: problems };
+    }
+
+    function climateFor(cal, rnd) {
+        function chance(p) { return rnd() * 100 < Number(p); }
+        return function (now) {
+            var rain = chance(cal.rain), snow = chance(cal.snow), storm = chance(cal.storm);
+            var fogDraw = rnd(), fogLevel = rnd();
+            var noise = rnd();
+            var doy = C.Sim.daysBetween({ year: now.year, month: 0, day: 1 }, now);
+            var mid = (Number(cal.winter) + Number(cal.summer)) / 2, amp = (Number(cal.summer) - Number(cal.winter)) / 2;
+            var temp = mid - amp * Math.cos(2 * Math.PI * (doy - 15) / 365.25) + (noise * 2 - 1) * 6;
+            return {
+                rain: rain, snow: snow, storm: storm,
+                fog: fogDraw * 100 < Number(cal.fog) ? 0.5 + fogLevel * 0.5 : fogLevel * 0.5,
+                temp: temp, season: SEASON_OF_MONTH[now.month],
+            };
+        };
+    }
+
+    function simulate(chk, inp, minutes, record) {
+        var rnd = C.Sim.random(Math.floor(Number(state.cal.seed)) || 0);
+        return C.Sim.run({
+            defs: chk.defs, rule: simRule(state.cal),
+            start: { year: inp.start.year, month: inp.start.month, day: inp.start.day, minute: inp.time },
+            minutes: minutes, record: record,
+            roll: function () { return rnd() * 100; },
+            climate: climateFor(state.cal, rnd),
+        });
+    }
+
+    var simCache = { key: null, result: null };
+    function calendarRun(chk, inp) {
+        var last = { year: inp.first.year + Math.floor((inp.first.month + inp.months - 1) / 12), month: (inp.first.month + inp.months - 1) % 12 };
+        var end = { year: last.year, month: last.month, day: C.Phase.daysInMonth(last.year, last.month) };
+        var minutes = (C.Sim.daysBetween(inp.start, end) + 2) * 1440 - inp.time;
+        var key = JSON.stringify([state.values, state.registered, state.cal.start, state.cal.time, state.cal.dawn, state.cal.dusk,
+            state.cal.cycle, state.cal.seed, state.cal.rain, state.cal.snow, state.cal.storm, state.cal.fog, state.cal.winter, state.cal.summer, minutes]);
+        if (simCache.key !== key) {
+            simCache = { key: key, result: simulate(chk, inp, minutes, true) };
+        }
+        return simCache.result;
+    }
+
+    // Runs never overlap and both lists are in time order.
+    function indexRun(result) {
+        var byDate = {};
+        var runs = result.runs, j = 0;
+        result.occasions.forEach(function (r, i) {
+            var end = r.end === null ? Infinity : r.end;
+            while (j < runs.length && runs[j].endedAt !== null && runs[j].endedAt <= r.start) { j++; }
+            r.events = [];
+            for (var k = j; k < runs.length && runs[k].startsAt < end; k++) {
+                if ((runs[k].endedAt === null ? Infinity : runs[k].endedAt) > r.start) { r.events.push(runs[k]); }
+            }
+            r.index = i;
+            (byDate[r.key] = byDate[r.key] || []).push(r);
+        });
+        Object.keys(byDate).forEach(function (k) { byDate[k].sort(function (a, b) { return a.start - b.start; }); });
+        return byDate;
+    }
+
+    function stamp(clock, hours) {
+        var m = clock.moment(hours);
+        return C.Phase.key(m) + " " + hhmm(m.minute);
+    }
+
+    // HH:MM on the given date, MM-DD HH:MM on another.
+    function shortStamp(clock, hours, key) {
+        var m = clock.moment(hours);
+        return (C.Phase.key(m) === key ? "" : C.Phase.key(m).slice(5) + " ") + hhmm(m.minute);
+    }
+
+    function colorOf(chk, id) {
+        var ev = chk.defs.byId[id];
+        return ev ? ev.color : undefined;
+    }
+
+    function occLine(chk, r, mode) {
+        var cls = "occ " + r.phase;
+        var label = h("span", { "class": "sr" }, r.phase + ": ");
+        if (mode === "candidates") {
+            var ids = r.pool ? r.pool.ids : [];
+            if (!ids.length) { return h("span", { "class": cls }, label, h("span", { "class": "muted" }, r.pool && r.pool.covered ? "…" : "")); }
+            return h("span", { "class": cls }, label, ids.map(function (id) {
+                var ev = chk.defs.byId[id];
+                return h("span", { "class": "chip", style: chipStyle(ev.color) }, id + (ev.chance !== undefined && ev.chance < 100 ? " " + C.luaString(ev.chance) + "%" : ""));
+            }));
+        }
+        if (!r.events.length) { return h("span", { "class": cls }, label, h("span", { "class": "blank" }, "·")); }
+        var run = r.events[0];
+        var started = run.startsAt >= r.start - 1 / 120;
+        return h("span", { "class": cls }, label,
+            h("span", { "class": "chip" + (started ? "" : " cont"), style: chipStyle(colorOf(chk, run.id)) }, (started ? "" : "…") + run.id),
+            r.events.length > 1 ? " +" + (r.events.length - 1) : null);
+    }
+
+    function detailFor(chk, result, byDate, key) {
+        var parts = key.split("-").map(Number);
+        var date = { year: parts[0], month: parts[1] - 1, day: parts[2] };
+        var phase = C.Phase.moon(date.year, date.month, date.day);
+        var before = C.Phase.previousDay(date);
+        var first = C.Phase.moon(before.year, before.month, before.day) !== phase;
+        var occs = byDate[key] || [];
+        var clock = result.clock;
+        var start = calInputs();
+        var worldDay = C.Sim.daysBetween(start.start, date) + (start.time <= 420 ? 1 : 0);
+        return h("div", { "class": "detail", id: "detail-" + key, "aria-live": "polite" },
+            h("h3", null, new Date(Date.UTC(date.year, date.month, date.day)).toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })),
+            h("p", null, "Moon: " + MOON_LABELS[phase] + (first ? " (the first day of this phase: moon=" + MOONS[phase] + " can match)" : "") + ". World day " + worldDay + "."),
+            occs.length === 0 ? h("p", { "class": "muted" }, "No day or night opens on this date.") : null,
+            occs.map(function (r) {
+                var pool = r.pool;
+                return h("div", { "data-key": "occ-" + r.index },
+                    h("h4", null, (r.phase === "day" ? "Day" : "Night") + " of " + r.key + ", from " + hhmm(clock.moment(r.start).minute)
+                        + (r.end !== null ? " to " + shortStamp(clock, r.end, r.key) : "")),
+                    r.events.length ? h("ul", null, r.events.map(function (run) {
+                        return h("li", null, h("span", { "class": "chip", style: chipStyle(colorOf(chk, run.id)) }, run.id),
+                            " " + stamp(clock, run.startsAt) + " to " + (run.endedAt === null ? "after the preview" : stamp(clock, run.endedAt))
+                            + (run.startsAt < r.start - 1 / 120 ? " (covers this " + r.phase + ")" : ""));
+                    })) : h("p", null, "No event."),
+                    pool && pool.ids.length ? h("p", null, "Candidates: " + pool.ids.map(function (id) {
+                        var ev = chk.defs.byId[id];
+                        return id + " (prio " + C.luaString(ev.prio) + (ev.chance !== undefined && ev.chance < 100 ? ", chance " + C.luaString(ev.chance) + "%" : "") + (ev.weather || ev.tempmin !== undefined || ev.tempmax !== undefined ? ", weather" : "") + ")";
+                    }).join(", ") + ".") : null,
+                    r.logs.length ? h("details", { "class": "tip", open: true }, h("summary", null, "The mod's log (Verbose), with simulated rolls and weather"),
+                        h("ul", { "class": "log mono" }, r.logs.map(function (l) { return h("li", null, hhmm(clock.moment(l.hours).minute) + " " + l.text); }))) : null);
+            }));
+    }
+
+    function legend(chk) {
+        var ev = chk.defs.events;
+        if (!ev.length) { return h("p", { "class": "muted" }, "No events are loaded."); }
+        return h("div", { "class": "legend" }, ev.map(function (e) {
+            var tags = [];
+            if (e.chance !== undefined && e.chance > 0 && e.chance < 100) { tags.push("chance " + C.luaString(e.chance) + "%, rolled"); }
+            if (e.weather || e.tempmin !== undefined || e.tempmax !== undefined) { tags.push("weather simulated"); }
+            if (e.season) { tags.push("season ≈"); }
+            return h("span", null, h("span", { "class": "chip", style: chipStyle(e.color) }, e.id), " " + e.track + (tags.length ? " (" + tags.join(", ") + ")" : ""));
+        }));
+    }
+
+    function statsTable(chk) {
+        var s = state.stats;
+        if (!s) { return null; }
+        if (s.key !== statsKey()) {
+            return h("p", { "class": "muted" }, "The settings changed since; compute again.");
+        }
+        var rows = chk.defs.events.map(function (e) {
+            var starts = s.starts[e.id] || [];
+            var gaps = [];
+            for (var i = 1; i < starts.length; i++) { gaps.push((starts[i] - starts[i - 1]) / 24); }
+            var gap = gaps.length ? gaps.reduce(function (a, b) { return a + b; }, 0) / gaps.length : null;
+            return h("tr", null, h("td", null, h("span", { "class": "chip", style: chipStyle(e.color) }, e.id)), h("td", null, e.track),
+                h("td", null, (starts.length / s.years).toFixed(2)), h("td", null, gap === null ? "—" : gap.toFixed(1)));
+        });
+        return h("div", { "class": "scroll" }, h("table", null,
+            h("caption", { "class": "sr" }, "Statistics"),
+            h("thead", null, h("tr", null, h("th", null, "Event"), h("th", null, "Track"), h("th", null, "Starts per year"), h("th", null, "Mean days between starts"))),
+            h("tbody", null, rows)),
+            h("p", { "class": "help" }, "Over " + s.years + " simulated years from the world's start, with the seed and weather above."));
+    }
+
+    function calPanel(chk) {
+        var cal = state.cal;
+        var inp = calInputs();
+        var v = state.values;
+        var controls = h("section", { "class": "card", "data-key": "cal-in" },
+            h("h2", null, "Calendar"),
+            h("p", { "class": "help" }, "What the scheduler decides for each day and night from the world's start, run as the mod runs it. Moon phases, dates, months, every, world days, nth, after, cooldown, priorities, coverage and durations are exact. Chance rolls and the weather are simulated with the seed below, and the season is approximate (≈): March to May spring, June to August summer, September to November autumn, December to February winter; the game's seasons shift a little every year."),
+            h("div", { "class": "row" },
+                h("div", null, h("label", { "for": "cal-start" }, "World start"), h("input", { type: "date", id: "cal-start", value: cal.start, "data-act": "cal", "data-k": "start" })),
+                h("div", null, h("label", { "for": "cal-time" }, "at"), h("input", { type: "time", id: "cal-time", value: cal.time, "data-act": "cal", "data-k": "time" })),
+                h("div", null, h("label", { "for": "cal-from" }, "Show from (YYYY-MM)"), textInput("cal-from", cal.from, { "class": "small", placeholder: cal.start.slice(0, 7), "data-act": "cal", "data-k": "from" })),
+                h("div", null, h("label", { "for": "cal-months" }, "Months"), textInput("cal-months", cal.months, { "class": "tiny", inputmode: "numeric", "data-act": "cal", "data-k": "months" }))),
+            h("p", { "class": "help" }, v.NightMode === 1
+                ? "Night from " + hhmm(v.NightStartHour * 60) + " to " + hhmm(v.NightEndHour * 60) + " (the Clock settings on the Definitions tab)."
+                : "Seasonal night: the game's dusk and dawn move with the seasons; here they are fixed (≈)."),
+            v.NightMode === 2 ? h("div", { "class": "row" },
+                h("div", null, h("label", { "for": "cal-cycle" }, "Day/Night Cycle"), select("cal-cycle", cal.cycle, [["normal", "normal"], ["day", "endless day"], ["night", "endless night"]], { "data-act": "cal", "data-k": "cycle" })),
+                cal.cycle === "normal" ? h("div", null, h("label", { "for": "cal-dawn" }, "Dawn ≈"), h("input", { type: "time", id: "cal-dawn", value: cal.dawn, "data-act": "cal", "data-k": "dawn" })) : null,
+                cal.cycle === "normal" ? h("div", null, h("label", { "for": "cal-dusk" }, "Dusk ≈"), h("input", { type: "time", id: "cal-dusk", value: cal.dusk, "data-act": "cal", "data-k": "dusk" })) : null) : null,
+            h("fieldset", null, h("legend", null, "Simulated"),
+                h("div", { "class": "row" },
+                    h("div", null, h("label", { "for": "cal-seed" }, "Seed"), textInput("cal-seed", cal.seed, { "class": "small", inputmode: "numeric", "data-act": "cal", "data-k": "seed" })),
+                    h("button", { type: "button", "data-act": "reroll" }, "Roll again"),
+                    ["rain", "snow", "storm", "fog"].map(function (w) {
+                        return h("div", null, h("label", { "for": "cal-" + w }, w + " %"), textInput("cal-" + w, cal[w], { "class": "tiny", inputmode: "decimal", "data-act": "cal", "data-k": w }));
+                    }),
+                    h("div", null, h("label", { "for": "cal-winter" }, "°C mid-January"), textInput("cal-winter", cal.winter, { "class": "tiny", inputmode: "decimal", "data-act": "cal", "data-k": "winter" })),
+                    h("div", null, h("label", { "for": "cal-summer" }, "°C mid-July"), textInput("cal-summer", cal.summer, { "class": "tiny", inputmode: "decimal", "data-act": "cal", "data-k": "summer" }))),
+                h("p", { "class": "help" }, "Each decision draws rain, snow, storm and fog on their own with these chances (clear is none of them), and a temperature around a yearly curve between the two values, give or take 6 °C.")),
+            h("fieldset", { "class": "checks" }, h("legend", { "class": "label" }, "Each day and night shows"),
+                [["outcome", "the event that runs (one possible future)"], ["candidates", "every candidate, with its chance"]].map(function (o) {
+                    return h("label", null, h("input", { type: "radio", name: "cal-view", value: o[0], "data-act": "cal", "data-k": "view", checked: cal.view === o[0] }), o[1]);
+                })),
+            msgList(inp.problems, []),
+            legend(chk),
+            h("div", { "class": "buttons" }, h("button", { type: "button", "data-act": "stats", disabled: inp.problems.length > 0 || chk.defs.events.length === 0 }, "Statistics over 200 years")),
+            statsTable(chk));
+        if (inp.problems.length) { return [controls]; }
+        var result = calendarRun(chk, inp);
+        var byDate = indexRun(result);
+        var months = [];
+        for (var i = 0; i < inp.months; i++) {
+            var y = inp.first.year + Math.floor((inp.first.month + i) / 12), m = (inp.first.month + i) % 12;
+            months.push(monthGrid(chk, result, byDate, y, m, inp));
+        }
+        return [controls].concat(months);
+    }
+
+    function monthGrid(chk, result, byDate, year, month, inp) {
+        var days = C.Phase.daysInMonth(year, month);
+        var lead = (new Date(Date.UTC(year, month, 1)).getUTCDay() + 6) % 7;
+        var cells = [];
+        var selectedHere = false;
+        for (var b = 0; b < lead; b++) { cells.push(h("div", { "aria-hidden": "true" })); }
+        for (var d = 1; d <= days; d++) {
+            var date = { year: year, month: month, day: d };
+            var key = C.Phase.key(date);
+            var before = C.Phase.previousDay(date);
+            var phase = C.Phase.moon(year, month, d);
+            var first = C.Phase.moon(before.year, before.month, before.day) !== phase;
+            var occs = byDate[key] || [];
+            // A world that starts after midnight begins in the night of the day before.
+            var beforeStart = C.Sim.daysBetween(inp.start, date) < 0 && occs.length === 0;
+            var sel = state.cal.selected === key;
+            selectedHere = selectedHere || sel;
+            var aria = MONTHS[month] + " " + d + (phase === 4 || phase === 0 ? ", " + MOON_LABELS[phase] + " moon" + (first ? ", first day" : "") : "")
+                + occs.map(function (r) {
+                    return "; " + r.phase + ": " + (r.events.length ? r.events.map(function (x) { return x.id; }).join(", ") : "no event");
+                }).join("");
+            cells.push(h("button", { type: "button", "class": "cell", "data-act": "day", "data-k": key, "aria-pressed": sel ? "true" : "false", "aria-label": aria, title: aria, disabled: beforeStart, "data-key": key },
+                h("span", { "class": "top", "aria-hidden": "true" }, h("span", { "class": "date" }, d),
+                    phase === 4 || phase === 0 ? h("span", { "class": "moonname" + (first ? " first" : "") }, MOONS[phase]) : null),
+                h("span", { "aria-hidden": "true" }, occs.map(function (r) { return occLine(chk, r, state.cal.view); }))));
+        }
+        return h("section", { "class": "month card", "aria-label": MONTHS[month] + " " + year, "data-key": "m-" + year + "-" + month },
+            h("h3", null, MONTHS[month] + " " + year),
+            h("div", { "class": "grid", role: "group" },
+                ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(function (x) { return h("div", { "class": "dow", "aria-hidden": "true" }, x); }),
+                cells),
+            selectedHere ? detailFor(chk, result, byDate, state.cal.selected) : null);
+    }
+
+    function computeStats(chk) {
+        var inp = calInputs();
+        var years = 200;
+        var result = simulate(chk, inp, Math.round(years * 365.25 * 1440), false);
+        var starts = {};
+        result.runs.forEach(function (r) { (starts[r.id] = starts[r.id] || []).push(r.startsAt); });
+        state.stats = { key: statsKey(), starts: starts, years: years };
+    }
+
+    function statsKey() {
+        var c = state.cal;
+        return JSON.stringify([state.values, state.registered, c.start, c.time, c.dawn, c.dusk, c.cycle, c.seed, c.rain, c.snow, c.storm, c.fog, c.winter, c.summer]);
+    }
+
+    // ---------------------------------------------------------------- page
+    var TABS = [["defs", "Definitions"], ["cal", "Calendar"], ["import", "Import"], ["export", "Export"]];
+    var app = document.getElementById("app");
+    document.getElementById("about").textContent = "Builds the Day, Night, Events 1 to 8 and Monster kinds options of Crepuscular "
+        + C.MOD_VERSION + ", checked exactly as that version of the mod checks them. Everything stays in this page: nothing is sent anywhere.";
+
+    function view() {
+        var chk = check();
+        var panel = state.tab === "defs" ? defsPanel(chk) : state.tab === "cal" ? calPanel(chk) : state.tab === "import" ? importPanel() : exportPanel(chk);
+        var problems = chk.errors.length;
+        return h("div", { id: "app" },
+            h("div", { role: "tablist", "aria-label": "Builder sections" }, TABS.map(function (t) {
+                var sel = state.tab === t[0];
+                return h("button", { role: "tab", type: "button", id: "tab-" + t[0], "aria-selected": sel ? "true" : "false", "aria-controls": "panel", tabindex: sel ? "0" : "-1", "data-act": "tab", "data-k": t[0] },
+                    t[1], t[0] === "defs" && problems ? h("span", { "class": "badge error", "aria-label": problems + " errors" }, problems) : null);
+            })),
+            h("div", { role: "status" }, state.notice ? h("p", { "class": "msg info" }, state.notice) : null),
+            h("div", { role: "tabpanel", id: "panel", "aria-labelledby": "tab-" + state.tab, "data-key": "panel-" + state.tab }, panel));
+    }
+
+    function render() {
+        var focused = document.activeElement && document.activeElement.id ? document.activeElement : null;
+        var sel = focused && typeof focused.selectionStart === "number" ? [focused.selectionStart, focused.selectionEnd] : null;
+        var fid = focused ? focused.id : null;
+        morph(app, view());
+        app = document.getElementById("app");
+        if (fid && (!document.activeElement || document.activeElement.id !== fid)) {
+            var el = document.getElementById(fid);
+            if (el) {
+                el.focus();
+                if (sel && typeof el.setSelectionRange === "function") {
+                    try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { sel = null; }
+                }
+            }
+        }
+    }
+
+    function update(fn) {
+        fn();
+        save();
+        render();
+    }
+
+    // ---------------------------------------------------------------- events
+    function clean(el, allowed) {
+        var re = allowed || FORBIDDEN;
+        if (!re.test(el.value)) { return el.value; }
+        re.lastIndex = 0;
+        var pos = el.selectionStart;
+        var before = el.value.length;
+        el.value = el.value.replace(re, "");
+        if (typeof pos === "number") {
+            var p = Math.max(0, pos - (before - el.value.length));
+            el.setSelectionRange(p, p);
+        }
+        state.notice = "; and | separate fields and events, and line breaks can't be part of a value, so they were left out.";
+        return el.value;
+    }
+
+    function inField(el) {
+        var box = el.closest("[data-field]");
+        return box ? box.getAttribute("data-field") : null;
+    }
+
+    function readChecks(box, key) {
+        var vals = Array.prototype.filter.call(box.querySelectorAll("input[type=checkbox]"), function (c) { return c.checked; }).map(function (c) { return c.value; });
+        if (key === "month") { return monthText(vals.map(Number)); }
+        return vals.join(",");
+    }
+
+    // Months as the shortest list, runs of three or more as ranges (a run may wrap December).
+    function monthText(months) {
+        if (months.length === 12) { return "1..12"; }
+        var on = {};
+        months.forEach(function (m) { on[m] = true; });
+        var startAt = 1;
+        for (var s = 1; s <= 12; s++) { if (!on[s]) { startAt = s % 12 + 1; break; } }
+        var out = [], run = [];
+        for (var i = 0; i < 12; i++) {
+            var m = (startAt - 1 + i) % 12 + 1;
+            if (on[m]) { run.push(m); }
+            if (!on[m] || i === 11) {
+                if (run.length >= 3) { out.push(run[0] + ".." + run[run.length - 1]); } else { out = out.concat(run.map(String)); }
+                run = [];
+            }
+        }
+        return out.join(",");
+    }
+
+    function onInput(e) {
+        var el = e.target;
+        var act = el.getAttribute && el.getAttribute("data-act");
+        if (!act) { return; }
+        var owner = ownerOf(el);
+        var key = inField(el);
+        var box = el.closest("[data-field]");
+        update(function () {
+            state.notice = null;
+            if (act === "text") {
+                var value = clean(el);
+                editDef(owner, function (f) { setField(f, key, value.trim() === "" ? null : value); });
+            } else if (act === "checks") {
+                var v = readChecks(box, key);
+                editDef(owner, function (f) { setField(f, key, v || null); });
+            } else if (act === "track") {
+                editDef(owner, function (f) { setField(f, "track", el.value || null); });
+            } else if (act === "for") {
+                var kind = box.querySelector("[data-part=kind]").value;
+                var amountEl = box.querySelector("[data-part=amount]");
+                var amount = amountEl ? clean(amountEl).trim() : "";
+                if (el.getAttribute("data-part") === "kind" && amount === "") { amount = kind === "p" ? "2" : kind === "h" ? "6" : "1"; }
+                editDef(owner, function (f) { setField(f, "for", kind === "phase" ? null : kind === "raw" ? amount : amount + kind); });
+            } else if (act === "cycle") {
+                var n = clean(box.querySelector("[data-part=n]")).trim(), k = clean(box.querySelector("[data-part=k]")).trim();
+                editDef(owner, function (f) { setField(f, key, n === "" ? null : n + (k === "" || k === "0" && key === "every" ? "" : "+" + k)); });
+            } else if (act === "cooldown") {
+                var amt = clean(box.querySelector("[data-part=amount]")).trim(), unit = box.querySelector("[data-part=unit]").value;
+                editDef(owner, function (f) { setField(f, "cooldown", amt === "" ? null : amt + unit); });
+            } else if (act === "color") {
+                var part = el.getAttribute("data-part");
+                var on = box.querySelector("[data-part=on]").checked;
+                var hex = part === "picker" ? el.value.slice(1) : part === "hex" ? clean(el).replace(/^#/, "").trim() : (box.querySelector("[data-part=hex]").value || "ffffff");
+                editDef(owner, function (f) { setField(f, "color", on ? hex.toLowerCase() : null); });
+            } else if (act === "off") {
+                var mode = box.querySelector("[data-part=mode]:checked").value;
+                var kinds = Array.prototype.filter.call(box.querySelectorAll("[data-part=kind]"), function (c) { return c.checked; }).map(function (c) { return c.value; });
+                var other = clean(box.querySelector("[data-part=other]")).split(",").map(function (x) { return x.trim(); }).filter(Boolean);
+                var list = kinds.concat(other).join(",");
+                var ok = owner.slot ? owner.slot + ":" + owner.index : owner.name;
+                state.offList[ok] = mode === "list" && list === "";
+                editDef(owner, function (f) { setField(f, "off", mode === "inherit" ? null : mode === "none" ? "none" : list || null); });
+            } else if (act === "setname" || act === "setvalue") {
+                var fi = Number(el.closest("[data-set]").getAttribute("data-set"));
+                var t = clean(el, act === "setname" ? /[;|=\x00-\x1f\x7f]/g : null).trim();
+                editDef(owner, function (f) {
+                    if (act === "setname") { f[fi].name = "set." + t; } else { f[fi].value = t; }
+                });
+            } else if (act === "cof") {
+                var name = "set.COF_Spawns." + el.getAttribute("data-k");
+                editDef(owner, function (f) {
+                    var at = f.findIndex(function (x) { return x.eq && x.name.slice(0, 4).toLowerCase() === "set." && "set." + x.name.slice(4) === name; });
+                    if (el.value === "") { if (at >= 0) { f.splice(at, 1); } }
+                    else if (at >= 0) { f[at].value = el.value; }
+                    else {
+                        var pos = f.length;
+                        for (var j = 0; j < f.length; j++) { if (rank(f[j]) > KEY_ORDER.indexOf("set.")) { pos = j; break; } }
+                        f.splice(pos, 0, { name: name, value: el.value, eq: true });
+                    }
+                });
+            } else if (act === "other") {
+                var oi = Number(el.closest("[data-other]").getAttribute("data-other"));
+                var txt = clean(el, /[;|]/g);
+                editDef(owner, function (f) { f[oi] = rawField(txt); });
+            } else if (act === "evraw") {
+                var raw = clean(el, /[|]/g);
+                var texts = Text.events(state.values[owner.slot]);
+                texts[owner.index] = raw.trim() === "" ? "id=" : raw;
+                state.values[owner.slot] = texts.join("|");
+            } else if (act === "raw") {
+                state.values[el.getAttribute("data-k")] = el.value;
+            } else if (act === "kindname" || act === "kindprefix") {
+                var ki = Number(el.closest("[data-kind]").getAttribute("data-kind"));
+                var kt = clean(el, act === "kindname" ? /[;|=\x00-\x1f\x7f]/g : null).trim();
+                var kf = Text.fields(state.values.Kinds);
+                if (act === "kindname") { kf[ki] = { name: kt, value: kf[ki].eq ? kf[ki].value : "", eq: true }; } else { kf[ki] = { name: kf[ki].eq ? kf[ki].name : kf[ki].value, value: kt, eq: true }; }
+                state.values.Kinds = Text.join(kf);
+            } else if (act === "registered") {
+                state.registered = clean(el);
+            } else if (act === "slot") {
+                var evs = eventList();
+                var at = evs.findIndex(function (x) { return x.slot === owner.slot && x.index === owner.index; });
+                var moved = evs[at];
+                moved.slot = el.value;
+                setEvents(evs);
+                state.open = {};
+                state.offList = {};
+                var now = eventList().findIndex(function (x) { return x.slot === moved.slot && x.text === moved.text; });
+                if (now >= 0) { state.open[moved.slot + ":" + eventList()[now].index] = true; }
+            } else if (act === "clock") {
+                state.values[el.getAttribute("data-k")] = Number(el.value);
+            } else if (act === "cal") {
+                var ck = el.getAttribute("data-k");
+                state.cal[ck] = el.value;
+            } else if (act === "showall") {
+                state.showAll = el.checked;
+            } else if (act === "importtext") {
+                state.importText = el.value;
+            } else if (act === "importas") {
+                state.importAs = el.value;
+            } else if (act === "importtarget") {
+                state.importTarget = el.value;
+            } else if (act === "importreset") {
+                state.importReset = el.checked;
+            }
+        });
+    }
+
+    function freeId(base, list) {
+        var taken = {};
+        list.forEach(function (e) { var id = getField(Text.fields(e.text), "id"); if (id) { taken[id.toLowerCase()] = true; } });
+        if (!taken[base]) { return base; }
+        for (var i = 2; ; i++) { if (!taken[base + "_" + i]) { return base + "_" + i; } }
+    }
+
+    function onClick(e) {
+        var el = e.target.closest("[data-act]");
+        if (!el || el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "TEXTAREA") { return; }
+        var act = el.getAttribute("data-act");
+        var owner = ownerOf(el);
+        if (act === "copy") {
+            copy(document.getElementById(el.getAttribute("data-k")), el);
+            return;
+        }
+        update(function () {
+            state.notice = null;
+            var list = eventList();
+            var g = owner && owner.slot ? list.findIndex(function (x) { return x.slot === owner.slot && x.index === owner.index; }) : -1;
+            if (act === "tab") {
+                state.tab = el.getAttribute("data-k");
+            } else if (act === "evadd") {
+                var slot = list.length ? list[list.length - 1].slot : "Events1";
+                list.push({ slot: slot, text: "id=" + freeId("event" + (list.length + 1), list) + ";track=moon" });
+                setEvents(list);
+                state.open = {};
+                state.offList = {};
+                state.open[slot + ":" + (Text.events(state.values[slot]).length - 1)] = true;
+            } else if (act === "pack") {
+                var bytes = 0, at = 0;
+                list.forEach(function (ev) {
+                    var b = Defs.bytes(ev.text) + 1;
+                    if (bytes > 0 && bytes + b > 16000 && at < Defs.SLOTS.length - 1) { at++; bytes = 0; }
+                    ev.slot = Defs.SLOTS[at];
+                    bytes += b;
+                });
+                setEvents(list);
+                state.open = {};
+                state.offList = {};
+            } else if (act === "up" || act === "down") {
+                moveEvent(list, g, act === "up" ? -1 : 1);
+            } else if (act === "dup") {
+                var copyText = Text.fields(list[g].text);
+                var oldId = getField(copyText, "id") || "event";
+                setField(copyText, "id", freeId(oldId.toLowerCase().replace(/[^a-z0-9_]/g, "") || "event", list));
+                list.splice(g + 1, 0, { slot: list[g].slot, text: Text.join(copyText) });
+                setEvents(list);
+                state.open = {};
+                state.offList = {};
+                state.open[list[g].slot + ":" + (owner.index + 1)] = true;
+            } else if (act === "del") {
+                list.splice(g, 1);
+                setEvents(list);
+                state.open = {};
+                state.offList = {};
+            } else if (act === "clear") {
+                var k = el.getAttribute("data-k");
+                editDef(owner, function (f) { setField(f, k, null); });
+            } else if (act === "addafter") {
+                editDef(owner, function (f) {
+                    var cur = getField(f, "after");
+                    var items = cur ? cur.split(",").map(function (x) { return x.trim(); }).filter(Boolean) : [];
+                    if (items.indexOf(el.getAttribute("data-k")) < 0) { items.push(el.getAttribute("data-k")); }
+                    setField(f, "after", items.join(","));
+                });
+            } else if (act === "setadd") {
+                editDef(owner, function (f) {
+                    var pos = f.length;
+                    for (var j = 0; j < f.length; j++) { if (rank(f[j]) > KEY_ORDER.indexOf("set.")) { pos = j; break; } }
+                    f.splice(pos, 0, { name: "set.", value: "", eq: true });
+                });
+            } else if (act === "setdel") {
+                var fi = Number(el.closest("[data-set]").getAttribute("data-set"));
+                editDef(owner, function (f) { f.splice(fi, 1); });
+            } else if (act === "otherdel") {
+                var oi = Number(el.closest("[data-other]").getAttribute("data-other"));
+                editDef(owner, function (f) { f.splice(oi, 1); });
+            } else if (act === "kindadd") {
+                var kf = Text.fields(state.values.Kinds);
+                kf.push({ name: "", value: "", eq: true });
+                state.values.Kinds = Text.join(kf);
+            } else if (act === "kinddel") {
+                var kf2 = Text.fields(state.values.Kinds);
+                kf2.splice(Number(el.closest("[data-kind]").getAttribute("data-kind")), 1);
+                state.values.Kinds = Text.join(kf2);
+            } else if (act === "reset") {
+                if (window.confirm("Put every option back to its default? This can't be undone.")) {
+                    var f = fresh();
+                    state.values = f.values;
+                    state.registered = "";
+                    state.open = {};
+                state.offList = {};
+                }
+            } else if (act === "import") {
+                doImport();
+            } else if (act === "reroll") {
+                state.cal.seed = String(Math.floor(Math.random() * 1000000));
+            } else if (act === "day") {
+                var key = el.getAttribute("data-k");
+                state.cal.selected = state.cal.selected === key ? "" : key;
+            } else if (act === "stats") {
+                computeStats(check());
+            }
+        });
+    }
+
+    function moveEvent(list, g, dir) {
+        var ev = list[g];
+        var slotIndex = Defs.SLOTS.indexOf(ev.slot);
+        var neighbour = list[g + dir];
+        if (neighbour && neighbour.slot === ev.slot) {
+            list[g] = neighbour;
+            list[g + dir] = ev;
+        } else if (slotIndex + dir >= 0 && slotIndex + dir < Defs.SLOTS.length) {
+            ev.slot = Defs.SLOTS[slotIndex + dir];
+        }
+        setEvents(list);
+        var after = eventList();
+        var at = after.findIndex(function (x, i) { return dir < 0 ? i <= g && x.text === ev.text && x.slot === ev.slot : i >= g && x.text === ev.text && x.slot === ev.slot; });
+        state.open = {};
+        if (at >= 0) { state.open[after[at].slot + ":" + after[at].index] = true; }
+    }
+
+    function copy(target, button) {
+        var text = target.value !== undefined && target.tagName !== "PRE" ? target.value : target.textContent;
+        function done(ok) {
+            button.textContent = ok ? "Copied" : "Select and copy it by hand";
+            window.setTimeout(function () { button.textContent = "Copy"; }, 1800);
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallbackCopy(text)); });
+        } else {
+            done(fallbackCopy(text));
+        }
+    }
+
+    function fallbackCopy(text) {
+        var t = document.createElement("textarea");
+        t.value = text;
+        t.setAttribute("readonly", "");
+        t.style.position = "fixed";
+        t.style.opacity = "0";
+        document.body.appendChild(t);
+        t.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        document.body.removeChild(t);
+        return ok;
+    }
+
+    document.addEventListener("input", function (e) {
+        var t = e.target;
+        if (t.type === "checkbox" || t.type === "radio" || t.tagName === "SELECT") { return; }
+        onInput(e);
+    });
+    document.addEventListener("change", function (e) {
+        var t = e.target;
+        if (t.type === "checkbox" || t.type === "radio" || t.tagName === "SELECT") { onInput(e); }
+    });
+    document.addEventListener("click", onClick);
+    document.addEventListener("toggle", function (e) {
+        var d = e.target;
+        if (d.tagName !== "DETAILS" || !d.hasAttribute("data-ev")) { return; }
+        var key = d.getAttribute("data-ev");
+        if ((state.open[key] === true) !== d.open) {
+            update(function () { state.open[key] = d.open; });
+        }
+    }, true);
+    document.addEventListener("keydown", function (e) {
+        var t = e.target;
+        if (t.getAttribute && t.getAttribute("role") === "tab" && (e.key === "ArrowRight" || e.key === "ArrowLeft" || e.key === "Home" || e.key === "End")) {
+            var i = TABS.findIndex(function (x) { return x[0] === state.tab; });
+            i = e.key === "Home" ? 0 : e.key === "End" ? TABS.length - 1 : (i + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length;
+            e.preventDefault();
+            update(function () { state.tab = TABS[i][0]; });
+            document.getElementById("tab-" + TABS[i][0]).focus();
+        }
+    });
+
+    render();
+})();
+</script>
+</body>
+</html>

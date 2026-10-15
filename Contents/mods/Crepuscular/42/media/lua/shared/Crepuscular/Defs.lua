@@ -96,7 +96,8 @@ local function number(text, whole)
         return nil
     end
     local n = tonumber(body)
-    if sign == "-" then
+    -- Not for 0: Kahlua keeps -0 as a table key apart from 0, so moon=-0 would never match.
+    if sign == "-" and n ~= 0 then
         n = -n
     end
     return n
