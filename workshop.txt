@@ -1,6 +1,9 @@
 version=1
 id=
-title=Crepuscular
+title=Crepuscular (testing)
+description=[b]In testing.[/b] Crepuscular has had little play so far: expect bugs, and settings may still change between updates. Please report problems at https://github.com/zexyqag/Crepuscular/issues
+description=Write Day, Night and events in the browser with the builder: https://zexyqag.github.io/Crepuscular/builder/
+description=
 description=Crepuscular divides the world clock into day and night and adds special nights and days: moons and suns. Each can make a share of the zombies faster or slower, make zombies more fragile or tougher, make a share of the killed zombies get back up, change sandbox options, tint the sky and set the fog, switch monster kinds off and show a line to every player and play a sound when it begins, and for a player who joins while it lasts.
 description=
 description=Night runs on fixed hours (20:00 to 04:00 by default) or follows the game's own seasonal dusk and dawn.
@@ -28,4 +31,4 @@ description=The Notifications option silences every line and sound on every play
 description=
 description=Works in single player and multiplayer, with or without these mods. Admins get a Crepuscular entry in the right-click menu to see the status (including the corpses waiting to rise, the sky values Crepuscular set and which of them an admin or another mod has overridden or turned off), force day or night, and start, end or re-decide events. Mistakes in the definitions are logged, and admins see a line about them when they join.
 tags=Build 42;Multiplayer;Balance
-visibility=unlisted
+visibility=public

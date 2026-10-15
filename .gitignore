@@ -4,3 +4,6 @@
 !/preview.png
 !/Contents/
 !/builder/
+!/.github/
+/.github/*
+!/.github/workflows/

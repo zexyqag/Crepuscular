@@ -1,0 +1,65 @@
+name: Workshop
+
+# Updates the Steam Workshop item named by workshop.txt's id= with Contents/. The item must exist:
+# its first upload, which also sets the title, description, tags and preview, is done from the game.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      note:
+        description: Change note on the Workshop page
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workshop
+
+env:
+  # Project Zomboid
+  APP_ID: '108600'
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    environment: steam
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Item and change note
+        id: item
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          NOTE: ${{ github.event_name == 'release' && github.event.release.body || inputs.note }}
+        run: |
+          id=$(sed -n 's/^id=//p' workshop.txt | tr -d '\r')
+          if [ -z "$id" ]; then
+            echo "::error::workshop.txt has no id=: upload the item once from the game and commit the id it writes"
+            exit 1
+          fi
+          version=$(sed -n 's/^modversion=//p' Contents/mods/*/42/mod.info | tr -d '\r')
+          if [ -n "$TAG" ] && [ "$TAG" != "v$version" ]; then
+            echo "::error::the release tag $TAG is not v$version, the modversion in mod.info"
+            exit 1
+          fi
+          # The note goes into a quoted VDF string.
+          note=$(printf '%s' "${NOTE:-$version}" | tr -d '\r' | tr '"' "'")
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          {
+            echo 'note<<NOTE_END'
+            printf '%s\n' "$note"
+            echo 'NOTE_END'
+          } >> "$GITHUB_OUTPUT"
+
+      # v4
+      - uses: m00nl1ght-dev/steam-workshop-deploy@7abf9c7628c3bc79229c9bca93f7a7296fa82428
+        with:
+          username: ${{ secrets.STEAM_USERNAME }}
+          configVdf: ${{ secrets.STEAM_CONFIG_VDF }}
+          appId: ${{ env.APP_ID }}
+          publishedFileId: ${{ steps.item.outputs.id }}
+          path: Contents
+          changeNote: ${{ steps.item.outputs.note }}
