@@ -1,5 +1,5 @@
 version=1
-id=
+id=3820511464
 title=Crepuscular (testing)
 description=[b]In testing.[/b] Crepuscular has had little play so far: expect bugs, and settings may still change between updates. Please report problems at https://github.com/zexyqag/Crepuscular/issues
 description=Write Day, Night and events in the browser with the builder: https://zexyqag.github.io/Crepuscular/builder/
@@ -31,4 +31,4 @@ description=The Notifications option silences every line and sound on every play
 description=
 description=Works in single player and multiplayer, with or without these mods. Admins get a Crepuscular entry in the right-click menu to see the status (including the corpses waiting to rise, the sky values Crepuscular set and which of them an admin or another mod has overridden or turned off), force day or night, and start, end or re-decide events. Mistakes in the definitions are logged, and admins see a line about them when they join.
 tags=Build 42;Multiplayer;Balance
-visibility=public
+visibility=unlisted
