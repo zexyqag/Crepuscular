@@ -21,6 +21,7 @@ local DEFAULTS = {
     RemovalsPerMinute = 50,
     MutantRequeue = false,
     ZombiesPerSweep = 400,
+    Notifications = true,
 }
 
 local function invalid(name, value)
@@ -93,6 +94,11 @@ end
 
 function Settings.zombiesPerSweep()
     return integer("ZombiesPerSweep", 50, 5000)
+end
+
+-- Whether players' games show the definitions' lines and play their sounds.
+function Settings.notifications()
+    return boolean("Notifications")
 end
 
 return Settings

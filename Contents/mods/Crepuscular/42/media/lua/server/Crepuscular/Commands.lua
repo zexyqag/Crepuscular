@@ -5,6 +5,7 @@ local Settings = require "Crepuscular/Settings"
 local Phase = require "Crepuscular/Phase"
 local State = require "Crepuscular/State"
 local Defs = require "Crepuscular/Defs"
+local Schedule = require "Crepuscular/Schedule"
 local Sandbox = require "Crepuscular/Sandbox"
 local Kinds = require "Crepuscular/Kinds"
 local Clock = require "Crepuscular/Clock"
@@ -51,8 +52,9 @@ local function status()
     add("Crepuscular " .. getModInfoByID("Crepuscular"):getModVersion() .. "; " .. clock)
 
     local occasion = ledger.occasion
+    local today = Schedule.worldDay(occasion)
     add("phase " .. state.phase .. (state.forced and " (forced)" or "") .. "; the clock is in the "
-        .. occasion.phase .. " of " .. occasion.key .. ", opened " .. stamp(occasion.start))
+        .. occasion.phase .. " of " .. occasion.key .. ", opened " .. stamp(occasion.start) .. ", world day " .. today)
     add("moon phase today " .. Phase.moon(now.year, now.month, now.day) .. " (the game shows "
         .. getClimateMoon():getCurrentMoonPhase() .. "), 4 is full")
     for _, track in ipairs({ "sun", "moon" }) do
@@ -104,6 +106,26 @@ local function status()
             line = line .. ", cooldown until " .. stamp(ledger.lastStart[id] + ev.cooldown)
         end
         add(line)
+    end
+    -- Noon of the occasion's date, where its world day is counted.
+    local noon = occasion.start + 12 - occasion.open
+    for _, ev in ipairs(defs.events) do
+        if ev.interval ~= nil then
+            local unit, from, to = Schedule.due(ledger, ev)
+            local line = "interval " .. ev.id .. ": due from "
+            if unit == "d" then
+                line = line .. "world day " .. from .. " (" .. string.sub(stamp(noon + (from - today) * 24), 1, 10) .. ")"
+                if to > from then
+                    line = line .. " to world day " .. to .. ", rolled the next time it could be picked"
+                end
+            else
+                line = line .. stamp(from)
+                if to > from then
+                    line = line .. " to " .. stamp(to) .. ", rolled the next time it could be picked"
+                end
+            end
+            add(line)
+        end
     end
     for _, id in ipairs(sorted(ledger.follow)) do
         add("chain flag " .. id .. ": " .. table.concat(sorted(ledger.follow[id]), ", "))

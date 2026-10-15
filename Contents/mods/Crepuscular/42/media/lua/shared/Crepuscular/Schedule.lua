@@ -4,6 +4,7 @@
 -- Ledger: { occasion = { phase, key, date, open, start, serial }, decided = { [track] = key },
 --   pool = { [track] = { key, ids, covered } }, current = { id, track, serial, running, at,
 --   startsAt, endsAt, phasesLeft }, count = { [id] = n }, lastStart = { [id] = hours },
+--   lastDay = { [id] = world day }, roll = { [id] = interval roll since the last start },
 --   follow = { [id] = { sun, moon } }, serial }
 local Phase = require "Crepuscular/Phase"
 
@@ -20,7 +21,7 @@ local function trackOf(phase)
 end
 
 function Schedule.prepare(ledger)
-    for _, name in ipairs({ "decided", "pool", "count", "lastStart", "follow" }) do
+    for _, name in ipairs({ "decided", "pool", "count", "lastStart", "lastDay", "roll", "follow" }) do
         if ledger[name] == nil then
             ledger[name] = {}
         end
@@ -37,6 +38,54 @@ end
 -- World age turns a day at 07:00, so an occasion counts the world day at noon of its date.
 local function worldDay(occasion)
     return math.floor((occasion.start + 12 - occasion.open + TOLERANCE) / 24)
+end
+
+Schedule.worldDay = worldDay
+
+-- When ev would start in the occasion: at its at= time, or as the occasion starts.
+local function startTime(ev, occasion)
+    if ev.at == nil then
+        return occasion.start
+    end
+    return occasion.start + Phase.wrap(ev.at - occasion.open, 24)
+end
+
+-- When an event with interval= is next due: its unit ("d" counts world days, "h" world-age hours)
+-- and the earliest and latest due, the same once its wait is rolled. The wait runs from its last
+-- start, or from the world's start.
+function Schedule.due(ledger, ev)
+    local interval = ev.interval
+    local base = ledger.lastStart[ev.id] or 0
+    if interval.unit == "d" then
+        base = ledger.lastDay[ev.id] or 0
+    end
+    local roll = ledger.roll[ev.id]
+    if roll == nil then
+        return interval.unit, base + interval.min, base + interval.max
+    end
+    local due = base + interval.min + math.floor(roll * (interval.max - interval.min + 1) / 100)
+    return interval.unit, due, due
+end
+
+-- Why ev still waits for its interval in the occasion, or nil once it is due. A wait is rolled
+-- when first needed and kept until the event starts again, so a lost chance doesn't roll anew.
+local function waiting(ledger, ev, occasion, roll)
+    local interval = ev.interval
+    if interval.max > interval.min and ledger.roll[ev.id] == nil then
+        ledger.roll[ev.id] = roll()
+    end
+    local unit, due = Schedule.due(ledger, ev)
+    if unit == "d" then
+        if worldDay(occasion) < due then
+            return "is not due before world day " .. due
+        end
+        return nil
+    end
+    local left = due - startTime(ev, occasion)
+    if left > TOLERANCE then
+        return "is not due for " .. math.floor(left * 60 + 0.5) .. " more minutes"
+    end
+    return nil
 end
 
 local function calendar(ev, occasion, climate)
@@ -119,6 +168,8 @@ local function start(ledger, ev, startsAt, now, log)
     end
     ledger.current = current
     ledger.lastStart[ev.id] = startsAt
+    ledger.lastDay[ev.id] = worldDay(ledger.occasion)
+    ledger.roll[ev.id] = nil
     -- The event replaces the phase's own line, which isn't shown again when it ends.
     ledger.occasion.serial = nil
     return true
@@ -141,8 +192,14 @@ local function pick(ledger, defs, climate, roll, log)
         local ev = defs.byId[id]
         if ev ~= nil and ev.track == track then
             local last = ledger.lastStart[id]
+            local wait = nil
             if ev.cooldown ~= nil and last ~= nil and occasion.start < last + ev.cooldown - TOLERANCE then
-                log(name .. ": " .. id .. " is cooling down")
+                wait = "is cooling down"
+            elseif ev.interval ~= nil then
+                wait = waiting(ledger, ev, occasion, roll)
+            end
+            if wait ~= nil then
+                log(name .. ": " .. id .. " " .. wait)
             elseif not weather(ev, climate) then
                 log(name .. ": " .. id .. " weather doesn't match")
             else
@@ -183,7 +240,7 @@ local function schedule(ledger, ev, earliest, now, log)
     local occasion = ledger.occasion
     local at = earliest
     if ev.at ~= nil then
-        at = math.max(earliest, occasion.start + Phase.wrap(ev.at - occasion.open, 24))
+        at = math.max(earliest, startTime(ev, occasion))
     end
     if at <= now + TOLERANCE then
         start(ledger, ev, at, now, log)

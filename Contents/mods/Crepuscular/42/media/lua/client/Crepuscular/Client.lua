@@ -19,22 +19,38 @@ local function channel(color, i)
     return high * 16 + low
 end
 
+-- The sound is the definition's own text, and the game hands a name it lacks to FMOD.
+local function play(sound)
+    local ok, err = pcall(function()
+        getSoundManager():playUISound(sound)
+    end)
+    if not ok then
+        Log.warnOnce("sound " .. sound, "the sound " .. sound .. " could not be played: " .. tostring(err))
+    end
+end
+
 local function announce(state)
     local line = state.announce
     if line == nil or line.serial == announced then
         return
     end
     local text = line.text
-    if string.sub(text, 1, 1) == "@" then
+    if text ~= nil and string.sub(text, 1, 1) == "@" then
         text = getText(string.sub(text, 2))
     end
     local r, g, b = channel(line.color, 1), channel(line.color, 3), channel(line.color, 5)
     for i = 0, getNumActivePlayers() - 1 do
         local player = getSpecificPlayer(i)
         if player ~= nil then
-            player:setHaloNote(text, r, g, b, 500)
+            if text ~= nil then
+                player:setHaloNote(text, r, g, b, 500)
+            end
             announced = line.serial
         end
+    end
+    -- One sound per game, however many players share its screen.
+    if announced == line.serial and line.sound ~= nil then
+        play(line.sound)
     end
 end
 

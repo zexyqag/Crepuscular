@@ -10,7 +10,7 @@
 })(this, function () {
     "use strict";
 
-    var MOD_VERSION = "0.5.0";
+    var MOD_VERSION = "0.6.0";
 
     // User text becomes keys, so tables keyed by it have no prototype ("constructor", "__proto__").
     function dict(from) {
@@ -220,11 +220,16 @@
     var MAX_PHASES = 60;
     var MAX_HOURS = 30 * 24;
     var MAX_COOLDOWN_HOURS = 3650 * 24;
+    var MAX_WAIT = { d: 3650, h: 3650 * 24 };
+    var MAX_DAYS = 36500;
 
     var CONDITIONS = [
         "moon", "date", "month", "season", "every", "nth", "mindays", "maxdays",
-        "after", "cooldown", "weather", "tempmin", "tempmax", "chance",
+        "after", "cooldown", "interval", "weather", "tempmin", "tempmax", "chance",
     ];
+
+    // Number effects that may be a range a..b, which grow= of the same definition moves along.
+    var GROWING = ["speed", "health"];
 
     // UTF-8 bytes, counted per UTF-16 unit as the game's Lua sees the text: a surrogate pair is 4.
     Defs.bytes = function (text) {
@@ -520,7 +525,7 @@
     };
 
     PARSE.mindays = function (v) {
-        return ranged(v, true, 0, 36500, "a whole number from 0 to 36500");
+        return ranged(v, true, 0, MAX_DAYS, "a whole number from 0 to 36500");
     };
 
     PARSE.maxdays = PARSE.mindays;
@@ -553,6 +558,35 @@
             return new Bad(quote(v) + " is not Xd or Xh, longer than 0 and up to 3650 days");
         }
         return x;
+    };
+
+    // Whole days or hours: Nd or Nh -> [N, unit], or null.
+    function duration(text) {
+        var m = /^([\s\S]*?) *([hd])$/.exec(text);
+        var n = m === null ? null : number(m[1], true);
+        if (n === null) {
+            return null;
+        }
+        return [n, m[2]];
+    }
+
+    PARSE.interval = function (v) {
+        var r = range(v);
+        var a = duration(r[0]);
+        var b = a;
+        if (r[1] !== null) {
+            b = duration(r[1]);
+        }
+        if (a !== null && b !== null && a[1] !== b[1]) {
+            return new Bad(quote(v) + " mixes days and hours");
+        }
+        if (a === null || b === null || a[0] < 1 || b[0] > MAX_WAIT[a[1]]) {
+            return new Bad(quote(v) + " is not Nd, Nh or a range of them such as 3d..7d, in whole days or hours up to 3650 days");
+        }
+        if (b[0] < a[0]) {
+            return new Bad(quote(v) + " is not from the shorter to the longer wait");
+        }
+        return { min: a[0], max: b[0], unit: a[1] };
     };
 
     PARSE.weather = function (v) {
@@ -602,8 +636,28 @@
         return v;
     };
 
+    PARSE.sound = function (v) {
+        if (!/^[A-Za-z0-9_.\-]+$/.test(v)) {
+            return new Bad(quote(v) + " is not a sound name made of letters, digits, _, . and -");
+        }
+        return v;
+    };
+
+    // A number, or a range a..b of them: { from: a, to: b }.
+    function growing(v, whole, min, max, what, ranges) {
+        var r = range(v);
+        if (r[1] === null) {
+            return ranged(v, whole, min, max, what);
+        }
+        var from = number(r[0], whole), to = number(r[1], whole);
+        if (from === null || to === null || from < min || from > max || to < min || to > max) {
+            return new Bad(quote(v) + " is not a range of " + ranges);
+        }
+        return { from: from, to: to };
+    }
+
     PARSE.speed = function (v) {
-        return ranged(v, true, -100, 100, "a whole number from -100 to 100");
+        return growing(v, true, -100, 100, "a whole number from -100 to 100", "whole numbers from -100 to 100 such as +25..+75");
     };
 
     PARSE.steps = function (v) {
@@ -611,11 +665,80 @@
     };
 
     PARSE.health = function (v) {
-        return ranged(v, false, 0.1, 5, "a number from 0.1 to 5");
+        return growing(v, false, 0.1, 5, "a number from 0.1 to 5", "numbers from 0.1 to 5 such as 0.7..0.4");
+    };
+
+    // Whole world days: Nd -> N, or null.
+    function wholeDays(text) {
+        var m = /^([\s\S]*?) *d$/.exec(text);
+        return m === null ? null : number(m[1], true);
+    }
+
+    PARSE.grow = function (v) {
+        var r = range(v);
+        var from = 0, to = wholeDays(r[0]);
+        if (r[1] !== null) {
+            from = to;
+            to = wholeDays(r[1]);
+        }
+        if (from === null || to === null || from < 0 || to > MAX_DAYS) {
+            return new Bad(quote(v) + " is not Nd or Ad..Bd, in whole world days from 0 to 36500");
+        }
+        if (to <= from) {
+            return new Bad(quote(v) + " does not end after it starts");
+        }
+        return { from: from, to: to };
     };
 
     // Keys a base definition may have; the rest belong to events.
-    var EFFECTS = dict({ off: true, say: true, color: true, speed: true, steps: true, health: true });
+    var EFFECTS = dict({
+        off: true, say: true, color: true, sound: true, speed: true, steps: true, health: true, grow: true,
+    });
+
+    // A range needs grow= in its own definition: an event's grow never moves what it inherits.
+    function ungrown(def, fail) {
+        GROWING.forEach(function (key) {
+            if (typeof def[key] === "object" && def.grow === undefined) {
+                fail(key, "a range needs grow= in the same definition");
+                delete def[key];
+            }
+        });
+    }
+
+    function idleGrow(def, warn) {
+        if (def.grow === undefined) {
+            return;
+        }
+        if (GROWING.some(function (key) { return typeof def[key] === "object"; })) {
+            return;
+        }
+        warn("grow", "no value of this definition is a range, so it changes nothing");
+    }
+
+    // A number effect of def on world day `day`: a range goes linearly from its first value on the
+    // first day of grow= to its second on the last, and keeps its ends outside them. Speed shares are
+    // whole numbers, rounded half away from 0.
+    Defs.at = function (def, key, day) {
+        var v = def[key];
+        if (v === undefined || typeof v !== "object") {
+            return v;
+        }
+        var grow = def.grow;
+        var x = v.to;
+        if (day <= grow.from) {
+            x = v.from;
+        } else if (day < grow.to) {
+            x = v.from + (v.to - v.from) * (day - grow.from) / (grow.to - grow.from);
+        }
+        if (key !== "speed") {
+            return x;
+        }
+        var n = Math.floor(Math.abs(x) + 0.5);
+        if (x < 0 && n > 0) {
+            return -n;
+        }
+        return n;
+    };
 
     // { key, option (for set.), value } or { bad = reason }, each with the name messages use.
     function fields(text) {
@@ -641,7 +764,7 @@
                     f.key = "set.";
                     f.option = name.slice(4);
                     f.name = "set." + f.option;
-                } else if (key !== "say") {
+                } else if (key !== "say" && key !== "sound") {
                     f.value = lower(value);
                 }
                 out.push(f);
@@ -805,8 +928,13 @@
 
         Defs.BASES.forEach(function (name) {
             var def = newDef(name);
-            parseFields(def, fields(texts[name]), false, function (key, reason) {
+            function failed(key, reason) {
                 fail(def, key, reason);
+            }
+            parseFields(def, fields(texts[name]), false, failed);
+            ungrown(def, failed);
+            idleGrow(def, function (key, reason) {
+                warn(def, key, reason);
             });
             checkKinds(def);
             if (def.errors > 0) {
@@ -848,6 +976,9 @@
                 if (ev.mindays !== undefined && ev.maxdays !== undefined && ev.maxdays < ev.mindays) {
                     fail(ev, "maxdays", luaString(ev.maxdays) + " is below mindays " + luaString(ev.mindays));
                 }
+                ungrown(ev, function (key, reason) {
+                    fail(ev, key, reason);
+                });
                 if (ev["for"] === undefined) {
                     ev["for"] = { phases: 1 };
                 }
@@ -899,6 +1030,9 @@
 
         result.events.forEach(function (ev) {
             checkKinds(ev);
+            idleGrow(ev, function (key, reason) {
+                warn(ev, key, reason);
+            });
             if (ev.chance === 0) {
                 warn(ev, "chance", "is 0, so it never happens");
             }
@@ -937,7 +1071,7 @@
     }
 
     Schedule.prepare = function (ledger) {
-        ["decided", "pool", "count", "lastStart", "follow"].forEach(function (name) {
+        ["decided", "pool", "count", "lastStart", "lastDay", "roll", "follow"].forEach(function (name) {
             if (ledger[name] === undefined) {
                 ledger[name] = dict();
             }
@@ -954,6 +1088,54 @@
     // World age turns a day at 07:00, so an occasion counts the world day at noon of its date.
     function worldDay(occasion) {
         return Math.floor((occasion.start + 12 - occasion.open + TOLERANCE) / 24);
+    }
+
+    Schedule.worldDay = worldDay;
+
+    // When ev would start in the occasion: at its at= time, or as the occasion starts.
+    function startTime(ev, occasion) {
+        if (ev.at === undefined) {
+            return occasion.start;
+        }
+        return occasion.start + Phase.wrap(ev.at - occasion.open, 24);
+    }
+
+    // When an event with interval= is next due: [unit ("d" counts world days, "h" world-age hours),
+    // the earliest and the latest due], the same once its wait is rolled. The wait runs from its last
+    // start, or from the world's start.
+    Schedule.due = function (ledger, ev) {
+        var interval = ev.interval;
+        var base = interval.unit === "d" ? ledger.lastDay[ev.id] : ledger.lastStart[ev.id];
+        if (base === undefined) {
+            base = 0;
+        }
+        var roll = ledger.roll[ev.id];
+        if (roll === undefined) {
+            return [interval.unit, base + interval.min, base + interval.max];
+        }
+        var due = base + interval.min + Math.floor(roll * (interval.max - interval.min + 1) / 100);
+        return [interval.unit, due, due];
+    };
+
+    // Why ev still waits for its interval in the occasion, or null once it is due. A wait is rolled
+    // when first needed and kept until the event starts again, so a lost chance doesn't roll anew.
+    function waiting(ledger, ev, occasion, roll) {
+        var interval = ev.interval;
+        if (interval.max > interval.min && ledger.roll[ev.id] === undefined) {
+            ledger.roll[ev.id] = roll();
+        }
+        var d = Schedule.due(ledger, ev);
+        if (d[0] === "d") {
+            if (worldDay(occasion) < d[1]) {
+                return "is not due before world day " + luaString(d[1]);
+            }
+            return null;
+        }
+        var left = d[1] - startTime(ev, occasion);
+        if (left > TOLERANCE) {
+            return "is not due for " + luaString(Math.floor(left * 60 + 0.5)) + " more minutes";
+        }
+        return null;
     }
 
     function calendar(ev, occasion, climate) {
@@ -1032,6 +1214,8 @@
         }
         ledger.current = current;
         ledger.lastStart[ev.id] = startsAt;
+        ledger.lastDay[ev.id] = worldDay(ledger.occasion);
+        delete ledger.roll[ev.id];
         // The event replaces the phase's own line, which isn't shown again when it ends.
         delete ledger.occasion.serial;
         return true;
@@ -1053,8 +1237,14 @@
             var ev = defs.byId[id];
             if (ev !== undefined && ev.track === track) {
                 var last = ledger.lastStart[id];
+                var wait = null;
                 if (ev.cooldown !== undefined && last !== undefined && occasion.start < last + ev.cooldown - TOLERANCE) {
-                    log(name + ": " + id + " is cooling down");
+                    wait = "is cooling down";
+                } else if (ev.interval !== undefined) {
+                    wait = waiting(ledger, ev, occasion, roll);
+                }
+                if (wait !== null) {
+                    log(name + ": " + id + " " + wait);
                 } else if (!weather(ev, climate)) {
                     log(name + ": " + id + " weather doesn't match");
                 } else {
@@ -1094,7 +1284,7 @@
         var occasion = ledger.occasion;
         var at = earliest;
         if (ev.at !== undefined) {
-            at = Math.max(earliest, occasion.start + Phase.wrap(ev.at - occasion.open, 24));
+            at = Math.max(earliest, startTime(ev, occasion));
         }
         if (at <= now + TOLERANCE) {
             start(ledger, ev, at, now, log);
@@ -1256,6 +1446,10 @@
         return dayNumber(b) - dayNumber(a);
     };
 
+    Sim.addDays = function (date, n) {
+        return fromDayNumber(dayNumber(date) + n);
+    };
+
     // begin: { year, month (0-11), day, minute of the day }. at(n) is the clock n in-game minutes
     // later. World age counts from 07:00 and turns a day each time the clock passes 07:00; a world
     // created at 07:00 sharp counts that on its first frame.
@@ -1306,8 +1500,9 @@
     // something can change; a minute in between would find nothing to do, as in the game.
     // o: { defs, rule, start, minutes, roll(), climate(now), record = false to keep only the runs }.
     // Returns { occasions, runs, clock }: occasions in order { phase, key, date, open, start, end, pool,
-    // logs, each { hours, text } as the mod logs it }, runs { id, track, serial, startsAt, endedAt (null
-    // while still running) }.
+    // waits (each interval= event of the track right after its decision: { id, unit, from, to }), logs,
+    // each { hours, text } as the mod logs it }, runs { id, track, serial, startsAt, endedAt (null while
+    // still running) }.
     Sim.run = function (o) {
         var keep = o.record !== false;
         var clock = Sim.clock(o.start);
@@ -1329,7 +1524,7 @@
                 if (record !== null) {
                     record.end = occ.start;
                 }
-                record = { source: occ, phase: occ.phase, key: occ.key, date: occ.date, end: null, pool: null, logs: [] };
+                record = { source: occ, phase: occ.phase, key: occ.key, date: occ.date, end: null, pool: null, waits: [], logs: [] };
                 occasions.push(record);
             }
             return record;
@@ -1352,9 +1547,16 @@
             Schedule.tick(ledger, o.defs, input, log);
             if (keep) {
                 var r = occasionRecord();
-                var pool = ledger.pool[trackOf(r.phase)];
-                if (pool !== undefined && pool.key === r.key) {
+                var track = trackOf(r.phase);
+                var pool = ledger.pool[track];
+                if (pool !== undefined && pool.key === r.key && r.pool !== pool) {
                     r.pool = pool;
+                    r.waits = o.defs.events.filter(function (ev) {
+                        return ev.track === track && ev.interval !== undefined;
+                    }).map(function (ev) {
+                        var d = Schedule.due(ledger, ev);
+                        return { id: ev.id, unit: d[0], from: d[1], to: d[2] };
+                    });
                 }
             }
             var current = ledger.current;
@@ -1446,7 +1648,7 @@
     };
 
     // Every Crepuscular option, for set. entries that name one.
-    var OWN_OPTIONS = OPTION_ORDER.concat(["KeepDistance", "RemovalsPerMinute", "MutantRequeue", "ZombiesPerSweep", "Verbose"]);
+    var OWN_OPTIONS = OPTION_ORDER.concat(["KeepDistance", "RemovalsPerMinute", "MutantRequeue", "ZombiesPerSweep", "Notifications", "Verbose"]);
 
     // Cry of Fear Monster NPCs options a definition sets for its spawn levels (1 = None ... 5 = High).
     var COF_OPTIONS = {

@@ -57,6 +57,14 @@ function Clock.rule()
     return { mode = 1, start = start, finish = finish }
 end
 
+-- The lowest and highest value of a number effect, which a range reaches at its ends.
+local function span(value)
+    if type(value) == "table" then
+        return math.min(value.from, value.to), math.max(value.from, value.to)
+    end
+    return value, value
+end
+
 -- The texts, hours and kinds the definitions were last parsed from, and the result.
 local source = {}
 local parsed = nil
@@ -90,12 +98,9 @@ function Clock.definitions(rule)
             defs.names[name] = true
         end
         cof = cof or (def.off ~= nil and def.off.cof == true)
-        local speed = def.speed or 0
-        if speed > defs.fmax then
-            defs.fmax = speed
-        elseif -speed > defs.smax then
-            defs.smax = -speed
-        end
+        local low, high = span(def.speed or 0)
+        defs.fmax = math.max(defs.fmax, high)
+        defs.smax = math.max(defs.smax, -low)
     end
     if cof and Kinds.cryOfFearLoaded() then
         defs.cof = Overrides.check("Cry of Fear", CryOfFear.OFF, "", defs.warnings)
@@ -203,11 +208,14 @@ local function update(state, ledger, defs)
         for name, value in pairs(ev.values) do
             wanted[name] = value
         end
-        if ev.say ~= nil then
-            announce = { serial = current.serial, text = ev.say, color = ev.color or "ffffff" }
+        if ev.say ~= nil or ev.sound ~= nil then
+            announce = { serial = current.serial, text = ev.say, color = ev.color or "ffffff", sound = ev.sound }
         end
-    elseif ledger.occasion.serial ~= nil and phase == clock and base.say ~= nil then
-        announce = { serial = ledger.occasion.serial, text = base.say, color = base.color or "ffffff" }
+    elseif ledger.occasion.serial ~= nil and phase == clock and (base.say ~= nil or base.sound ~= nil) then
+        announce = { serial = ledger.occasion.serial, text = base.say, color = base.color or "ffffff", sound = base.sound }
+    end
+    if not Settings.notifications() then
+        announce = nil
     end
     -- Off means off: the adapter's values win over set. entries for the same options.
     if off.cof and defs.cof ~= nil then
@@ -227,11 +235,14 @@ local function update(state, ledger, defs)
     end
 
     local effects = { off = copy(off), fmax = defs.fmax, smax = defs.smax }
+    local day = Schedule.worldDay(ledger.occasion)
     for key, neutral in pairs(NEUTRAL) do
-        local value = base[key]
+        -- A range grows with the grow= of the definition it belongs to.
+        local owner = base
         if ev ~= nil and ev[key] ~= nil then
-            value = ev[key]
+            owner = ev
         end
+        local value = Defs.at(owner, key, day)
         if value == nil then
             value = neutral
         end

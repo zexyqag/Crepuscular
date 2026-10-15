@@ -213,9 +213,9 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         NightMode: { name: "Night mode", options: ["Fixed hours", "Seasonal night"], tooltip: "How night is decided. Fixed hours: night runs between the two hours below, every day of the year, whatever the Day/Night Cycle setting. Seasonal night: the game's own dusk and dawn, which move with the seasons and follow the Day/Night Cycle setting (endless day has no night, endless night is always night)." },
         NightStartHour: { name: "Night starts at", tooltip: "Hour of the day, 0 to 23, at which night begins when Night mode is Fixed hours. Night can run past midnight. If both hours are the same there is no night at all, and the log says so." },
         NightEndHour: { name: "Night ends at", tooltip: "Hour of the day, 0 to 23, at which night ends when Night mode is Fixed hours." },
-        Day: { name: "Day", tooltip: "What changes by day while no event runs. Fields are key=value, separated by ;. speed=+25 makes 25 percent of ordinary zombies one tier faster (shambler to fast shambler, fast shambler to sprinter) and speed=-50 makes 50 percent one tier slower; a zombie that speeds up is among the last to slow down, and speed=0 keeps every zombie at the game's speed. steps=2 moves them two tiers: always sprinters or always shamblers. health=0.7 gives new and reloaded zombies 70 percent of the health they roll and lowers any zombie above 70 percent of the most a new one can have; health=1.5 gives new and reloaded zombies 150 percent, and zombies already around keep theirs. Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. off=cof,mutants turns those monster kinds off (off=none turns none off): far ones are removed, The Mutants makes no new mutants and Cry of Fear Monster NPCs spawns nothing new. A kind no definition turns off is left alone. For Cry of Fear monsters only at night, write off=cof here and keep its own Night only option off; as with that option, each time cof is on again every Cry of Fear home may be filled again, so killed monsters come back too. set.Table.Option=value changes a sandbox option, for example set.ZombieLore.Toughness=1, or set.Option=value for an option without a table, for example set.HoursForCorpseRemoval=24; it goes back to its base value when the day ends. say=text shows a line to every player when the day begins (say=@Key shows that translation), and color=rrggbb gives its colour. A sun event starts from these values. The default, speed=+25;health=0.7, makes a quarter of the zombies faster and the zombies more fragile. A bad field is skipped and logged, and the rest applies." },
-        Night: { name: "Night", tooltip: "What changes by night while no event runs, written as for Day: speed=-50 or speed=+25, steps=2, health=1.5, off=mutants,cof or off=none, set.Table.Option=value, say=text and color=rrggbb. The values go back to their base when the night ends. A moon event starts from these values, even when it runs into the day. The default, speed=-50;off=mutants, makes half of the zombies slower, keeps The Mutants from making mutants at night and removes far mutants." },
-        Events1: { name: "Events 1", tooltip: "Moons and suns: special nights and days. Events are separated by |, fields by ;. Each event needs id=name (letters a-z, digits and _) and track=moon (decided when night begins) or track=sun (decided when day begins). Conditions, which must all hold: moon=full (the first night of a full moon; also new, waxingcrescent, firstquarter, waxinggibbous, waninggibbous, thirdquarter, waningcrescent), date=10-31 or date=12-20..01-05, month=6..8, season=summer, every=30 (every 30 days since the world began; every=30+5 shifts it by 5), mindays=30 and maxdays=365 (days since the world began), nth=4 (every 4th time its calendar conditions hold), after=id (the first time after that event ended), cooldown=20d or 36h, weather=rain, snow, storm, fog or clear, tempmin=0 and tempmax=30 (degrees C), chance=50. A list such as moon=full,new holds when any item does. Timing: at=HH:MM starts it later in its night or day, and for=phase (the default), 2p (phases), 6h or 3.5d sets how long it lasts. prio=10: when several events qualify, the highest is tried first. Effects: speed, steps, health, off, set., say and color, as in Day and Night; a moon starts from Night and a sun from Day. One event runs at a time, and nothing else is decided while it runs. An event with an error is skipped and logged. Keep each option under 32000 bytes." },
+        Day: { name: "Day", tooltip: "What changes by day while no event runs. Fields are key=value, separated by ;. speed=+25 makes 25 percent of ordinary zombies one tier faster (shambler to fast shambler, fast shambler to sprinter) and speed=-50 makes 50 percent one tier slower; a zombie that speeds up is among the last to slow down, and speed=0 keeps every zombie at the game's speed. steps=2 moves them two tiers: always sprinters or always shamblers. health=0.7 gives new and reloaded zombies 70 percent of the health they roll and lowers any zombie above 70 percent of the most a new one can have; health=1.5 gives new and reloaded zombies 150 percent, and zombies already around keep theirs. Both can grow with the days since the world began: speed=+25..+75;grow=60d goes from +25 on world day 0 to +75 on world day 60 and stays there, grow=30d..90d moves it between those days instead, and health=0.7..0.4 works the same way. World days are counted at noon, as for every= and mindays=, and a speed share is rounded to a whole percent. A range needs grow= in the same definition, and grow= moves only that definition's own ranges. Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. off=cof,mutants turns those monster kinds off (off=none turns none off): far ones are removed, The Mutants makes no new mutants and Cry of Fear Monster NPCs spawns nothing new. A kind no definition turns off is left alone. For Cry of Fear monsters only at night, write off=cof here and keep its own Night only option off; as with that option, each time cof is on again every Cry of Fear home may be filled again, so killed monsters come back too. set.Table.Option=value changes a sandbox option, for example set.ZombieLore.Toughness=1, or set.Option=value for an option without a table, for example set.HoursForCorpseRemoval=24; it goes back to its base value when the day ends. say=text shows a line to every player when the day begins (say=@Key shows that translation), and color=rrggbb gives its colour. sound=Name plays that game sound on every player's game at the same moment, with or without a line, for example sound=MetaWolfHowl; upper and lower case matter. A sun event starts from these values. The default, speed=+25;health=0.7, makes a quarter of the zombies faster and the zombies more fragile. A bad field is skipped and logged, and the rest applies." },
+        Night: { name: "Night", tooltip: "What changes by night while no event runs, written as for Day: speed=-50 or speed=+25, steps=2, health=1.5, a range that grows such as speed=-25..-75;grow=60d, off=mutants,cof or off=none, set.Table.Option=value, say=text, color=rrggbb and sound=Name. The values go back to their base when the night ends. A moon event starts from these values, even when it runs into the day. The default, speed=-50;off=mutants, makes half of the zombies slower, keeps The Mutants from making mutants at night and removes far mutants." },
+        Events1: { name: "Events 1", tooltip: "Moons and suns: special nights and days. Events are separated by |, fields by ;. Each event needs id=name (letters a-z, digits and _) and track=moon (decided when night begins) or track=sun (decided when day begins). Conditions, which must all hold: moon=full (the first night of a full moon; also new, waxingcrescent, firstquarter, waxinggibbous, waninggibbous, thirdquarter, waningcrescent), date=10-31 or date=12-20..01-05, month=6..8, season=summer, every=30 (every 30 days since the world began; every=30+5 shifts it by 5), mindays=30 and maxdays=365 (days since the world began), nth=4 (every 4th time its calendar conditions hold), after=id (the first time after that event ended), cooldown=20d or 36h, interval=3d..7d (after each start it waits a random 3 to 7 whole days, counted in world days, before it can happen again, and the first wait counts from the world's start; interval=7d waits exactly 7 days, interval=12h..36h whole hours from its start time; once the wait is over it stays a candidate until it starts, so a lost chance or a higher prio doesn't roll a new wait, and an admin start counts as a start), weather=rain, snow, storm, fog or clear, tempmin=0 and tempmax=30 (degrees C), chance=50. A list such as moon=full,new holds when any item does. Timing: at=HH:MM starts it later in its night or day, and for=phase (the default), 2p (phases), 6h or 3.5d sets how long it lasts. prio=10: when several events qualify, the highest is tried first. Effects: speed, steps, health, off, set., say, color and sound, as in Day and Night, with grow= for its own ranges; a moon starts from Night and a sun from Day, and a range it takes from them grows with their grow=. One event runs at a time, and nothing else is decided while it runs. An event with an error is skipped and logged. Keep each option under 32000 bytes." },
         Kinds: { name: "Monster kinds", tooltip: "Monsters of other mods, told by their outfit: name=prefix,prefix;name=prefix, for example wraiths=ZW_,Wraith;husks=Husk_. A zombie whose outfit name starts with one of the prefixes (upper and lower case don't matter) belongs to that kind. Names are made of a-z, 0-9 and _. cof (Cry of Fear Monster NPCs) and mutants (The Mutants) are built in, and other mods can add kinds of their own. Put a kind in off= of Day, Night or an event to remove its far members while that applies; it can't keep a mod from turning zombies into its monsters. When The Mutants is loaded, members of every kind are never turned into mutants." },
     };
     Defs.SLOTS.slice(1).forEach(function (slot) {
@@ -235,9 +235,18 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
 
     // Where a new field goes, so written text reads like the mod's own examples.
     var KEY_ORDER = ["id", "track", "moon", "date", "month", "season", "every", "nth", "mindays", "maxdays", "after",
-        "cooldown", "weather", "tempmin", "tempmax", "chance", "at", "for", "prio", "speed", "steps", "health", "off", "set.", "say", "color"];
+        "cooldown", "interval", "weather", "tempmin", "tempmax", "chance", "at", "for", "prio", "speed", "steps", "health", "grow", "off", "set.",
+        "say", "color", "sound"];
     var EVENT_KEYS = KEY_ORDER.filter(function (k) { return k !== "set."; });
-    var BASE_KEYS = ["speed", "steps", "health", "off", "say", "color"];
+    var BASE_KEYS = ["speed", "steps", "health", "grow", "off", "say", "color", "sound"];
+    var GROWING = ["speed", "health"];
+
+    // Sounds the game itself plays by name, all of them once rather than in a loop.
+    var SOUNDS = [
+        ["Thunder", "a thunder clap"], ["RumbleThunder", "far thunder rolling"], ["MetaWolfHowl", "a wolf howling far away"],
+        ["MetaOwl", "an owl"], ["MetaScream", "a scream far away"], ["MetaDogBark", "a dog barking far away"],
+        ["WorldEventElectricityShutdown", "the power grid shutting down"],
+    ];
 
     var HELP = {
         id: "Required. Letters a-z, digits and _, unique across all Events options. Counters and chains are kept by id.",
@@ -255,15 +264,18 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         maxdays: "Days since the world began, 0 to 36500, at most.",
         after: "Event ids, separated by commas: the first night or day of this track decided after one of them ended. It still has to win, so give it the highest prio.",
         cooldown: "At least this long since its last start, up to 3650 days.",
+        interval: "After each start it waits a random whole number of days (or hours) between the two, before it can happen again; the first wait counts from the world's start. Days count world days, like every and the world-day fields; hours count from its start time. Leave the longest empty for a fixed wait. Once the wait is over it stays a candidate until it starts: a lost chance or a higher prio doesn't roll a new wait, and an admin start counts as a start.",
         weather: "At the decision: rain, snow, storm, fog (intensity 0.5 or more) or clear (none of these). Several: any.",
         tempmin: "Temperature at the decision, °C, -80 to 80: at least this.",
         tempmax: "Temperature at the decision, °C, -80 to 80: at most this.",
         chance: "Percent, 0 to 100, decimals allowed. Rolled only when it is the highest candidate left; empty means always.",
-        speed: "A share of the ordinary zombies, in percent, moves a tier faster or slower (shambler, fast shambler, sprinter). The same zombies are picked every time, on the server and on every player's game, and the ones that speed up are the last to slow down. 0 keeps every zombie at the game's speed.",
+        speed: "A share of the ordinary zombies, in percent, moves a tier faster or slower (shambler, fast shambler, sprinter). The same zombies are picked every time, on the server and on every player's game, and the ones that speed up are the last to slow down. 0 keeps every zombie at the game's speed. A range goes from its first share to its second over the days of Grows, rounded to whole percents.",
         steps: "How many tiers they move: 2 makes them always sprinters (faster) or always shamblers (slower).",
-        health: "0.1 to 5. Below 1, new and reloaded zombies get that share of the health they roll, and no zombie keeps more than that share of the most a new one can have. Above 1, new and reloaded zombies get that much more; zombies already around keep theirs. 1 changes nothing.",
+        health: "0.1 to 5. Below 1, new and reloaded zombies get that share of the health they roll, and no zombie keeps more than that share of the most a new one can have. Above 1, new and reloaded zombies get that much more; zombies already around keep theirs. 1 changes nothing. A range such as 0.7..0.4 goes from the first to the second over the days of Grows.",
+        grow: "The world days over which this definition's ranges (speed or health a..b) go from their first value to their second; before and after, they keep their ends. Empty from means world day 0. World days are counted at noon, as for every. Only this definition's own ranges grow: an event that takes a range from Day or Night follows their Grows.",
         say: "A line shown to every player when it starts; @Key shows that translation. ; and | can't be part of it.",
         color: "The colour of that line; white when not set.",
+        sound: "A game sound played on every player's game when it starts, with or without a line; upper and lower case matter. The suggestions are sounds of the game itself; another mod's sound works by its name.",
     };
 
     // ---------------------------------------------------------------- state
@@ -278,7 +290,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             showAll: false,
             cal: {
                 start: "1993-07-09", time: "09:00", dawn: "06:00", dusk: "21:00", cycle: "normal",
-                from: "", months: "6", seed: "1", view: "outcome",
+                from: "", months: "6", seed: "1", view: "outcome", worldDay: "30",
                 rain: "25", snow: "25", storm: "25", fog: "25", winter: "0", summer: "25", selected: "",
             },
             importText: "", importAs: "detect", importTarget: "Events1", importReset: true, importReport: null,
@@ -650,6 +662,68 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         }, msgs);
     }
 
+    // A field the form can't show in its own controls: its text, with a button to clear it.
+    function asWritten(ownerKey, key, labelText, raw, msgs) {
+        return fieldBox(ownerKey, key, labelText, HELP[key], function (id) {
+            return h("div", null, textInput(id, raw, { "data-act": "text" }),
+                h("button", { type: "button", "data-act": "clear", "data-k": key }, "Clear"));
+        }, msgs);
+    }
+
+    function intervalField(ownerKey, fields, msgs) {
+        var raw = getField(fields, "interval");
+        var m = raw === null ? null : /^\s*([0-9]+)\s*([hd])\s*(?:\.\.\s*([0-9]+)\s*([hd]))?\s*$/i.exec(raw);
+        if (raw !== null && (m === null || (m[4] !== undefined && m[4].toLowerCase() !== m[2].toLowerCase()))) {
+            return asWritten(ownerKey, "interval", "Interval", raw, msgs);
+        }
+        var shortest = m ? m[1] : "", longest = m && m[3] !== undefined ? m[3] : "", unit = m ? m[2].toLowerCase() : "d";
+        return fieldBox(ownerKey, "interval", null, HELP.interval, function (id) {
+            return h("div", { "class": "row" },
+                h("div", null, h("label", { "for": id }, "Interval: shortest wait"), textInput(id, shortest, { "class": "tiny", inputmode: "numeric", "data-act": "interval", "data-part": "min" })),
+                h("div", null, h("label", { "for": id + "-max" }, "longest (optional)"), textInput(id + "-max", longest, { "class": "tiny", inputmode: "numeric", "data-act": "interval", "data-part": "max" })),
+                h("div", null, h("label", { "for": id + "-u" }, "in"), select(id + "-u", unit, [["d", "world days"], ["h", "hours"]], { "data-act": "interval", "data-part": "unit" })));
+        }, msgs);
+    }
+
+    function growField(ownerKey, fields, msgs) {
+        var raw = getField(fields, "grow");
+        var m = raw === null ? null : /^\s*(?:([0-9]+)\s*d\s*\.\.\s*)?([0-9]+)\s*d\s*$/i.exec(raw);
+        if (raw !== null && m === null) {
+            return asWritten(ownerKey, "grow", "Grows", raw, msgs);
+        }
+        var from = m && m[1] !== undefined ? m[1] : "", to = m ? m[2] : "";
+        return fieldBox(ownerKey, "grow", null, HELP.grow, function (id) {
+            return h("div", { "class": "row" },
+                h("div", null, h("label", { "for": id }, "Grows from world day"), textInput(id, from, { "class": "tiny", inputmode: "numeric", placeholder: "0", "data-act": "grow", "data-part": "from" })),
+                h("div", null, h("label", { "for": id + "-to" }, "to world day"), textInput(id + "-to", to, { "class": "tiny", inputmode: "numeric", "data-act": "grow", "data-part": "to" })));
+        }, msgs);
+    }
+
+    function signed(n) {
+        return (n > 0 ? "+" : "") + C.luaString(n);
+    }
+
+    // What the definition gives on a world day, with what it takes from its base: shown while a range grows.
+    function growPreview(ownerKey, def, base) {
+        var ranges = [def].concat(base ? [base] : []).some(function (d) {
+            return GROWING.some(function (k) { return typeof d[k] === "object"; });
+        });
+        if (!ranges) { return null; }
+        var day = Math.floor(Number(state.cal.worldDay)) || 0;
+        var id = idOf("f", ownerKey, "worldday");
+        var parts = GROWING.map(function (key) {
+            var owner = def[key] !== undefined || !base ? def : base;
+            var v = C.Defs.at(owner, key, day);
+            if (v === undefined) { v = key === "speed" ? 0 : 1; }
+            return key + " " + (key === "speed" ? signed(v) : C.luaString(Math.round(v * 1000) / 1000)) + (owner !== def ? " (from " + owner.label + ")" : "");
+        });
+        return h("div", { "class": "field", "data-key": "grow-preview" },
+            h("label", { "for": id }, "On world day"),
+            h("div", { "class": "row" },
+                textInput(id, state.cal.worldDay, { "class": "tiny", inputmode: "numeric", "data-act": "worldday" }),
+                h("span", { "data-preview": "", "aria-live": "polite" }, parts.join(", "))));
+    }
+
     function cooldownField(ownerKey, fields, msgs) {
         var raw = getField(fields, "cooldown");
         var a = splitAmount(raw);
@@ -697,20 +771,27 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
 
     function speedField(ownerKey, fields, msgs, isEvent) {
         var raw = getField(fields, "speed");
+        var range = raw === null ? null : /^\s*([+-]?[0-9]+)\s*\.\.\s*([+-]?[0-9]+)\s*$/.exec(raw);
         // The sign gives the direction even while the amount after it is being typed.
         var sign = raw !== null && /^[+-]/.test(raw) ? raw.charAt(0) : "";
         var amount = raw === null ? "" : raw.slice(sign.length);
         var whole = /^[0-9]+$/.test(amount);
-        var dir = raw === null ? "" : whole && Number(amount) === 0 ? "zero" : sign === "-" ? "down" : sign === "+" || whole ? "up" : "raw";
+        var dir = raw === null ? "" : range !== null ? "range" : raw.indexOf("..") >= 0 ? "raw"
+            : whole && Number(amount) === 0 ? "zero" : sign === "-" ? "down" : sign === "+" || whole ? "up" : "raw";
         var inherit = isEvent ? "not set: as its track's base" : "not set: the game's speed";
         return fieldBox(ownerKey, "speed", "Speed", HELP.speed, function (id) {
             return h("div", { "class": "row" },
-                select(id, dir, [["", inherit], ["up", "faster"], ["down", "slower"], ["zero", "the game's speed (speed=0)"]]
+                select(id, dir, [["", inherit], ["up", "faster"], ["down", "slower"], ["zero", "the game's speed (speed=0)"], ["range", "a share that grows"]]
                     .concat(dir === "raw" ? [["raw", "as written"]] : []), { "data-act": "speed", "data-part": "dir", "aria-describedby": id + "-help" }),
+                dir === "range" ? [
+                    textInput(id + "-from", range[1], { "class": "tiny", inputmode: "numeric", "data-act": "speed", "data-part": "from", "aria-label": "Share at the start: +N faster, -N slower" }),
+                    h("span", { "class": "muted" }, "to"),
+                    textInput(id + "-to", range[2], { "class": "tiny", inputmode: "numeric", "data-act": "speed", "data-part": "to", "aria-label": "Share at the end: +N faster, -N slower" }),
+                    h("span", { "class": "muted" }, "percent, over the days of Grows")]
                 // One input in both cases, so that typing an invalid amount doesn't replace the box being typed in.
-                dir === "" || dir === "zero" ? null : textInput(id + "-n", dir === "raw" ? raw : amount,
-                    { "class": "small", inputmode: "numeric", "data-act": "speed", "data-part": "amount",
-                        "aria-label": dir === "raw" ? "Speed as written" : "Percent of ordinary zombies" }),
+                    : dir === "" || dir === "zero" ? null : textInput(id + "-n", dir === "raw" ? raw : amount,
+                        { "class": "small", inputmode: "numeric", "data-act": "speed", "data-part": "amount",
+                            "aria-label": dir === "raw" ? "Speed as written" : "Percent of ordinary zombies" }),
                 dir === "up" || dir === "down" ? h("span", { "class": "muted" }, "percent of ordinary zombies") : null);
         }, msgs);
     }
@@ -724,13 +805,16 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         }, msgs);
     }
 
-    // inherited: the health the definition has without its own, as text.
-    function zombiesSet(ownerKey, fields, msgs, isEvent, inherited) {
+    // inherited: the health the definition has without its own, as text; def and base: the parsed definition
+    // and, for an event, its track's base definition.
+    function zombiesSet(ownerKey, fields, msgs, isEvent, inherited, def, base) {
         return h("fieldset", { "data-key": "zombies" }, h("legend", null, "Zombies"),
             h("p", { "class": "help" }, "Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too."),
             speedField(ownerKey, fields, msgs, isEvent),
             stepsField(ownerKey, fields, msgs, isEvent),
-            textField(ownerKey, fields, "health", "Health factor", { "class": "small", inputmode: "decimal", placeholder: inherited }, msgs));
+            textField(ownerKey, fields, "health", "Health factor", { "class": "small", inputmode: "decimal", placeholder: inherited }, msgs),
+            growField(ownerKey, fields, msgs),
+            growPreview(ownerKey, def, base));
     }
 
     function colorField(ownerKey, fields, msgs) {
@@ -749,6 +833,13 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         var known = raw !== null ? SAY_KEYS[raw] : undefined;
         var box = textField(ownerKey, fields, "say", "Announcement", { "class": "wide" }, msgs);
         if (known) { box.appendChild(h("p", { "class": "help" }, "Shows: “" + known + "”")); }
+        return box;
+    }
+
+    function soundField(ownerKey, fields, msgs) {
+        var list = idOf("f", ownerKey, "sound", "list");
+        var box = textField(ownerKey, fields, "sound", "Sound", { "class": "wide", list: list, placeholder: "for example " + SOUNDS[0][0] }, msgs);
+        box.appendChild(h("datalist", { id: list }, SOUNDS.map(function (x) { return h("option", { value: x[0] }, x[1]); })));
         return box;
     }
 
@@ -800,10 +891,15 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             }));
     }
 
+    function baseOf(def, chk) {
+        return def.track === "moon" ? chk.defs.night : def.track === "sun" ? chk.defs.day : null;
+    }
+
     // The health an event without its own has: its track's base definition's, or none without a track.
     function inheritedHealth(def, chk) {
-        var base = def.track === "moon" ? chk.defs.night : def.track === "sun" ? chk.defs.day : null;
+        var base = baseOf(def, chk);
         if (base === null) { return null; }
+        if (typeof base.health === "object") { return C.luaString(base.health.from) + ".." + C.luaString(base.health.to); }
         return base.health === undefined ? "1" : String(base.health);
     }
 
@@ -857,15 +953,17 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                     return h("button", { type: "button", "data-act": "addafter", "data-k": x, style: "margin:2px;padding:0 6px" }, x);
                 })) : null,
                 cooldownField(ownerKey, fields, msgs),
+                intervalField(ownerKey, fields, msgs),
                 checksField(ownerKey, fields, "weather", "Weather", WEATHERS.map(function (w) { return [w, w]; }), on(def.weather), msgs, ownerKey),
                 h("div", { "class": "row" },
                     textField(ownerKey, fields, "tempmin", "Min °C", { "class": "small", inputmode: "decimal" }, msgs),
                     textField(ownerKey, fields, "tempmax", "Max °C", { "class": "small", inputmode: "decimal" }, msgs)),
                 textField(ownerKey, fields, "chance", "Chance %", { "class": "small", inputmode: "decimal", placeholder: "100" }, msgs)),
-            zombiesSet(ownerKey, fields, msgs, true, inheritedHealth(def, chk)),
+            zombiesSet(ownerKey, fields, msgs, true, inheritedHealth(def, chk), def, baseOf(def, chk)),
             h("fieldset", { "data-key": "monsters" }, h("legend", null, "Monsters"), offField(ownerKey, fields, msgs, chk, true)),
             setRows(ownerKey, fields, cls, msgs),
-            h("fieldset", { "data-key": "say" }, h("legend", null, "Announcement"), sayField(ownerKey, fields, msgs), colorField(ownerKey, fields, msgs)),
+            h("fieldset", { "data-key": "say" }, h("legend", null, "Announcement"), sayField(ownerKey, fields, msgs), colorField(ownerKey, fields, msgs),
+                soundField(ownerKey, fields, msgs)),
             otherFields(ownerKey, fields, cls),
             h("div", { "class": "field" },
                 h("label", { "for": idOf("f", ownerKey, "raw") }, "This event as text"),
@@ -882,12 +980,12 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 msgs.errors.length ? h("span", { "class": "badge error" }, msgs.errors.length + " skipped") : null),
             h("p", { "class": "help" }, name === "Day" ? "What changes by day while no event runs. A sun event starts from these values." : "What changes by night while no event runs. A moon event starts from these values, even when it runs into the day."),
             msgList(rest.errors, rest.warnings),
-            zombiesSet(name, fields, msgs, false, "1"),
+            zombiesSet(name, fields, msgs, false, "1", name === "Day" ? chk.defs.day : chk.defs.night, null),
             offField(name, fields, msgs, chk, false),
             setRows(name, fields, cls, msgs),
             h("fieldset", { "data-key": "say" }, h("legend", null, "Announcement"),
                 h("p", { "class": "help" }, "Shown when the " + name.toLowerCase() + " begins, unless an event covers it."),
-                sayField(name, fields, msgs), colorField(name, fields, msgs)),
+                sayField(name, fields, msgs), colorField(name, fields, msgs), soundField(name, fields, msgs)),
             otherFields(name, fields, cls),
             h("div", { "class": "field" },
                 h("label", { "for": "raw-" + name }, name + " as text"),
@@ -1252,6 +1350,41 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             r.events.length > 1 ? " +" + (r.events.length - 1) : null);
     }
 
+    // The date whose noon counts world day n, as in Schedule.worldDay.
+    function dateOfDay(inp, n) {
+        return C.Phase.key(C.Sim.addDays(inp.start, n - (inp.time <= 420 ? 1 : 0)));
+    }
+
+    function waitText(w, clock, inp) {
+        var later = w.to > w.from ? ", rolled the next time it could be picked" : "";
+        if (w.unit === "d") {
+            return w.id + " due from world day " + w.from + " (" + dateOfDay(inp, w.from) + ")"
+                + (w.to > w.from ? " to world day " + w.to + " (" + dateOfDay(inp, w.to) + ")" : "") + later;
+        }
+        return w.id + " due from " + stamp(clock, w.from) + (w.to > w.from ? " to " + stamp(clock, w.to) : "") + later;
+    }
+
+    function grows(chk) {
+        return [chk.defs.day, chk.defs.night].concat(chk.defs.events).some(function (d) {
+            return GROWING.some(function (k) { return typeof d[k] === "object"; });
+        });
+    }
+
+    // Speed, steps and health in effect as the occasion begins, resolved as the mod does on its world day.
+    function zombiesAt(chk, r) {
+        var run = r.events.filter(function (x) { return x.startsAt <= r.start + 1 / 120; })[0];
+        var ev = run ? chk.defs.byId[run.id] : undefined;
+        var base = (ev ? ev.track === "moon" : r.phase === "night") ? chk.defs.night : chk.defs.day;
+        var day = C.Schedule.worldDay(r);
+        var neutral = { speed: 0, steps: 1, health: 1 };
+        return ["speed", "steps", "health"].map(function (key) {
+            var owner = ev !== undefined && ev[key] !== undefined ? ev : base;
+            var v = C.Defs.at(owner, key, day);
+            if (v === undefined) { v = neutral[key]; }
+            return key + " " + (key === "speed" ? signed(v) : C.luaString(Math.round(v * 1000) / 1000));
+        }).join(", ") + " (" + (ev ? ev.id : base.label) + ", world day " + day + ")";
+    }
+
     function detailFor(chk, result, byDate, key) {
         var parts = key.split("-").map(Number);
         var date = { year: parts[0], month: parts[1] - 1, day: parts[2] };
@@ -1276,6 +1409,8 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                             " " + stamp(clock, run.startsAt) + " to " + (run.endedAt === null ? "after the preview" : stamp(clock, run.endedAt))
                             + (run.startsAt < r.start - 1 / 120 ? " (covers this " + r.phase + ")" : ""));
                     })) : h("p", null, "No event."),
+                    grows(chk) ? h("p", null, "Zombies as it begins: " + zombiesAt(chk, r) + ".") : null,
+                    r.waits.length ? h("p", null, "Intervals after its decision: " + r.waits.map(function (w) { return waitText(w, clock, start); }).join("; ") + ".") : null,
                     pool && pool.ids.length ? h("p", null, "Candidates: " + pool.ids.map(function (id) {
                         var ev = chk.defs.byId[id];
                         return id + " (prio " + C.luaString(ev.prio) + (ev.chance !== undefined && ev.chance < 100 ? ", chance " + C.luaString(ev.chance) + "%" : "") + (ev.weather || ev.tempmin !== undefined || ev.tempmax !== undefined ? ", weather" : "") + ")";
@@ -1293,6 +1428,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             if (e.chance !== undefined && e.chance > 0 && e.chance < 100) { tags.push("chance " + C.luaString(e.chance) + "%, rolled"); }
             if (e.weather || e.tempmin !== undefined || e.tempmax !== undefined) { tags.push("weather simulated"); }
             if (e.season) { tags.push("season ≈"); }
+            if (e.interval && e.interval.max > e.interval.min) { tags.push("interval rolled"); }
             return h("span", null, h("span", { "class": "chip", style: chipStyle(e.color) }, e.id), " " + e.track + (tags.length ? " (" + tags.join(", ") + ")" : ""));
         }));
     }
@@ -1522,6 +1658,17 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 editDef(owner, function (f) { setField(f, "track", el.value || null); });
             } else if (act === "choice") {
                 editDef(owner, function (f) { setField(f, key, el.value || null); });
+            } else if (act === "speed" && box.querySelector("[data-part=dir]").value === "range") {
+                var rfrom = box.querySelector("[data-part=from]"), rto = box.querySelector("[data-part=to]");
+                var rf = rfrom ? clean(rfrom).trim() : "", rt = rto ? clean(rto).trim() : "";
+                editDef(owner, function (f) {
+                    if (!rfrom) {
+                        var down = /^\s*-/.test(getField(f, "speed") || "");
+                        setField(f, "speed", down ? "-25..-75" : "+25..+75");
+                    } else if (rf !== "" && rt !== "") {
+                        setField(f, "speed", rf + ".." + rt);
+                    }
+                });
             } else if (act === "speed") {
                 var sdir = box.querySelector("[data-part=dir]").value;
                 var samt = box.querySelector("[data-part=amount]");
@@ -1543,6 +1690,15 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             } else if (act === "cycle") {
                 var n = clean(box.querySelector("[data-part=n]")).trim(), k = clean(box.querySelector("[data-part=k]")).trim();
                 editDef(owner, function (f) { setField(f, key, n === "" ? null : n + (k === "" || k === "0" && key === "every" ? "" : "+" + k)); });
+            } else if (act === "interval") {
+                var imin = clean(box.querySelector("[data-part=min]")).trim(), imax = clean(box.querySelector("[data-part=max]")).trim();
+                var iunit = box.querySelector("[data-part=unit]").value;
+                editDef(owner, function (f) { setField(f, "interval", imin === "" ? null : imin + iunit + (imax === "" || imax === imin ? "" : ".." + imax + iunit)); });
+            } else if (act === "grow") {
+                var gfrom = clean(box.querySelector("[data-part=from]")).trim(), gto = clean(box.querySelector("[data-part=to]")).trim();
+                editDef(owner, function (f) { setField(f, "grow", gto === "" ? null : (gfrom === "" ? "" : gfrom + "d..") + gto + "d"); });
+            } else if (act === "worldday") {
+                state.cal.worldDay = el.value;
             } else if (act === "cooldown") {
                 var amt = clean(box.querySelector("[data-part=amount]")).trim(), unit = box.querySelector("[data-part=unit]").value;
                 editDef(owner, function (f) { setField(f, "cooldown", amt === "" ? null : amt + unit); });

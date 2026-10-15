@@ -29,11 +29,16 @@ local MONTH_DAYS = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 local MAX_PHASES = 60
 local MAX_HOURS = 30 * 24
 local MAX_COOLDOWN_HOURS = 3650 * 24
+local MAX_WAIT = { d = 3650, h = 3650 * 24 }
+local MAX_DAYS = 36500
 
 local CONDITIONS = {
     "moon", "date", "month", "season", "every", "nth", "mindays", "maxdays",
-    "after", "cooldown", "weather", "tempmin", "tempmax", "chance",
+    "after", "cooldown", "interval", "weather", "tempmin", "tempmax", "chance",
 }
+
+-- Number effects that may be a range a..b, which grow= of the same definition moves along.
+local GROWING = { "speed", "health" }
 
 -- UTF-8 bytes, as the game writes the option. Kahlua strings are Java strings: string.byte gives
 -- UTF-16 units, and a surrogate pair is 4 bytes.
@@ -327,7 +332,7 @@ function PARSE.nth(v)
 end
 
 function PARSE.mindays(v)
-    return ranged(v, true, 0, 36500, "a whole number from 0 to 36500")
+    return ranged(v, true, 0, MAX_DAYS, "a whole number from 0 to 36500")
 end
 
 PARSE.maxdays = PARSE.mindays
@@ -360,6 +365,35 @@ function PARSE.cooldown(v)
         return nil, quote(v) .. " is not Xd or Xh, longer than 0 and up to 3650 days"
     end
     return x
+end
+
+-- Whole days or hours: Nd or Nh -> N, unit.
+local function duration(text)
+    local amount, unit = string.match(text, "^(.-) *([hd])$")
+    local n = amount and number(amount, true)
+    if n == nil then
+        return nil
+    end
+    return n, unit
+end
+
+function PARSE.interval(v)
+    local a, b = range(v)
+    local min, unit = duration(a)
+    local max, last = min, unit
+    if b ~= nil then
+        max, last = duration(b)
+    end
+    if min ~= nil and max ~= nil and unit ~= last then
+        return nil, quote(v) .. " mixes days and hours"
+    end
+    if min == nil or max == nil or min < 1 or max > MAX_WAIT[unit] then
+        return nil, quote(v) .. " is not Nd, Nh or a range of them such as 3d..7d, in whole days or hours up to 3650 days"
+    end
+    if max < min then
+        return nil, quote(v) .. " is not from the shorter to the longer wait"
+    end
+    return { min = min, max = max, unit = unit }
 end
 
 function PARSE.weather(v)
@@ -409,8 +443,28 @@ function PARSE.color(v)
     return v
 end
 
+function PARSE.sound(v)
+    if string.find(v, "^[A-Za-z0-9_%.%-]+$") == nil then
+        return nil, quote(v) .. " is not a sound name made of letters, digits, _, . and -"
+    end
+    return v
+end
+
+-- A number, or a range a..b of them: { from = a, to = b }.
+local function growing(v, whole, min, max, what, ranges)
+    local a, b = range(v)
+    if b == nil then
+        return ranged(v, whole, min, max, what)
+    end
+    local from, to = number(a, whole), number(b, whole)
+    if from == nil or to == nil or from < min or from > max or to < min or to > max then
+        return nil, quote(v) .. " is not a range of " .. ranges
+    end
+    return { from = from, to = to }
+end
+
 function PARSE.speed(v)
-    return ranged(v, true, -100, 100, "a whole number from -100 to 100")
+    return growing(v, true, -100, 100, "a whole number from -100 to 100", "whole numbers from -100 to 100 such as +25..+75")
 end
 
 function PARSE.steps(v)
@@ -418,11 +472,81 @@ function PARSE.steps(v)
 end
 
 function PARSE.health(v)
-    return ranged(v, false, 0.1, 5, "a number from 0.1 to 5")
+    return growing(v, false, 0.1, 5, "a number from 0.1 to 5", "numbers from 0.1 to 5 such as 0.7..0.4")
+end
+
+-- Whole world days: Nd -> N.
+local function wholeDays(text)
+    local amount = string.match(text, "^(.-) *d$")
+    return amount and number(amount, true)
+end
+
+function PARSE.grow(v)
+    local a, b = range(v)
+    local from, to = 0, wholeDays(a)
+    if b ~= nil then
+        from, to = to, wholeDays(b)
+    end
+    if from == nil or to == nil or from < 0 or to > MAX_DAYS then
+        return nil, quote(v) .. " is not Nd or Ad..Bd, in whole world days from 0 to 36500"
+    end
+    if to <= from then
+        return nil, quote(v) .. " does not end after it starts"
+    end
+    return { from = from, to = to }
 end
 
 -- Keys a base definition may have; the rest belong to events.
-local EFFECTS = { off = true, say = true, color = true, speed = true, steps = true, health = true }
+local EFFECTS = {
+    off = true, say = true, color = true, sound = true, speed = true, steps = true, health = true, grow = true,
+}
+
+-- A range needs grow= in its own definition: an event's grow never moves what it inherits.
+local function ungrown(def, fail)
+    for _, key in ipairs(GROWING) do
+        if type(def[key]) == "table" and def.grow == nil then
+            fail(key, "a range needs grow= in the same definition")
+            def[key] = nil
+        end
+    end
+end
+
+local function idleGrow(def, warn)
+    if def.grow == nil then
+        return
+    end
+    for _, key in ipairs(GROWING) do
+        if type(def[key]) == "table" then
+            return
+        end
+    end
+    warn("grow", "no value of this definition is a range, so it changes nothing")
+end
+
+-- A number effect of def on world day `day`: a range goes linearly from its first value on the
+-- first day of grow= to its second on the last, and keeps its ends outside them. Speed shares are
+-- whole numbers, rounded half away from 0.
+function Defs.at(def, key, day)
+    local v = def[key]
+    if type(v) ~= "table" then
+        return v
+    end
+    local grow = def.grow
+    local x = v.to
+    if day <= grow.from then
+        x = v.from
+    elseif day < grow.to then
+        x = v.from + (v.to - v.from) * (day - grow.from) / (grow.to - grow.from)
+    end
+    if key ~= "speed" then
+        return x
+    end
+    local n = math.floor(math.abs(x) + 0.5)
+    if x < 0 and n > 0 then
+        return -n
+    end
+    return n
+end
 
 -- Splits a definition into fields: { key, option (for set.), value } or { bad = reason }.
 local function fields(text)
@@ -448,7 +572,7 @@ local function fields(text)
                 f.key = "set."
                 f.option = string.sub(name, 5)
                 f.name = "set." .. f.option
-            elseif key ~= "say" then
+            elseif key ~= "say" and key ~= "sound" then
                 f.value = string.lower(value)
             end
             out[#out + 1] = f
@@ -619,8 +743,13 @@ function Defs.parse(texts, rule, builtin, registered)
 
     for _, name in ipairs(Defs.BASES) do
         local def = newDef(name)
-        parseFields(def, fields(texts[name]), false, function(key, reason)
+        local function failed(key, reason)
             fail(def, key, reason)
+        end
+        parseFields(def, fields(texts[name]), false, failed)
+        ungrown(def, failed)
+        idleGrow(def, function(key, reason)
+            warn(def, key, reason)
         end)
         checkKinds(def)
         if def.errors > 0 then
@@ -663,6 +792,9 @@ function Defs.parse(texts, rule, builtin, registered)
             if ev.mindays ~= nil and ev.maxdays ~= nil and ev.maxdays < ev.mindays then
                 fail(ev, "maxdays", ev.maxdays .. " is below mindays " .. ev.mindays)
             end
+            ungrown(ev, function(key, reason)
+                fail(ev, key, reason)
+            end)
             ev["for"] = ev["for"] or { phases = 1 }
             ev.prio = ev.prio or 0
             parsed[#parsed + 1] = ev
@@ -711,6 +843,9 @@ function Defs.parse(texts, rule, builtin, registered)
 
     for _, ev in ipairs(result.events) do
         checkKinds(ev)
+        idleGrow(ev, function(key, reason)
+            warn(ev, key, reason)
+        end)
         if ev.chance == 0 then
             warn(ev, "chance", "is 0, so it never happens")
         end
