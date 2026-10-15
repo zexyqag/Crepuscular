@@ -19,16 +19,6 @@ local function channel(color, i)
     return high * 16 + low
 end
 
--- The sound is the definition's own text, and the game hands a name it lacks to FMOD.
-local function play(sound)
-    local ok, err = pcall(function()
-        getSoundManager():playUISound(sound)
-    end)
-    if not ok then
-        Log.warnOnce("sound " .. sound, "the sound " .. sound .. " could not be played: " .. tostring(err))
-    end
-end
-
 local function announce(state)
     local line = state.announce
     if line == nil or line.serial == announced then
@@ -48,9 +38,10 @@ local function announce(state)
             announced = line.serial
         end
     end
-    -- One sound per game, however many players share its screen.
+    -- One sound per game, however many players share its screen. A name the game lacks plays
+    -- nothing, and the server warns about it.
     if announced == line.serial and line.sound ~= nil then
-        play(line.sound)
+        getSoundManager():playUISound(line.sound)
     end
 end
 

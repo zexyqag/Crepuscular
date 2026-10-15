@@ -1,7 +1,7 @@
 -- Decides occasions and runs the current event on the server's ledger. Pure: the clock, climate
 -- and random rolls are passed in.
 --
--- Ledger: { occasion = { phase, key, date, open, start, serial }, decided = { [track] = key },
+-- Ledger: { occasion = { phase, key, date, open, start, endless, serial }, decided = { [track] = key },
 --   pool = { [track] = { key, ids, covered } }, current = { id, track, serial, running, at,
 --   startsAt, endsAt, phasesLeft }, count = { [id] = n }, lastStart = { [id] = hours },
 --   lastDay = { [id] = world day }, roll = { [id] = interval roll since the last start },
@@ -35,24 +35,37 @@ local function label(occasion)
     return occasion.phase .. " of " .. occasion.key
 end
 
--- World age turns a day at 07:00, so an occasion counts the world day at noon of its date.
-local function worldDay(occasion)
-    return math.floor((occasion.start + 12 - occasion.open + TOLERANCE) / 24)
+-- World age turns a day at 07:00, so an occasion counts the world day at noon of its date: this is
+-- that noon in world-age hours. An endless occasion keeps the date it opened on, so it counts the
+-- date of `now` (world-age hours) instead.
+local function noon(occasion, now)
+    local midnight = occasion.start - occasion.open
+    if occasion.endless then
+        midnight = midnight + 24 * math.floor((now - midnight + TOLERANCE) / 24)
+    end
+    return midnight + 12
 end
 
+-- Noon is 5 hours from the turn of a world day, so it needs no tolerance.
+local function worldDay(occasion, now)
+    return math.floor(noon(occasion, now) / 24)
+end
+
+Schedule.noon = noon
 Schedule.worldDay = worldDay
 
--- When ev would start in the occasion: at its at= time, or as the occasion starts.
-local function startTime(ev, occasion)
+-- When ev would start in the occasion: at its at= time, or as the occasion starts, but not before
+-- `earliest`: the occasion's nominal start for a decision, now for an admin's.
+local function startTime(ev, occasion, earliest)
     if ev.at == nil then
-        return occasion.start
+        return earliest
     end
-    return occasion.start + Phase.wrap(ev.at - occasion.open, 24)
+    return math.max(earliest, occasion.start + Phase.wrap(ev.at - occasion.open, 24))
 end
 
 -- When an event with interval= is next due: its unit ("d" counts world days, "h" world-age hours)
 -- and the earliest and latest due, the same once its wait is rolled. The wait runs from its last
--- start, or from the world's start.
+-- start; the first one from world day 0, or for hours from world age 0, 07:00 that day.
 function Schedule.due(ledger, ev)
     local interval = ev.interval
     local base = ledger.lastStart[ev.id] or 0
@@ -67,28 +80,29 @@ function Schedule.due(ledger, ev)
     return interval.unit, due, due
 end
 
--- Why ev still waits for its interval in the occasion, or nil once it is due. A wait is rolled
--- when first needed and kept until the event starts again, so a lost chance doesn't roll anew.
-local function waiting(ledger, ev, occasion, roll)
+-- Why ev still waits for its interval if it starts at `when` in the occasion, or nil once it is
+-- due. A wait is rolled when first needed and kept until the event starts again, so a lost chance
+-- doesn't roll anew.
+local function waiting(ledger, ev, occasion, when, roll)
     local interval = ev.interval
     if interval.max > interval.min and ledger.roll[ev.id] == nil then
         ledger.roll[ev.id] = roll()
     end
     local unit, due = Schedule.due(ledger, ev)
     if unit == "d" then
-        if worldDay(occasion) < due then
+        if worldDay(occasion, when) < due then
             return "is not due before world day " .. due
         end
         return nil
     end
-    local left = due - startTime(ev, occasion)
+    local left = due - when
     if left > TOLERANCE then
         return "is not due for " .. math.floor(left * 60 + 0.5) .. " more minutes"
     end
     return nil
 end
 
-local function calendar(ev, occasion, climate)
+local function calendar(ev, occasion, day, climate)
     local date = occasion.date
     if ev.moon ~= nil then
         local phase = Phase.moon(date.year, date.month, date.day)
@@ -98,11 +112,11 @@ local function calendar(ev, occasion, climate)
         end
     end
     if ev.date ~= nil then
-        local day = (date.month + 1) * 100 + date.day
+        local key = (date.month + 1) * 100 + date.day
         local inside = false
         for _, r in ipairs(ev.date) do
-            if (r.from <= r.to and day >= r.from and day <= r.to)
-                or (r.from > r.to and (day >= r.from or day <= r.to)) then
+            if (r.from <= r.to and key >= r.from and key <= r.to)
+                or (r.from > r.to and (key >= r.from or key <= r.to)) then
                 inside = true
             end
         end
@@ -116,7 +130,6 @@ local function calendar(ev, occasion, climate)
     if ev.season ~= nil and not ev.season[climate.season] then
         return false
     end
-    local day = worldDay(occasion)
     if ev.every ~= nil and Phase.wrap(day, ev.every.n) ~= ev.every.k then
         return false
     end
@@ -168,7 +181,7 @@ local function start(ledger, ev, startsAt, now, log)
     end
     ledger.current = current
     ledger.lastStart[ev.id] = startsAt
-    ledger.lastDay[ev.id] = worldDay(ledger.occasion)
+    ledger.lastDay[ev.id] = worldDay(ledger.occasion, startsAt)
     ledger.roll[ev.id] = nil
     -- The event replaces the phase's own line, which isn't shown again when it ends.
     ledger.occasion.serial = nil
@@ -182,8 +195,9 @@ local function finish(ledger, log, why)
     log(current.id .. " ended: " .. why)
 end
 
--- Picks among the pool of the occasion's track (1.4 steps 5-7). Returns the chosen event or nil.
-local function pick(ledger, defs, climate, roll, log)
+-- Picks among the pool of the occasion's track (1.4 steps 5-7), each event as it would start, not
+-- before `earliest`. Returns the chosen event or nil.
+local function pick(ledger, defs, climate, roll, earliest, log)
     local occasion = ledger.occasion
     local track = trackOf(occasion.phase)
     local name = label(occasion)
@@ -192,11 +206,12 @@ local function pick(ledger, defs, climate, roll, log)
         local ev = defs.byId[id]
         if ev ~= nil and ev.track == track then
             local last = ledger.lastStart[id]
+            local when = startTime(ev, occasion, earliest)
             local wait = nil
-            if ev.cooldown ~= nil and last ~= nil and occasion.start < last + ev.cooldown - TOLERANCE then
+            if ev.cooldown ~= nil and last ~= nil and when < last + ev.cooldown - TOLERANCE then
                 wait = "is cooling down"
             elseif ev.interval ~= nil then
-                wait = waiting(ledger, ev, occasion, roll)
+                wait = waiting(ledger, ev, occasion, when, roll)
             end
             if wait ~= nil then
                 log(name .. ": " .. id .. " " .. wait)
@@ -234,14 +249,10 @@ local function pick(ledger, defs, climate, roll, log)
     return nil
 end
 
--- Makes ev the current event of the ledger's occasion, starting at its at= time but not before
--- `earliest`: the occasion's nominal start for a decision, now for an admin's.
+-- Makes ev the current event of the ledger's occasion, starting at its start time.
 local function schedule(ledger, ev, earliest, now, log)
     local occasion = ledger.occasion
-    local at = earliest
-    if ev.at ~= nil then
-        at = math.max(earliest, startTime(ev, occasion))
-    end
+    local at = startTime(ev, occasion, earliest)
     if at <= now + TOLERANCE then
         start(ledger, ev, at, now, log)
         return
@@ -271,9 +282,10 @@ local function decide(ledger, defs, input, log)
     end
 
     local climate = input.climate()
+    local day = worldDay(occasion, input.now)
     local ids = {}
     for _, ev in ipairs(defs.events) do
-        if ev.track == track and calendar(ev, occasion, climate) then
+        if ev.track == track and calendar(ev, occasion, day, climate) then
             local ok = true
             if ev.nth ~= nil then
                 local count = (ledger.count[ev.id] or 0) + 1
@@ -301,7 +313,7 @@ local function decide(ledger, defs, input, log)
         log(name .. ": covered by " .. covering)
         return
     end
-    local ev = pick(ledger, defs, climate, input.roll, log)
+    local ev = pick(ledger, defs, climate, input.roll, occasion.start, log)
     -- The phase's own announcement belongs to this start until an event takes over.
     ledger.serial = ledger.serial + 1
     ledger.occasion.serial = ledger.serial
@@ -310,7 +322,8 @@ local function decide(ledger, defs, input, log)
     end
 end
 
--- Counts a phase change and moves the ledger to the clock's occasion.
+-- Counts a phase change and moves the ledger to the clock's occasion, which is endless while the
+-- clock's is.
 local function advance(ledger, input, log)
     local seen = ledger.occasion
     local occasion = input.occasion
@@ -320,20 +333,21 @@ local function advance(ledger, input, log)
         if ledger.decided[trackOf(seen.phase)] ~= seen.key then
             seen.open, seen.start = occasion.open, occasion.start
         end
-        return
-    end
-    local current = ledger.current
-    if seen ~= nil and current ~= nil then
-        if not current.running then
-            log(current.id .. " missed: the " .. label(seen) .. " ended before its start time")
-            ledger.current = nil
-        elseif current.phasesLeft ~= nil then
-            current.phasesLeft = current.phasesLeft - 1
+    else
+        local current = ledger.current
+        if seen ~= nil and current ~= nil then
+            if not current.running then
+                log(current.id .. " missed: the " .. label(seen) .. " ended before its start time")
+                ledger.current = nil
+            elseif current.phasesLeft ~= nil then
+                current.phasesLeft = current.phasesLeft - 1
+            end
         end
+        ledger.occasion = {
+            phase = occasion.phase, key = input.key, date = occasion.date, open = occasion.open, start = occasion.start,
+        }
     end
-    ledger.occasion = {
-        phase = occasion.phase, key = input.key, date = occasion.date, open = occasion.open, start = occasion.start,
-    }
+    ledger.occasion.endless = occasion.endless
 end
 
 -- One tick (1.5): count a phase change, end the current event if due, decide a new occasion,
@@ -418,7 +432,7 @@ function Schedule.redecide(ledger, defs, input, log)
     if ledger.pool[trackOf(ledger.occasion.phase)] == nil then
         return false
     end
-    local ev = pick(ledger, defs, input.climate(), input.roll, log)
+    local ev = pick(ledger, defs, input.climate(), input.roll, input.now, log)
     if ev == nil then
         return false
     end

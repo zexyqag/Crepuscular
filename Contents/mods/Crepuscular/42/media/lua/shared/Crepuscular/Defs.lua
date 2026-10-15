@@ -444,8 +444,8 @@ function PARSE.color(v)
 end
 
 function PARSE.sound(v)
-    if string.find(v, "^[A-Za-z0-9_%.%-]+$") == nil then
-        return nil, quote(v) .. " is not a sound name made of letters, digits, _, . and -"
+    if string.find(v, "^[A-Za-z0-9_]+$") == nil then
+        return nil, quote(v) .. " is not a sound name made of letters, digits and _"
     end
     return v
 end
@@ -501,11 +501,20 @@ local EFFECTS = {
     off = true, say = true, color = true, sound = true, speed = true, steps = true, health = true, grow = true,
 }
 
--- A range needs grow= in its own definition: an event's grow never moves what it inherits.
-local function ungrown(def, fail)
+-- A range needs grow= in its own definition: an event's grow never moves what it inherits. Without
+-- a valid grow= the range is dropped; a grow= field that failed has its error already.
+local function ungrown(def, list, fail)
+    local written = false
+    for _, f in ipairs(list) do
+        if f.name == "grow" then
+            written = true
+        end
+    end
     for _, key in ipairs(GROWING) do
         if type(def[key]) == "table" and def.grow == nil then
-            fail(key, "a range needs grow= in the same definition")
+            if not written then
+                fail(key, "a range needs grow= in the same definition")
+            end
             def[key] = nil
         end
     end
@@ -746,8 +755,9 @@ function Defs.parse(texts, rule, builtin, registered)
         local function failed(key, reason)
             fail(def, key, reason)
         end
-        parseFields(def, fields(texts[name]), false, failed)
-        ungrown(def, failed)
+        local list = fields(texts[name])
+        parseFields(def, list, false, failed)
+        ungrown(def, list, failed)
         idleGrow(def, function(key, reason)
             warn(def, key, reason)
         end)
@@ -792,7 +802,7 @@ function Defs.parse(texts, rule, builtin, registered)
             if ev.mindays ~= nil and ev.maxdays ~= nil and ev.maxdays < ev.mindays then
                 fail(ev, "maxdays", ev.maxdays .. " is below mindays " .. ev.mindays)
             end
-            ungrown(ev, function(key, reason)
+            ungrown(ev, list, function(key, reason)
                 fail(ev, key, reason)
             end)
             ev["for"] = ev["for"] or { phases = 1 }

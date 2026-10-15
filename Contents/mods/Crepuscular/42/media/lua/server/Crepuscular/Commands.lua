@@ -52,7 +52,7 @@ local function status()
     add("Crepuscular " .. getModInfoByID("Crepuscular"):getModVersion() .. "; " .. clock)
 
     local occasion = ledger.occasion
-    local today = Schedule.worldDay(occasion)
+    local today = Schedule.worldDay(occasion, now.hours)
     add("phase " .. state.phase .. (state.forced and " (forced)" or "") .. "; the clock is in the "
         .. occasion.phase .. " of " .. occasion.key .. ", opened " .. stamp(occasion.start) .. ", world day " .. today)
     add("moon phase today " .. Phase.moon(now.year, now.month, now.day) .. " (the game shows "
@@ -107,8 +107,7 @@ local function status()
         end
         add(line)
     end
-    -- Noon of the occasion's date, where its world day is counted.
-    local noon = occasion.start + 12 - occasion.open
+    local noon = Schedule.noon(occasion, now.hours)
     for _, ev in ipairs(defs.events) do
         if ev.interval ~= nil then
             local unit, from, to = Schedule.due(ledger, ev)

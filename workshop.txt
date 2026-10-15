@@ -1,14 +1,14 @@
 version=1
 id=
 title=Crepuscular
-description=Crepuscular divides the world clock into day and night and adds special nights and days: moons and suns. Each can make a share of the zombies faster or slower, make zombies more fragile or tougher, change sandbox options, switch monster kinds off and show a line to every player and play a sound when it begins.
+description=Crepuscular divides the world clock into day and night and adds special nights and days: moons and suns. Each can make a share of the zombies faster or slower, make zombies more fragile or tougher, change sandbox options, switch monster kinds off and show a line to every player and play a sound when it begins, and for a player who joins while it lasts.
 description=
 description=Night runs on fixed hours (20:00 to 04:00 by default) or follows the game's own seasonal dusk and dawn.
-description=Day and Night each have a definition: how fast and how tough zombies are, sandbox values that change while it lasts (for example ZombieLore.Toughness), which monster kinds are off, and a line to show and a game sound to play when it begins. The values go back to their base when it ends.
+description=Day and Night each have a definition: how fast and how tough zombies are, sandbox values that change while it lasts (for example ZombieLore.Toughness), which monster kinds are off, and a line to show and a game sound to play when it begins or a player joins. The values go back to their base when it ends.
 description=
 description=Speed: a share of the ordinary zombies moves one or two tiers faster (shambler, fast shambler, sprinter) or slower. The same zombies are picked every time, on the server and on every player's game, and the ones that speed up are the last to slow down. A share of 0 leaves the game's speeds alone. By default a quarter of the zombies are faster by day, half are slower at night, and half are faster on a blood moon.
 description=Health: a factor below 1 makes zombies fragile: new and reloaded zombies get that share of their health, and no zombie keeps more than that share of the most a new one can have. Above 1, new and reloaded zombies are tougher. A zombie already around is never healed. By default zombies have 70% of their health by day.
-description=Both can grow with the days since the world began: for example a quarter of the zombies faster on the first day and three quarters by day 60, or nights that get tougher month by month.
+description=Both can grow with the days since the world began: for example from a quarter of the zombies faster to three quarters over the first 60 days, or nights that get a little tougher every day.
 description=Monsters of every kind, Bandits and crawlers keep their own speed and are never capped. The health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too.
 description=
 description=Events (8 options, each holding any number of them) define moons and suns with their own conditions: moon phase, dates, months, seasons, every N days, days since the world began, every Nth time, right after another event, a cooldown, a random wait after each start (for example 3 to 7 days), weather, temperature and chance. An event can start at a set hour and last its night or day, several of them, or a number of hours or days. One event runs at a time, and each night and day is decided once, so a restart never rolls again.

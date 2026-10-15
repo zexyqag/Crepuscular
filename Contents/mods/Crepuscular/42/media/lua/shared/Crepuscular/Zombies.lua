@@ -209,7 +209,8 @@ end
 function Zombies.status()
     local effects = State.get().effects
     local lore = SandboxVars.ZombieLore
-    local line = "zombies: speed " .. signed(effects.speed) .. ", steps " .. effects.steps .. ", health " .. effects.health
+    local line = "zombies: speed " .. signed(effects.speed) .. ", steps " .. effects.steps
+        .. string.format(", health %.3g", effects.health)
     local cap = Tuning.cap(effects.health, lore.Toughness)
     if cap ~= nil then
         line = line .. string.format(", at most %.2f", cap)

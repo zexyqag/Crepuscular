@@ -97,6 +97,12 @@ function Clock.definitions(rule)
         for name in pairs(def.values) do
             defs.names[name] = true
         end
+        -- The sound scripts' names, which a dedicated server loads too. A client may still have a
+        -- sound file of that name, so it is only a warning.
+        if def.sound ~= nil and not GameSounds.isKnownSound(def.sound) then
+            defs.warnings[#defs.warnings + 1] = def.label .. ": sound: '" .. def.sound
+                .. "' is not a sound the game knows, so players may hear nothing"
+        end
         cof = cof or (def.off ~= nil and def.off.cof == true)
         local low, high = span(def.speed or 0)
         defs.fmax = math.max(defs.fmax, high)
@@ -180,7 +186,8 @@ end
 local NEUTRAL = { speed = 0, steps = 1, health = 1 }
 
 -- Resolves the definition in effect (3.1), applies its sandbox values and publishes on change.
-local function update(state, ledger, defs)
+-- now: world-age hours.
+local function update(state, ledger, defs, now)
     local clock = ledger.occasion.phase
     local phase = Clock.forced or clock
     local current = ledger.current
@@ -235,7 +242,7 @@ local function update(state, ledger, defs)
     end
 
     local effects = { off = copy(off), fmax = defs.fmax, smax = defs.smax }
-    local day = Schedule.worldDay(ledger.occasion)
+    local day = Schedule.worldDay(ledger.occasion, now)
     for key, neutral in pairs(NEUTRAL) do
         -- A range grows with the grow= of the definition it belongs to.
         local owner = base
@@ -293,7 +300,7 @@ function Clock.tick()
         climate = climate,
         roll = roll,
     }, Log.info)
-    update(state, ledger, defs)
+    update(state, ledger, defs, now.hours)
 end
 
 -- phase is nil for automatic.

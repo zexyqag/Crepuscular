@@ -637,8 +637,8 @@
     };
 
     PARSE.sound = function (v) {
-        if (!/^[A-Za-z0-9_.\-]+$/.test(v)) {
-            return new Bad(quote(v) + " is not a sound name made of letters, digits, _, . and -");
+        if (!/^[A-Za-z0-9_]+$/.test(v)) {
+            return new Bad(quote(v) + " is not a sound name made of letters, digits and _");
         }
         return v;
     };
@@ -695,11 +695,15 @@
         off: true, say: true, color: true, sound: true, speed: true, steps: true, health: true, grow: true,
     });
 
-    // A range needs grow= in its own definition: an event's grow never moves what it inherits.
-    function ungrown(def, fail) {
+    // A range needs grow= in its own definition: an event's grow never moves what it inherits. Without
+    // a valid grow= the range is dropped; a grow= field that failed has its error already.
+    function ungrown(def, fieldList, fail) {
+        var written = fieldList.some(function (f) { return f.name === "grow"; });
         GROWING.forEach(function (key) {
             if (typeof def[key] === "object" && def.grow === undefined) {
-                fail(key, "a range needs grow= in the same definition");
+                if (!written) {
+                    fail(key, "a range needs grow= in the same definition");
+                }
                 delete def[key];
             }
         });
@@ -720,7 +724,7 @@
     // whole numbers, rounded half away from 0.
     Defs.at = function (def, key, day) {
         var v = def[key];
-        if (v === undefined || typeof v !== "object") {
+        if (typeof v !== "object") {
             return v;
         }
         var grow = def.grow;
@@ -931,8 +935,9 @@
             function failed(key, reason) {
                 fail(def, key, reason);
             }
-            parseFields(def, fields(texts[name]), false, failed);
-            ungrown(def, failed);
+            var fieldList = fields(texts[name]);
+            parseFields(def, fieldList, false, failed);
+            ungrown(def, fieldList, failed);
             idleGrow(def, function (key, reason) {
                 warn(def, key, reason);
             });
@@ -976,7 +981,7 @@
                 if (ev.mindays !== undefined && ev.maxdays !== undefined && ev.maxdays < ev.mindays) {
                     fail(ev, "maxdays", luaString(ev.maxdays) + " is below mindays " + luaString(ev.mindays));
                 }
-                ungrown(ev, function (key, reason) {
+                ungrown(ev, fieldList, function (key, reason) {
                     fail(ev, key, reason);
                 });
                 if (ev["for"] === undefined) {
@@ -1085,24 +1090,37 @@
         return occasion.phase + " of " + occasion.key;
     }
 
-    // World age turns a day at 07:00, so an occasion counts the world day at noon of its date.
-    function worldDay(occasion) {
-        return Math.floor((occasion.start + 12 - occasion.open + TOLERANCE) / 24);
+    // World age turns a day at 07:00, so an occasion counts the world day at noon of its date: this is
+    // that noon in world-age hours. An endless occasion keeps the date it opened on, so it counts the
+    // date of `now` (world-age hours) instead.
+    function noon(occasion, now) {
+        var midnight = occasion.start - occasion.open;
+        if (occasion.endless) {
+            midnight = midnight + 24 * Math.floor((now - midnight + TOLERANCE) / 24);
+        }
+        return midnight + 12;
     }
 
+    // Noon is 5 hours from the turn of a world day, so it needs no tolerance.
+    function worldDay(occasion, now) {
+        return Math.floor(noon(occasion, now) / 24);
+    }
+
+    Schedule.noon = noon;
     Schedule.worldDay = worldDay;
 
-    // When ev would start in the occasion: at its at= time, or as the occasion starts.
-    function startTime(ev, occasion) {
+    // When ev would start in the occasion: at its at= time, or as the occasion starts, but not before
+    // `earliest`: the occasion's nominal start for a decision, now for an admin's.
+    function startTime(ev, occasion, earliest) {
         if (ev.at === undefined) {
-            return occasion.start;
+            return earliest;
         }
-        return occasion.start + Phase.wrap(ev.at - occasion.open, 24);
+        return Math.max(earliest, occasion.start + Phase.wrap(ev.at - occasion.open, 24));
     }
 
     // When an event with interval= is next due: [unit ("d" counts world days, "h" world-age hours),
     // the earliest and the latest due], the same once its wait is rolled. The wait runs from its last
-    // start, or from the world's start.
+    // start; the first one from world day 0, or for hours from world age 0, 07:00 that day.
     Schedule.due = function (ledger, ev) {
         var interval = ev.interval;
         var base = interval.unit === "d" ? ledger.lastDay[ev.id] : ledger.lastStart[ev.id];
@@ -1117,28 +1135,29 @@
         return [interval.unit, due, due];
     };
 
-    // Why ev still waits for its interval in the occasion, or null once it is due. A wait is rolled
-    // when first needed and kept until the event starts again, so a lost chance doesn't roll anew.
-    function waiting(ledger, ev, occasion, roll) {
+    // Why ev still waits for its interval if it starts at `when` in the occasion, or null once it is
+    // due. A wait is rolled when first needed and kept until the event starts again, so a lost chance
+    // doesn't roll anew.
+    function waiting(ledger, ev, occasion, when, roll) {
         var interval = ev.interval;
         if (interval.max > interval.min && ledger.roll[ev.id] === undefined) {
             ledger.roll[ev.id] = roll();
         }
         var d = Schedule.due(ledger, ev);
         if (d[0] === "d") {
-            if (worldDay(occasion) < d[1]) {
+            if (worldDay(occasion, when) < d[1]) {
                 return "is not due before world day " + luaString(d[1]);
             }
             return null;
         }
-        var left = d[1] - startTime(ev, occasion);
+        var left = d[1] - when;
         if (left > TOLERANCE) {
             return "is not due for " + luaString(Math.floor(left * 60 + 0.5)) + " more minutes";
         }
         return null;
     }
 
-    function calendar(ev, occasion, climate) {
+    function calendar(ev, occasion, day, climate) {
         var date = occasion.date;
         if (ev.moon !== undefined) {
             var phase = Phase.moon(date.year, date.month, date.day);
@@ -1162,7 +1181,6 @@
         if (ev.season !== undefined && !ev.season[climate.season]) {
             return false;
         }
-        var day = worldDay(occasion);
         if (ev.every !== undefined && Phase.wrap(day, ev.every.n) !== ev.every.k) {
             return false;
         }
@@ -1214,7 +1232,7 @@
         }
         ledger.current = current;
         ledger.lastStart[ev.id] = startsAt;
-        ledger.lastDay[ev.id] = worldDay(ledger.occasion);
+        ledger.lastDay[ev.id] = worldDay(ledger.occasion, startsAt);
         delete ledger.roll[ev.id];
         // The event replaces the phase's own line, which isn't shown again when it ends.
         delete ledger.occasion.serial;
@@ -1228,7 +1246,8 @@
         log(current.id + " ended: " + why);
     }
 
-    function pick(ledger, defs, climate, roll, log) {
+    // Picks among the pool of the occasion's track, each event as it would start, not before `earliest`.
+    function pick(ledger, defs, climate, roll, earliest, log) {
         var occasion = ledger.occasion;
         var track = trackOf(occasion.phase);
         var name = label(occasion);
@@ -1237,11 +1256,12 @@
             var ev = defs.byId[id];
             if (ev !== undefined && ev.track === track) {
                 var last = ledger.lastStart[id];
+                var when = startTime(ev, occasion, earliest);
                 var wait = null;
-                if (ev.cooldown !== undefined && last !== undefined && occasion.start < last + ev.cooldown - TOLERANCE) {
+                if (ev.cooldown !== undefined && last !== undefined && when < last + ev.cooldown - TOLERANCE) {
                     wait = "is cooling down";
                 } else if (ev.interval !== undefined) {
-                    wait = waiting(ledger, ev, occasion, roll);
+                    wait = waiting(ledger, ev, occasion, when, roll);
                 }
                 if (wait !== null) {
                     log(name + ": " + id + " " + wait);
@@ -1282,10 +1302,7 @@
 
     function schedule(ledger, ev, earliest, now, log) {
         var occasion = ledger.occasion;
-        var at = earliest;
-        if (ev.at !== undefined) {
-            at = Math.max(earliest, startTime(ev, occasion));
-        }
+        var at = startTime(ev, occasion, earliest);
         if (at <= now + TOLERANCE) {
             start(ledger, ev, at, now, log);
             return;
@@ -1316,9 +1333,10 @@
         });
 
         var climate = input.climate();
+        var day = worldDay(occasion, input.now);
         var ids = [];
         defs.events.forEach(function (ev) {
-            if (ev.track === track && calendar(ev, occasion, climate)) {
+            if (ev.track === track && calendar(ev, occasion, day, climate)) {
                 var ok = true;
                 if (ev.nth !== undefined) {
                     var count = (ledger.count[ev.id] || 0) + 1;
@@ -1343,7 +1361,7 @@
             log(name + ": covered by " + covering);
             return;
         }
-        var ev = pick(ledger, defs, climate, input.roll, log);
+        var ev = pick(ledger, defs, climate, input.roll, occasion.start, log);
         // The phase's own announcement belongs to this start until an event takes over.
         ledger.serial = ledger.serial + 1;
         ledger.occasion.serial = ledger.serial;
@@ -1352,6 +1370,8 @@
         }
     }
 
+    // Counts a phase change and moves the ledger to the clock's occasion, which is endless while the
+    // clock's is.
     function advance(ledger, input, log) {
         var seen = ledger.occasion;
         var occasion = input.occasion;
@@ -1362,20 +1382,21 @@
                 seen.open = occasion.open;
                 seen.start = occasion.start;
             }
-            return;
-        }
-        var current = ledger.current;
-        if (seen !== undefined && current !== undefined) {
-            if (!current.running) {
-                log(current.id + " missed: the " + label(seen) + " ended before its start time");
-                ledger.current = undefined;
-            } else if (current.phasesLeft !== undefined) {
-                current.phasesLeft = current.phasesLeft - 1;
+        } else {
+            var current = ledger.current;
+            if (seen !== undefined && current !== undefined) {
+                if (!current.running) {
+                    log(current.id + " missed: the " + label(seen) + " ended before its start time");
+                    ledger.current = undefined;
+                } else if (current.phasesLeft !== undefined) {
+                    current.phasesLeft = current.phasesLeft - 1;
+                }
             }
+            ledger.occasion = {
+                phase: occasion.phase, key: input.key, date: occasion.date, open: occasion.open, start: occasion.start,
+            };
         }
-        ledger.occasion = {
-            phase: occasion.phase, key: input.key, date: occasion.date, open: occasion.open, start: occasion.start,
-        };
+        ledger.occasion.endless = occasion.endless;
     }
 
     // input: { occasion (Phase.occasion), key, now = world-age hours, ready = the climate has updated,
@@ -1499,7 +1520,7 @@
     // Runs Schedule.tick from the world's start for o.minutes in-game minutes, at every minute where
     // something can change; a minute in between would find nothing to do, as in the game.
     // o: { defs, rule, start, minutes, roll(), climate(now), record = false to keep only the runs }.
-    // Returns { occasions, runs, clock }: occasions in order { phase, key, date, open, start, end, pool,
+    // Returns { occasions, runs, clock }: occasions in order { phase, key, date, open, start, endless, end, pool,
     // waits (each interval= event of the track right after its decision: { id, unit, from, to }), logs,
     // each { hours, text } as the mod logs it }, runs { id, track, serial, startsAt, endedAt (null while
     // still running) }.
@@ -1608,6 +1629,7 @@
         occasions.forEach(function (r) {
             r.open = r.source.open;
             r.start = r.source.start;
+            r.endless = r.source.endless;
             delete r.source;
         });
         return { occasions: occasions, runs: runs, clock: clock };
