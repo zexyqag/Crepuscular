@@ -55,8 +55,7 @@ end
 
 -- The kind of the zombie, or nil.
 function API.kindOf(z)
-    local kind = Kinds.of(z)
-    return kind
+    return Kinds.of(z)
 end
 
 -- { phase = "day" or "night", event, track and serial of the running event or nil }.
@@ -98,6 +97,7 @@ State.listen(function(state)
     triggerEvent(EVENT, current(state), previous)
 end)
 
-Crepuscular = { API = API }
+Crepuscular = Crepuscular or {}
+Crepuscular.API = API
 
 return API

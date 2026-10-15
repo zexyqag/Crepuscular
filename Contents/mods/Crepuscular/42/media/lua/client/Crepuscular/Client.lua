@@ -60,13 +60,20 @@ local function takeOut(list)
         local z = zombies:get(i)
         byId[z:getOnlineID()] = z
     end
+    local kindOf = Kinds.test()
     local cofOut = cryOfFearOut()
     for _, entry in ipairs(list) do
         if entry.kind == "cof" and cofOut ~= nil then
-            cofOut(entry)
+            -- Only for a copy this game has: Cry of Fear looks it up again by itself.
+            if byId[entry.id] ~= nil then
+                local ok, err = pcall(cofOut, entry)
+                if not ok then
+                    Log.warnOnce("cof out", "Cry of Fear's out failed for a monster the server removed: " .. tostring(err))
+                end
+            end
         else
             local z = byId[entry.id]
-            if z ~= nil and Kinds.of(z) == entry.kind then
+            if z ~= nil and kindOf(z) == entry.kind then
                 local dx, dy = z:getX() - entry.x, z:getY() - entry.y
                 if dx * dx + dy * dy <= OUT_RANGE * OUT_RANGE then
                     Kinds.remove(z, entry.kind)

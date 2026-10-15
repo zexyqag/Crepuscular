@@ -129,6 +129,14 @@ Kinds.register("cof", { isMember = function(z)
 end })
 Kinds.register("mutants", { isMember = Kinds.isMutant })
 
+-- Whether a built-in kind can have members in this game.
+local AVAILABLE = {
+    cof = Kinds.cryOfFearLoaded,
+    mutants = function()
+        return started and Kinds.mutantsApi() ~= nil
+    end,
+}
+
 -- Outfit index -> name, numbered as the game numbers persistent outfits: the female names sorted,
 -- then the male ones, each name once whatever its case.
 local outfitNames = nil
@@ -171,11 +179,14 @@ local function outfitName(z)
     return outfitNames[math.floor(id / 65536)]
 end
 
--- The Kinds option as the server parsed it: { { name, prefixes } }, prefixes lowercased.
+local EMPTY = {}
+
+-- The Kinds option as the server parsed it: { { name, prefixes } }, prefixes lowercased. A state
+-- saved before there were kinds has none until the server's next minute.
 local function optionKinds()
     local state = State.get()
-    if state == nil then
-        return {}
+    if state == nil or state.kinds == nil then
+        return EMPTY
     end
     return state.kinds
 end
@@ -189,33 +200,98 @@ local function startsWithAny(name, prefixes)
     return false
 end
 
--- The kind z belongs to and whether its far members are removed while it is off; nil if none.
-function Kinds.of(z)
-    if Kinds.isBandit(z) then
-        return nil
+-- Another mod's member test; one that fails counts as no member.
+local function member(entry, z)
+    local ok, result = pcall(entry.isMember, z)
+    if not ok then
+        Log.warnOnce("isMember " .. entry.name, "the kind " .. entry.name .. " another mod registered fails its"
+            .. " member test, so it has no members: " .. tostring(result))
+        return false
     end
-    for _, entry in ipairs(builtins) do
-        if entry.isMember(z) then
-            return entry.name, entry.despawn
+    return result
+end
+
+-- The membership test, built again when the Kinds option's kinds or the registry change.
+local test, testKinds, testRevision = nil, nil, nil
+
+local function classifier()
+    local options = optionKinds()
+    if test ~= nil and testKinds == options and testRevision == revision then
+        return test
+    end
+    local taken = {}
+    for _, kind in ipairs(options) do
+        taken[kind.name] = true
+    end
+    local others = {}
+    for _, entry in ipairs(registered) do
+        if not taken[entry.name] then
+            others[#others + 1] = entry
         end
     end
-    local options = optionKinds()
-    local taken = {}
-    if #options > 0 then
-        local name = outfitName(z)
-        for _, kind in ipairs(options) do
-            taken[kind.name] = true
-            if name ~= nil and startsWithAny(name, kind.prefixes) then
-                return kind.name, true
+    test = function(z)
+        if Kinds.isBandit(z) then
+            return nil
+        end
+        for _, entry in ipairs(builtins) do
+            if entry.isMember(z) then
+                return entry.name
             end
         end
+        if #options > 0 then
+            local name = outfitName(z)
+            if name ~= nil then
+                for _, kind in ipairs(options) do
+                    if startsWithAny(name, kind.prefixes) then
+                        return kind.name
+                    end
+                end
+            end
+        end
+        for _, entry in ipairs(others) do
+            if member(entry, z) then
+                return entry.name
+            end
+        end
+        return nil
     end
-    for _, entry in ipairs(registered) do
-        if not taken[entry.name] and entry.isMember(z) then
-            return entry.name, entry.despawn
+    testKinds, testRevision = options, revision
+    return test
+end
+
+-- The kind z belongs to, or nil.
+function Kinds.of(z)
+    return classifier()(z)
+end
+
+-- Kinds.of for many zombies in a row.
+function Kinds.test()
+    return classifier()
+end
+
+-- Of the kinds in off, those that can have members in this game and whose far members are
+-- removed; and whether there is any.
+function Kinds.removable(off)
+    local options = {}
+    for _, kind in ipairs(optionKinds()) do
+        options[kind.name] = true
+    end
+    local out, any = {}, false
+    for name in pairs(off) do
+        local can
+        if Kinds.BUILTIN[name] then
+            can = AVAILABLE[name]()
+        elseif options[name] then
+            can = true
+        else
+            can = byName[name] ~= nil and byName[name].despawn
+        end
+        if can then
+            out[name] = true
+            any = true
         end
     end
-    return nil
+    return out, any
 end
 
 -- Every kind in membership order: { name, source = "built in", "Kinds option" or "registered",

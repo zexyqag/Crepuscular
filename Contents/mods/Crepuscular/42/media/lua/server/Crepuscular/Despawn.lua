@@ -12,59 +12,63 @@ local Despawn = {}
 -- kind -> members removed since this game started.
 local removed = {}
 
--- Single player: the local players. getOnlinePlayers() is empty outside multiplayer.
-local function players()
+-- Where every player is, read once a minute. Single player: the local players;
+-- getOnlinePlayers() is empty outside multiplayer.
+local function positions()
     local list = {}
+    local function add(player)
+        list[#list + 1] = { x = player:getX(), y = player:getY() }
+    end
     if isServer() then
         local online = getOnlinePlayers()
         for i = 0, online:size() - 1 do
-            list[#list + 1] = online:get(i)
+            add(online:get(i))
         end
     else
         for i = 0, getNumActivePlayers() - 1 do
             local player = getSpecificPlayer(i)
             if player ~= nil then
-                list[#list + 1] = player
+                add(player)
             end
         end
     end
     return list
 end
 
-local function near(z, list, distance)
+local function near(z, spots, limit)
     local x, y = z:getX(), z:getY()
-    for _, player in ipairs(list) do
-        local dx, dy = player:getX() - x, player:getY() - y
-        if dx * dx + dy * dy <= distance * distance then
+    for _, spot in ipairs(spots) do
+        local dx, dy = spot.x - x, spot.y - y
+        if dx * dx + dy * dy <= limit then
             return true
         end
     end
     return false
 end
 
-local function anyOff(off)
-    for _ in pairs(off) do
-        return true
-    end
-    return false
-end
-
 local function minute()
     local state = State.get()
-    if not Kinds.started() or state == nil or not anyOff(state.effects.off) then
+    if not Kinds.started() or state == nil then
         return
     end
-    local off = state.effects.off
+    -- Without kinds that can have members here, such as mutants without The Mutants, there is
+    -- nothing to look for.
+    local targets, any = Kinds.removable(state.effects.off)
+    if not any then
+        return
+    end
     local cap = Settings.removalsPerMinute()
     local distance = Settings.keepDistance()
-    local list = players()
+    local limit = distance * distance
+    local spots = positions()
+    local kindOf = Kinds.test()
     local zombies = getCell():getZombieList()
     local doomed, kinds = {}, {}
     for i = 0, zombies:size() - 1 do
         local z = zombies:get(i)
         if not z:isDead() and not z:isReanimatedForGrappleOnly() and z:getTarget() == nil then
-            local kind, despawn = Kinds.of(z)
-            if kind ~= nil and off[kind] and despawn and not near(z, list, distance) then
+            local kind = kindOf(z)
+            if kind ~= nil and targets[kind] and not near(z, spots, limit) then
                 doomed[#doomed + 1] = z
                 kinds[#doomed] = kind
                 if #doomed == cap then

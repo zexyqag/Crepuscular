@@ -43,9 +43,10 @@ local function describe(option)
     return kind
 end
 
--- The set. entries of a definition as typed values. Entries the game can't take are left out
--- with a warning: the option may belong to a mod that isn't loaded.
-function Overrides.check(label, entries, warnings)
+-- The option name -> text entries as typed values, prefix being how a warning names an entry.
+-- Entries the game can't take are left out with a warning: the option may belong to a mod that
+-- isn't loaded.
+function Overrides.check(label, entries, prefix, warnings)
     local values = {}
     local names = {}
     for name in pairs(entries) do
@@ -69,7 +70,7 @@ function Overrides.check(label, entries, warnings)
             end
         end
         if why ~= nil then
-            warnings[#warnings + 1] = label .. ": set." .. name .. ": " .. why
+            warnings[#warnings + 1] = label .. ": " .. prefix .. name .. ": " .. why
         end
     end
     return values

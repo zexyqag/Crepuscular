@@ -25,6 +25,28 @@ local function nightOnly()
     return vars ~= nil and vars.NightOnly == true
 end
 
+-- Cry of Fear marks a home spent when it fills it, and with its NightOnly off frees it again only
+-- RespawnHours after a kill, so monsters removed while cof was off wouldn't come back. When cof is on
+-- again every home may be filled again, as NightOnly does at dusk. Its levels coming back change its
+-- settings revision, which makes it look for the homes around players anew.
+function CryOfFear.refill()
+    local host = COF_ServerMonsters
+    if not isServer() then
+        host = COF_MonsterSpawns
+    end
+    local saved = nil
+    if type(host) == "table" and type(host.engine) == "table" and type(host.engine.saved) == "function" then
+        saved = host.engine.saved()
+    end
+    if type(saved) ~= "table" or type(saved.done) ~= "table" then
+        Log.warnOnce("cof refill", "Cry of Fear has no spent-home record Crepuscular knows, so its monsters"
+            .. " removed while cof was off come back only after its RespawnHours")
+        return
+    end
+    saved.done = {}
+    Log.info("Cry of Fear: cof is on again, so every home may be filled again")
+end
+
 -- managed: some definition turns cof off and Cry of Fear is loaded.
 function CryOfFear.check(managed)
     if managed and nightOnly() then

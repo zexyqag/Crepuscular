@@ -99,8 +99,8 @@ Events.OnServerStarted.Add(check)
 Events.OnGameStart.Add(check)
 
 -- Members of every kind stay as they are: a mutant offered again would be healed.
-local function ordinary(z)
-    return not z:isDead() and not z:isReanimatedForGrappleOnly() and not Kinds.isBandit(z) and Kinds.of(z) == nil
+local function ordinary(z, kindOf)
+    return not z:isDead() and not z:isReanimatedForGrappleOnly() and not Kinds.isBandit(z) and kindOf(z) == nil
 end
 
 -- Requeue in progress: the next index in the zombie list.
@@ -114,12 +114,13 @@ local function requeue()
         return
     end
     local zombies = getCell():getZombieList()
+    local kindOf = Kinds.test()
     local offered = 0
     while cursor < zombies:size() and offered < REQUEUE_PER_MINUTE do
         local z = zombies:get(cursor)
         cursor = cursor + 1
         -- An entry already there is newer, from OnZombieCreate.
-        if pending[z] == nil and ordinary(z) then
+        if pending[z] == nil and ordinary(z, kindOf) then
             pending[z] = { attempts = 0, retryTicks = 0 }
             offered = offered + 1
         end

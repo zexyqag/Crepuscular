@@ -82,17 +82,20 @@ function Clock.definitions(rule)
     defs.names = {}
     local cof = false
     for _, def in ipairs(all) do
-        def.values = Overrides.check(def.label, def.set, defs.warnings)
+        def.values = Overrides.check(def.label, def.set, "set.", defs.warnings)
         for name in pairs(def.values) do
             defs.names[name] = true
         end
         cof = cof or (def.off ~= nil and def.off.cof == true)
     end
     if cof and Kinds.cryOfFearLoaded() then
-        defs.cof = Overrides.check("Cry of Fear", CryOfFear.OFF, defs.warnings)
+        defs.cof = Overrides.check("Cry of Fear", CryOfFear.OFF, "", defs.warnings)
         for name in pairs(defs.cof) do
             defs.names[name] = true
         end
+    elseif cof then
+        defs.warnings[#defs.warnings + 1] = "Cry of Fear: off=cof, but Cry of Fear Monster NPCs is not loaded,"
+            .. " so the kind cof has no members"
     end
     for _, text in ipairs(defs.errors) do
         Log.warnOnce(text, text)
@@ -199,6 +202,9 @@ local function update(state, ledger, defs)
         for name, value in pairs(defs.cof) do
             wanted[name] = value
         end
+    elseif defs.cof ~= nil and state.effects ~= nil and state.effects.off.cof then
+        -- cof was off until now.
+        CryOfFear.refill()
     end
     local event = nil
     if current ~= nil then
