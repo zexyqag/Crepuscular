@@ -11,6 +11,7 @@ local Clock = require "Crepuscular/Clock"
 local Despawn = require "Crepuscular/Despawn"
 local Mutants = require "Crepuscular/Mutants"
 local CryOfFear = require "Crepuscular/CryOfFear"
+local Zombies = require "Crepuscular/Zombies"
 
 local Commands = {}
 
@@ -121,6 +122,9 @@ local function status()
         off = { "none" }
     end
     add("kinds off: " .. table.concat(off, ", ") .. "; far members " .. Despawn.status())
+    for _, line in ipairs(Zombies.status()) do
+        add(line)
+    end
 
     local overridden = 0
     for name, entry in pairs(ModData.getOrCreate(Sandbox.STORE)) do

@@ -1,7 +1,8 @@
 -- The global ModData table Crepuscular: the server owns it and sends it to every client.
 -- { version, phase = "day" | "night", forced,
 --   event = { id, track, serial, running, startsAt, endsAt } or nil,
---   effects = { off = { [kind] = true } },
+--   effects = { off = { [kind] = true }, speed, steps, health of the definition in effect,
+--     fmax, smax = the largest speed=+N and speed=-N of all definitions },
 --   announce = { serial, text, color } or nil,
 --   sandbox = { [option name] = current value },
 --   kinds = { { name, prefixes } } from the Kinds option,

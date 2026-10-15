@@ -10,7 +10,7 @@
 })(this, function () {
     "use strict";
 
-    var MOD_VERSION = "0.4.0";
+    var MOD_VERSION = "0.5.0";
 
     // User text becomes keys, so tables keyed by it have no prototype ("constructor", "__proto__").
     function dict(from) {
@@ -602,8 +602,20 @@
         return v;
     };
 
+    PARSE.speed = function (v) {
+        return ranged(v, true, -100, 100, "a whole number from -100 to 100");
+    };
+
+    PARSE.steps = function (v) {
+        return ranged(v, true, 1, 2, "1 or 2");
+    };
+
+    PARSE.health = function (v) {
+        return ranged(v, false, 0.1, 5, "a number from 0.1 to 5");
+    };
+
     // Keys a base definition may have; the rest belong to events.
-    var EFFECTS = dict({ off: true, say: true, color: true });
+    var EFFECTS = dict({ off: true, say: true, color: true, speed: true, steps: true, health: true });
 
     // { key, option (for set.), value } or { bad = reason }, each with the name messages use.
     function fields(text) {
@@ -1420,9 +1432,9 @@
         NightMode: 1,
         NightStartHour: 20,
         NightEndHour: 4,
-        Day: "",
-        Night: "off=mutants",
-        Events1: "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
+        Day: "speed=+25;health=0.7",
+        Night: "speed=-50;off=mutants",
+        Events1: "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
         Events2: "",
         Events3: "",
         Events4: "",
@@ -1434,7 +1446,7 @@
     };
 
     // Every Crepuscular option, for set. entries that name one.
-    var OWN_OPTIONS = OPTION_ORDER.concat(["KeepDistance", "RemovalsPerMinute", "MutantRequeue", "Verbose"]);
+    var OWN_OPTIONS = OPTION_ORDER.concat(["KeepDistance", "RemovalsPerMinute", "MutantRequeue", "ZombiesPerSweep", "Verbose"]);
 
     // Cry of Fear Monster NPCs options a definition sets for its spawn levels (1 = None ... 5 = High).
     var COF_OPTIONS = {

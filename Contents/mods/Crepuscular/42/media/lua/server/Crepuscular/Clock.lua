@@ -10,6 +10,7 @@ local Overrides = require "Crepuscular/Overrides"
 local Sandbox = require "Crepuscular/Sandbox"
 local Kinds = require "Crepuscular/Kinds"
 local CryOfFear = require "Crepuscular/CryOfFear"
+local Zombies = require "Crepuscular/Zombies"
 
 local Clock = {}
 
@@ -62,7 +63,8 @@ local parsed = nil
 
 -- The definitions, parsed again whenever a text, the fixed hours or the registered kinds change.
 -- defs.names: every sandbox option they set; defs.cof: what the Cry of Fear adapter sets while
--- cof is off, nil when no definition turns it off or Cry of Fear isn't loaded.
+-- cof is off, nil when no definition turns it off or Cry of Fear isn't loaded; defs.fmax and
+-- defs.smax: the largest speed=+N and speed=-N of all of them, 0 for none.
 function Clock.definitions(rule)
     local texts = {}
     local same = parsed ~= nil and source.mode == rule.mode and source.start == rule.start
@@ -80,6 +82,7 @@ function Clock.definitions(rule)
         all[#all + 1] = ev
     end
     defs.names = {}
+    defs.fmax, defs.smax = 0, 0
     local cof = false
     for _, def in ipairs(all) do
         def.values = Overrides.check(def.label, def.set, "set.", defs.warnings)
@@ -87,6 +90,12 @@ function Clock.definitions(rule)
             defs.names[name] = true
         end
         cof = cof or (def.off ~= nil and def.off.cof == true)
+        local speed = def.speed or 0
+        if speed > defs.fmax then
+            defs.fmax = speed
+        elseif -speed > defs.smax then
+            defs.smax = -speed
+        end
     end
     if cof and Kinds.cryOfFearLoaded() then
         defs.cof = Overrides.check("Cry of Fear", CryOfFear.OFF, "", defs.warnings)
@@ -162,6 +171,9 @@ local function same(a, b)
     return true
 end
 
+-- The zombie keys of a definition, with the value they have when no definition sets them.
+local NEUTRAL = { speed = 0, steps = 1, health = 1 }
+
 -- Resolves the definition in effect (3.1), applies its sandbox values and publishes on change.
 local function update(state, ledger, defs)
     local clock = ledger.occasion.phase
@@ -214,13 +226,25 @@ local function update(state, ledger, defs)
         }
     end
 
+    local effects = { off = copy(off), fmax = defs.fmax, smax = defs.smax }
+    for key, neutral in pairs(NEUTRAL) do
+        local value = base[key]
+        if ev ~= nil and ev[key] ~= nil then
+            value = ev[key]
+        end
+        if value == nil then
+            value = neutral
+        end
+        effects[key] = value
+    end
+
     local sandbox, changed = Sandbox.sync(defs.names, wanted, label)
     local fresh = {
         version = State.VERSION,
         phase = phase,
         forced = Clock.forced ~= nil,
         event = event,
-        effects = { off = copy(off) },
+        effects = effects,
         announce = announce,
         sandbox = sandbox,
         kinds = copy(defs.kinds),
@@ -246,6 +270,7 @@ function Clock.tick()
     local rule = Clock.rule()
     local defs = Clock.definitions(rule)
     CryOfFear.check(defs.cof ~= nil)
+    Zombies.check(defs.fmax, defs.smax)
     local now = Clock.now()
     local occasion = Phase.occasion(now, rule)
     Schedule.tick(ledger, defs, {

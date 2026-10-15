@@ -32,7 +32,7 @@ option Crepuscular.NightEndHour
 option Crepuscular.Day
 {
     type = string,
-    default = ,
+    default = speed=+25;health=0.7,
     page = Crepuscular,
     translation = Crepuscular_Day,
 }
@@ -40,7 +40,7 @@ option Crepuscular.Day
 option Crepuscular.Night
 {
     type = string,
-    default = off=mutants,
+    default = speed=-50;off=mutants,
     page = Crepuscular,
     translation = Crepuscular_Night,
 }
@@ -48,7 +48,7 @@ option Crepuscular.Night
 option Crepuscular.Events1
 {
     type = string,
-    default = id=bloodmoon;track=moon;moon=full;chance=50;prio=10;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c,
+    default = id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c,
     page = Crepuscular,
     translation = Crepuscular_Events1,
 }
@@ -143,6 +143,16 @@ option Crepuscular.MutantRequeue
     default = false,
     page = Crepuscular,
     translation = Crepuscular_MutantRequeue,
+}
+
+option Crepuscular.ZombiesPerSweep
+{
+    type = integer,
+    min = 50,
+    max = 5000,
+    default = 400,
+    page = Crepuscular,
+    translation = Crepuscular_ZombiesPerSweep,
 }
 
 option Crepuscular.Verbose

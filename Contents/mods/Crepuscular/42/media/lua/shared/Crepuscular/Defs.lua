@@ -409,8 +409,20 @@ function PARSE.color(v)
     return v
 end
 
+function PARSE.speed(v)
+    return ranged(v, true, -100, 100, "a whole number from -100 to 100")
+end
+
+function PARSE.steps(v)
+    return ranged(v, true, 1, 2, "1 or 2")
+end
+
+function PARSE.health(v)
+    return ranged(v, false, 0.1, 5, "a number from 0.1 to 5")
+end
+
 -- Keys a base definition may have; the rest belong to events.
-local EFFECTS = { off = true, say = true, color = true }
+local EFFECTS = { off = true, say = true, color = true, speed = true, steps = true, health = true }
 
 -- Splits a definition into fields: { key, option (for set.), value } or { bad = reason }.
 local function fields(text)

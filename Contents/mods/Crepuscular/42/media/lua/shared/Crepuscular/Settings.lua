@@ -6,9 +6,9 @@ local DEFAULTS = {
     NightMode = 1,
     NightStartHour = 20,
     NightEndHour = 4,
-    Day = "",
-    Night = "off=mutants",
-    Events1 = "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
+    Day = "speed=+25;health=0.7",
+    Night = "speed=-50;off=mutants",
+    Events1 = "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
     Events2 = "",
     Events3 = "",
     Events4 = "",
@@ -20,6 +20,7 @@ local DEFAULTS = {
     KeepDistance = 40,
     RemovalsPerMinute = 50,
     MutantRequeue = false,
+    ZombiesPerSweep = 400,
 }
 
 local function invalid(name, value)
@@ -88,6 +89,10 @@ end
 
 function Settings.mutantRequeue()
     return boolean("MutantRequeue")
+end
+
+function Settings.zombiesPerSweep()
+    return integer("ZombiesPerSweep", 50, 5000)
 end
 
 return Settings
