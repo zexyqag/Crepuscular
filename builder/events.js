@@ -10,7 +10,7 @@
 })(this, function () {
     "use strict";
 
-    var MOD_VERSION = "0.7.0";
+    var MOD_VERSION = "0.8.0";
 
     // User text becomes keys, so tables keyed by it have no prototype ("constructor", "__proto__").
     function dict(from) {
@@ -229,7 +229,7 @@
     ];
 
     // Number effects that may be a range a..b, which grow= of the same definition moves along.
-    var GROWING = ["speed", "health", "rise"];
+    var GROWING = ["speed", "health", "rise", "fog", "desat", "dark", "ambient"];
     // Of those, the ones that are whole numbers.
     var WHOLE = dict({ speed: true, rise: true });
 
@@ -631,12 +631,25 @@
         return v;
     };
 
+    function hex(text, digits) {
+        return text.length === digits && /^[0-9a-f]+$/.test(text);
+    }
+
     PARSE.color = function (v) {
-        if (!/^[0-9a-f]{6}$/.test(v)) {
+        if (!hex(v, 6)) {
             return new Bad(quote(v) + " is not a colour as rrggbb");
         }
         return v;
     };
+
+    PARSE.sky = function (v) {
+        if (!hex(v, 8)) {
+            return new Bad(quote(v) + " is not a colour as rrggbbaa");
+        }
+        return v;
+    };
+
+    PARSE.fogcolor = PARSE.color;
 
     PARSE.sound = function (v) {
         if (!/^[A-Za-z0-9_]+$/.test(v)) {
@@ -674,6 +687,16 @@
         return growing(v, true, 0, 100, "a whole number from 0 to 100", "whole numbers from 0 to 100 such as 25..100");
     };
 
+    // Climate values from 0 to 1.
+    function climate(v) {
+        return growing(v, false, 0, 1, "a number from 0 to 1", "numbers from 0 to 1 such as 0.2..0.6");
+    }
+
+    PARSE.fog = climate;
+    PARSE.desat = climate;
+    PARSE.dark = climate;
+    PARSE.ambient = climate;
+
     PARSE.wake = function (v) {
         if (v !== "true" && v !== "false") {
             return new Bad(quote(v) + " is not true or false");
@@ -706,7 +729,8 @@
     // Keys a base definition may have; the rest belong to events.
     var EFFECTS = dict({
         off: true, say: true, color: true, sound: true, speed: true, steps: true, health: true, rise: true,
-        wake: true, grow: true,
+        wake: true, grow: true, sky: true, fogcolor: true, fog: true, desat: true, dark: true,
+        ambient: true,
     });
 
     // A range needs grow= in its own definition: an event's grow never moves what it inherits. Without

@@ -14,6 +14,7 @@ local Mutants = require "Crepuscular/Mutants"
 local CryOfFear = require "Crepuscular/CryOfFear"
 local Zombies = require "Crepuscular/Zombies"
 local Risers = require "Crepuscular/Risers"
+local Visuals = require "Crepuscular/Visuals"
 
 local Commands = {}
 
@@ -150,6 +151,7 @@ local function status()
     for _, line in ipairs(Risers.status()) do
         add(line)
     end
+    add(Visuals.status())
 
     local overridden = 0
     for name, entry in pairs(ModData.getOrCreate(Sandbox.STORE)) do

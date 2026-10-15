@@ -213,9 +213,9 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         NightMode: { name: "Night mode", options: ["Fixed hours", "Seasonal night"], tooltip: "How night is decided. Fixed hours: night runs between the two hours below, every day of the year, whatever the Day/Night Cycle setting. Seasonal night: the game's own dusk and dawn, which move with the seasons and follow the Day/Night Cycle setting (endless day has no night, endless night is always night)." },
         NightStartHour: { name: "Night starts at", tooltip: "Hour of the day, 0 to 23, at which night begins when Night mode is Fixed hours. Night can run past midnight. If both hours are the same there is no night at all, and the log says so." },
         NightEndHour: { name: "Night ends at", tooltip: "Hour of the day, 0 to 23, at which night ends when Night mode is Fixed hours." },
-        Day: { name: "Day", tooltip: "What changes by day while no event runs. Fields are key=value, separated by ;. speed=+25 makes 25 percent of ordinary zombies one tier faster (shambler to fast shambler, fast shambler to sprinter) and speed=-50 makes 50 percent one tier slower; a zombie that speeds up is among the last to slow down, and speed=0 keeps every zombie at the game's speed. steps=2 moves them two tiers: always sprinters or always shamblers. health=0.7 gives new and reloaded zombies 70 percent of the health they roll and lowers any zombie above 70 percent of the most a new one can have; health=1.5 gives new and reloaded zombies 150 percent, and zombies already around keep theirs. rise=50 marks 50 percent of the zombies killed while the day lasts to get up again (rise=100 all of them, rise=0 none), and wake=true lets marked corpses get up while it lasts; a corpse marked by day without wake=true gets up once a definition with it applies, such as the default Night. When and how often they rise is set by the options below. speed, health and rise can grow with the days since the world began: speed=+25..+75;grow=60d goes from +25 on world day 0 to +75 on world day 60 and stays there, grow=30d..90d moves it between those days instead, and health=0.7..0.4 and rise=25..100 work the same way. World days are counted at noon, as for every= and mindays=, and a speed or rise share is rounded to a whole percent. A range needs grow= in the same definition, and grow= moves only that definition's own ranges. Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. off=cof,mutants turns those monster kinds off (off=none turns none off): far ones are removed, The Mutants makes no new mutants and Cry of Fear Monster NPCs spawns nothing new. A kind no definition turns off is left alone. For Cry of Fear monsters only at night, write off=cof here and keep its own Night only option off; as with that option, each time cof is on again every Cry of Fear home may be filled again, so killed monsters come back too. set.Table.Option=value changes a sandbox option, for example set.ZombieLore.Toughness=1, or set.Option=value for an option without a table, for example set.HoursForCorpseRemoval=24; it goes back to its base value when the day ends. say=text shows a line to every player when the day begins (say=@Key shows that translation), and color=rrggbb gives its colour. sound=Name plays that game sound on every player's game at the same moment, with or without a line, for example sound=MetaWolfHowl; upper and lower case matter. A player who joins or loads the game while the day lasts gets the line and the sound then. A sun event starts from these values, except say=, color= and sound=. The default, speed=+25;health=0.7, makes a quarter of the zombies faster and the zombies more fragile, and zombies killed by day stay down. A bad field is skipped and logged, and the rest applies." },
-        Night: { name: "Night", tooltip: "What changes by night while no event runs, written as for Day: speed=-50 or speed=+25, steps=2, health=1.5, rise=50, wake=true, a range that grows such as speed=-25..-75;grow=60d, off=mutants,cof or off=none, set.Table.Option=value, say=text, color=rrggbb and sound=Name. The values go back to their base when the night ends. A moon event starts from these values except say=, color= and sound=, even when it runs into the day. The default, speed=-50;rise=50;wake=true;off=mutants, makes half of the zombies slower, marks half of the zombies killed at night to get up again and lets marked corpses get up at night, keeps The Mutants from making mutants at night and removes far mutants." },
-        Events1: { name: "Events 1", tooltip: "Moons and suns: special nights and days. Events are separated by |, fields by ;. Each event needs id=name (letters a-z, digits and _) and track=moon (decided when night begins) or track=sun (decided when day begins). Conditions, which must all hold: moon=full (the first night of a full moon; also new, waxingcrescent, firstquarter, waxinggibbous, waninggibbous, thirdquarter, waningcrescent), date=10-31 or date=12-20..01-05, month=6..8, season=summer, every=30 (every 30 days since the world began; every=30+5 shifts it by 5), mindays=30 and maxdays=365 (days since the world began), nth=4 (every 4th time its calendar conditions hold), after=id (the first time after that event ended), cooldown=20d or 36h, interval=3d..7d (after each start it waits a random 3 to 7 whole days, counted in world days, before it can happen again, and the first wait counts from world day 0, the day mindays= and every= count from, or for hours from 07:00 that day; interval=7d waits exactly 7 days, interval=12h..36h whole hours from its start time, but hours drift against a seasonal dusk or dawn, so days suit a nightly or daily rhythm; once the wait is over it stays a candidate until it starts, so a lost chance or a higher prio doesn't roll a new wait, and an admin start counts as a start), weather=rain, snow, storm, fog or clear, tempmin=0 and tempmax=30 (degrees C), chance=50. A list such as moon=full,new holds when any item does. Timing: at=HH:MM starts it later in its night or day, and for=phase (the default), 2p (phases), 6h or 3.5d sets how long it lasts. prio=10: when several events qualify, the highest is tried first. Effects: speed, steps, health, rise, wake, off, set., say, color and sound, as in Day and Night, with grow= for its own ranges; a moon starts from Night and a sun from Day except for say, color and sound, and a range it takes from them grows with their grow=. One event runs at a time, and nothing else is decided while it runs. An event with an error is skipped and logged. Keep each option under 32000 bytes." },
+        Day: { name: "Day", tooltip: "What changes by day while no event runs. Fields are key=value, separated by ;. speed=+25 makes 25 percent of ordinary zombies one tier faster (shambler to fast shambler, fast shambler to sprinter) and speed=-50 makes 50 percent one tier slower; a zombie that speeds up is among the last to slow down, and speed=0 keeps every zombie at the game's speed. steps=2 moves them two tiers: always sprinters or always shamblers. health=0.7 gives new and reloaded zombies 70 percent of the health they roll and lowers any zombie above 70 percent of the most a new one can have; health=1.5 gives new and reloaded zombies 150 percent, and zombies already around keep theirs. rise=50 marks 50 percent of the zombies killed while the day lasts to get up again (rise=100 all of them, rise=0 none), and wake=true lets marked corpses get up while it lasts; a corpse marked by day without wake=true gets up once a definition with it applies, such as the default Night. When and how often they rise is set by the options below. speed, health, rise and the sky numbers can grow with the days since the world began: speed=+25..+75;grow=60d goes from +25 on world day 0 to +75 on world day 60 and stays there, grow=30d..90d moves it between those days instead, and health=0.7..0.4, rise=25..100 and fog=0.2..0.6 work the same way. World days are counted at noon, as for every= and mindays=, and a speed or rise share is rounded to a whole percent. A range needs grow= in the same definition, and grow= moves only that definition's own ranges. Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. off=cof,mutants turns those monster kinds off (off=none turns none off): far ones are removed, The Mutants makes no new mutants and Cry of Fear Monster NPCs spawns nothing new. A kind no definition turns off is left alone. For Cry of Fear monsters only at night, write off=cof here and keep its own Night only option off; as with that option, each time cof is on again every Cry of Fear home may be filled again, so killed monsters come back too. set.Table.Option=value changes a sandbox option, for example set.ZombieLore.Toughness=1, or set.Option=value for an option without a table, for example set.HoursForCorpseRemoval=24; it goes back to its base value when the day ends. say=text shows a line to every player when the day begins (say=@Key shows that translation), and color=rrggbb gives its colour. sound=Name plays that game sound on every player's game at the same moment, with or without a line, for example sound=MetaWolfHowl; upper and lower case matter. A player who joins or loads the game while the day lasts gets the line and the sound then. sky=rrggbbaa tints the light while the day lasts, aa being the strength from 00 (none) to ff (full), for example sky=ff964660. fogcolor=rrggbb colours fog, and fog=, desat= (grey), dark= (night strength) and ambient= (ambient light) set those values from 0 to 1. Each replaces the game's own value while it applies and gives it back afterwards, and one not set stays the game's. The server sets them: in multiplayer players see a change with the next climate update, up to about 10 in-game minutes later, and fade it in. Admin climate overrides win, rain and storms still mix in their own sky and fog, and view distance can't change. A sun event starts from these values, except say=, color= and sound=. The default, speed=+25;health=0.7, makes a quarter of the zombies faster and the zombies more fragile, zombies killed by day stay down, and the sky is the game's. A bad field is skipped and logged, and the rest applies." },
+        Night: { name: "Night", tooltip: "What changes by night while no event runs, written as for Day: speed=-50 or speed=+25, steps=2, health=1.5, rise=50, wake=true, a range that grows such as speed=-25..-75;grow=60d, off=mutants,cof or off=none, set.Table.Option=value, say=text, color=rrggbb, sound=Name, and the sky: sky=rrggbbaa, fogcolor=rrggbb and fog=, desat=, dark= and ambient= from 0 to 1, which reach players' games with the next climate update, up to about 10 in-game minutes later. The values go back to their base when the night ends. A moon event starts from these values except say=, color= and sound=, even when it runs into the day. The default, speed=-50;rise=50;wake=true;off=mutants, makes half of the zombies slower, marks half of the zombies killed at night to get up again and lets marked corpses get up at night, keeps The Mutants from making mutants at night and removes far mutants; the sky is the game's." },
+        Events1: { name: "Events 1", tooltip: "Moons and suns: special nights and days. Events are separated by |, fields by ;. Each event needs id=name (letters a-z, digits and _) and track=moon (decided when night begins) or track=sun (decided when day begins). Conditions, which must all hold: moon=full (the first night of a full moon; also new, waxingcrescent, firstquarter, waxinggibbous, waninggibbous, thirdquarter, waningcrescent), date=10-31 or date=12-20..01-05, month=6..8, season=summer, every=30 (every 30 days since the world began; every=30+5 shifts it by 5), mindays=30 and maxdays=365 (days since the world began), nth=4 (every 4th time its calendar conditions hold), after=id (the first time after that event ended), cooldown=20d or 36h, interval=3d..7d (after each start it waits a random 3 to 7 whole days, counted in world days, before it can happen again, and the first wait counts from world day 0, the day mindays= and every= count from, or for hours from 07:00 that day; interval=7d waits exactly 7 days, interval=12h..36h whole hours from its start time, but hours drift against a seasonal dusk or dawn, so days suit a nightly or daily rhythm; once the wait is over it stays a candidate until it starts, so a lost chance or a higher prio doesn't roll a new wait, and an admin start counts as a start), weather=rain, snow, storm, fog or clear, tempmin=0 and tempmax=30 (degrees C), chance=50. A list such as moon=full,new holds when any item does. Timing: at=HH:MM starts it later in its night or day, and for=phase (the default), 2p (phases), 6h or 3.5d sets how long it lasts. prio=10: when several events qualify, the highest is tried first. Effects: speed, steps, health, rise, wake, off, set., say, color, sound and the sky (sky, fogcolor, fog, desat, dark, ambient), as in Day and Night, with grow= for its own ranges; a moon starts from Night and a sun from Day except for say, color and sound, and a range it takes from them grows with their grow=. Players' games get its sky with the next climate update, up to about 10 in-game minutes after it starts, and fade it in; admin climate overrides win, and view distance can't change. One event runs at a time, and nothing else is decided while it runs. An event with an error is skipped and logged. Keep each option under 32000 bytes." },
         Kinds: { name: "Monster kinds", tooltip: "Monsters of other mods, told by their outfit: name=prefix,prefix;name=prefix, for example wraiths=ZW_,Wraith;husks=Husk_. A zombie whose outfit name starts with one of the prefixes (upper and lower case don't matter) belongs to that kind. Names are made of a-z, 0-9 and _. cof (Cry of Fear Monster NPCs) and mutants (The Mutants) are built in, and other mods can add kinds of their own. Put a kind in off= of Day, Night or an event to remove its far members while that applies; it can't keep a mod from turning zombies into its monsters. When The Mutants is loaded, members of every kind are never turned into mutants." },
     };
     Defs.SLOTS.slice(1).forEach(function (slot) {
@@ -236,10 +236,16 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
     // Where a new field goes, so written text reads like the mod's own examples.
     var KEY_ORDER = ["id", "track", "moon", "date", "month", "season", "every", "nth", "mindays", "maxdays", "after",
         "cooldown", "interval", "weather", "tempmin", "tempmax", "chance", "at", "for", "prio", "speed", "steps", "health", "rise", "wake",
-        "grow", "off", "set.", "say", "color", "sound"];
+        "grow", "off", "set.", "say", "color", "sound", "sky", "fogcolor", "fog", "desat", "dark", "ambient"];
     var EVENT_KEYS = KEY_ORDER.filter(function (k) { return k !== "set."; });
-    var BASE_KEYS = ["speed", "steps", "health", "rise", "wake", "grow", "off", "say", "color", "sound"];
-    var GROWING = ["speed", "health", "rise"];
+    var BASE_KEYS = ["speed", "steps", "health", "rise", "wake", "grow", "off", "say", "color", "sound", "sky", "fogcolor", "fog", "desat",
+        "dark", "ambient"];
+    var GROWING = ["speed", "health", "rise", "fog", "desat", "dark", "ambient"];
+    var VISUAL_NUMBERS = ["fog", "desat", "dark", "ambient"];
+    // The game's own night light, ClimateManager's colNight: 0.33 grey at 0.4.
+    var NIGHT_SKY = "54545466";
+    // Its fog colour, ClimateManager's colorNewFog: 0.9, 0.9, 0.95.
+    var GAME_FOG = "e6e6f2";
 
     // Sounds the game itself plays by name, all of them once rather than in a loop.
     var SOUNDS = [
@@ -265,7 +271,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         after: "Event ids, separated by commas: the first night or day of this track decided after one of them ended. It still has to win, so give it the highest prio.",
         cooldown: "At least this long since its last start, up to 3650 days.",
         interval: "After each start it waits a random whole number of days (or hours) between the two, before it can happen again. Days count world days, like every and the world-day fields, and the first wait counts from world day 0. Hours count from its start time, the first wait from 07:00 on world day 0, and drift against a seasonal dusk or dawn, so days suit a nightly or daily rhythm. Leave the longest empty for a fixed wait. Once the wait is over it stays a candidate until it starts: a lost chance or a higher prio doesn't roll a new wait, and an admin start counts as a start.",
-        weather: "At the decision: rain, snow, storm, fog (intensity 0.5 or more) or clear (none of these). Several: any.",
+        weather: "At the decision: rain, snow, storm, fog (intensity 0.5 or more) or clear (none of these). Several: any. The fog is as players see it, so a fog= of the night or day that just ended counts.",
         tempmin: "Temperature at the decision, °C, -80 to 80: at least this.",
         tempmax: "Temperature at the decision, °C, -80 to 80: at most this.",
         chance: "Percent, 0 to 100, decimals allowed. Rolled only when it is the highest candidate left; empty means always.",
@@ -274,9 +280,15 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         health: "0.1 to 5. Below 1, new and reloaded zombies get that share of the health they roll, and no zombie keeps more than that share of the most a new one can have. Above 1, new and reloaded zombies get that much more; zombies already around keep theirs. 1 changes nothing. A range such as 0.7..0.4 goes from the first to the second over the days of Grows.",
         rise: "0 to 100: the percent of the zombies killed while this applies that are marked to get up again (100 all of them, 0 none). When they come due, how often and what keeps them down are the mod's other options. A range such as 25..100 goes from the first to the second over the days of Grows, rounded to whole percents.",
         wake: "Whether marked corpses get up while this applies. A corpse that comes due at another time waits for a definition with wake=true, so corpses marked by day can get up at night.",
-        grow: "The world days over which this definition's ranges (speed, health or rise a..b) go from their first value to their second; before and after, they keep their ends. Empty from means world day 0. World days are counted at noon, as for every. Only this definition's own ranges grow: an event that takes a range from Day or Night follows their Grows.",
+        grow: "The world days over which this definition's ranges (speed, health, rise or a sky number a..b) go from their first value to their second; before and after, they keep their ends. Empty from means world day 0. World days are counted at noon, as for every. Only this definition's own ranges grow: an event that takes a range from Day or Night follows their Grows.",
         say: "A line shown to every player when it starts, and to a player who joins or loads the game while it lasts; @Key shows that translation. ; and | can't be part of it.",
         color: "The colour of that line; white when not set.",
+        sky: "The colour of the light, rrggbbaa: aa is how strongly it tints, 00 not at all and ff fully. It replaces the game's own light colour, with its dawn and dusk shades, for as long as this applies; the game's night is about " + NIGHT_SKY + ". It tints indoors the same way.",
+        fogcolor: "The colour of fog, rrggbb. It shows only where there is fog: natural fog or fog=. The game's own is " + GAME_FOG + ".",
+        fog: "Fog, 0 (none) to 1 (thick), instead of the weather's. 0 keeps fog away. Rain and storms still clear or thicken it while they last, and with fog turned off or endless in the sandbox options it does nothing. A range goes from the first to the second over the days of Grows.",
+        desat: "How grey the world looks, 0 (full colour) to 1 (grey), instead of the season's and the fog's. A range goes from the first to the second over the days of Grows.",
+        dark: "The game's night strength, 0 (day) to 1 (night), instead of its own. Among other things it sets the stars and the light of the sky; the light colour keeps following the real time of day. A range goes from the first to the second over the days of Grows.",
+        ambient: "The game's ambient light, 0 (dark) to 1 (daylight), instead of its own; the Night Darkness sandbox setting still sets how dark 0 is. A range goes from the first to the second over the days of Grows.",
         sound: "A game sound played on every player's game when it starts, with or without a line, and for a player who joins or loads the game while it lasts; upper and lower case matter. The suggestions are sounds of the game itself; another mod's sound works by its name, and the mod's log warns about a name the game doesn't know.",
     };
 
@@ -722,9 +734,10 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         var parts = GROWING.map(function (key) {
             var owner = def[key] !== undefined || !base ? def : base;
             var v = C.Defs.at(owner, key, day);
+            if (v === undefined && NEUTRAL[key] === undefined) { return null; }
             if (v === undefined) { v = NEUTRAL[key]; }
             return key + " " + shown(key, v) + (owner !== def ? " (from " + owner.label + ")" : "");
-        });
+        }).filter(function (x) { return x !== null; });
         return h("div", { "class": "field", "data-key": "grow-preview" },
             h("label", { "for": id }, "On world day"),
             h("div", { "class": "row" },
@@ -822,18 +835,85 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         }, msgs);
     }
 
-    // inherited: what the definition has without its own health and rise, as text; def and base: the parsed
-    // definition and, for an event, its track's base definition.
-    function zombiesSet(ownerKey, fields, msgs, isEvent, inherited, def, base) {
+    // inherited: what the definition has without its own health and rise, as text.
+    function zombiesSet(ownerKey, fields, msgs, isEvent, inherited) {
         return h("fieldset", { "data-key": "zombies" }, h("legend", null, "Zombies"),
             h("p", { "class": "help" }, "Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too."),
             speedField(ownerKey, fields, msgs, isEvent),
             stepsField(ownerKey, fields, msgs, isEvent),
             textField(ownerKey, fields, "health", "Health factor", { "class": "small", inputmode: "decimal", placeholder: inherited.health }, msgs),
             textField(ownerKey, fields, "rise", "Rise again, percent of kills", { "class": "small", inputmode: "numeric", placeholder: inherited.rise }, msgs),
-            wakeField(ownerKey, fields, msgs, isEvent),
+            wakeField(ownerKey, fields, msgs, isEvent));
+    }
+
+    function growSet(ownerKey, fields, msgs, def, base) {
+        return h("fieldset", { "data-key": "growth" }, h("legend", null, "Growth"),
             growField(ownerKey, fields, msgs),
             growPreview(ownerKey, def, base));
+    }
+
+    function hexOk(text, digits) {
+        return typeof text === "string" && text.length === digits && /^[0-9a-fA-F]+$/.test(text);
+    }
+
+    // What a white wall looks like under a sky colour rrggbbaa: each channel 1 + (c - 1) * a, as the game tints.
+    function underSky(hex8) {
+        var a = parseInt(hex8.slice(6, 8), 16) / 255;
+        var rgb = [0, 2, 4].map(function (i) {
+            var c = parseInt(hex8.slice(i, i + 2), 16) / 255;
+            return Math.round((1 + (c - 1) * a) * 255);
+        });
+        return "rgb(" + rgb.join(",") + ")";
+    }
+
+    function skyField(ownerKey, fields, msgs, inherited) {
+        var raw = getField(fields, "sky");
+        if (raw !== null && !/^[0-9a-fA-F]{0,8}$/.test(raw)) {
+            return asWritten(ownerKey, "sky", "Sky colour", raw, msgs);
+        }
+        var ok = hexOk(raw, 8);
+        var alpha = ok ? parseInt(raw.slice(6, 8), 16) : 0;
+        var off = raw === null;
+        return fieldBox(ownerKey, "sky", null, HELP.sky, function (id) {
+            return h("div", { "class": "row" },
+                h("label", { "class": "inline", "for": id + "-on" }, h("input", { type: "checkbox", id: id + "-on", "data-act": "sky", "data-part": "on", checked: !off }),
+                    "Sky colour" + (off && inherited.sky ? " (not set: " + inherited.sky + ")" : "")),
+                h("input", { type: "color", id: id + "-picker", value: "#" + (ok ? raw.slice(0, 6).toLowerCase() : NIGHT_SKY.slice(0, 6)), "data-act": "sky",
+                    "data-part": "picker", "aria-label": "Sky colour picker", disabled: off }),
+                h("label", { "class": "inline", "for": id + "-alpha" }, "strength",
+                    h("input", { type: "range", id: id + "-alpha", min: "0", max: "255", step: "1", value: String(alpha), "data-act": "sky",
+                        "data-part": "alpha", disabled: off })),
+                textInput(id + "-hex", raw || "", { "class": "small", "data-act": "sky", "data-part": "hex", placeholder: "rrggbbaa",
+                    "aria-label": "Sky colour as rrggbbaa", disabled: off }),
+                ok ? h("span", { "class": "muted" }, h("span", { "class": "swatch", style: "background:" + underSky(raw) + ";width:2.2em", "aria-hidden": "true" }),
+                    " a white wall under it") : null);
+        }, msgs);
+    }
+
+    function fogColorField(ownerKey, fields, msgs, inherited) {
+        var raw = getField(fields, "fogcolor");
+        var valid = hexOk(raw, 6);
+        return fieldBox(ownerKey, "fogcolor", null, HELP.fogcolor, function (id) {
+            return h("div", { "class": "row" },
+                h("label", { "class": "inline", "for": id + "-on" }, h("input", { type: "checkbox", id: id + "-on", "data-act": "fogcolor", "data-part": "on", checked: raw !== null }),
+                    "Fog colour" + (raw === null && inherited.fogcolor ? " (not set: " + inherited.fogcolor + ")" : "")),
+                h("input", { type: "color", id: id, value: "#" + (valid ? raw.toLowerCase() : GAME_FOG), "data-act": "fogcolor", "data-part": "picker", "aria-label": "Fog colour picker", disabled: raw === null }),
+                textInput(id + "-hex", raw || "", { "class": "small", "data-act": "fogcolor", "data-part": "hex", placeholder: "rrggbb", "aria-label": "Fog colour as rrggbb", disabled: raw === null }));
+        }, msgs);
+    }
+
+    var VISUAL_LABELS = { fog: "Fog", desat: "Grey (desaturation)", dark: "Night strength", ambient: "Ambient light" };
+
+    // inherited: the visuals an event takes from its track's base, as text, or nothing for Day and Night.
+    function skySet(ownerKey, fields, msgs, inherited) {
+        return h("fieldset", { "data-key": "sky" }, h("legend", null, "Sky"),
+            h("p", { "class": "help" }, "Set by the server (or the single player game) for as long as this applies, as absolute values that replace the game's own, and given back to the game afterwards; a value not set stays the game's. Players' games get a change with the next climate update, up to about 10 in-game minutes later, and fade it in. Admin climate overrides win, rain and storms still mix in their own sky and fog, and view distance can't change."),
+            skyField(ownerKey, fields, msgs, inherited),
+            fogColorField(ownerKey, fields, msgs, inherited),
+            h("div", { "class": "row" }, VISUAL_NUMBERS.map(function (key) {
+                return textField(ownerKey, fields, key, VISUAL_LABELS[key], { "class": "small", inputmode: "decimal",
+                    placeholder: inherited[key] || "0 to 1" }, msgs);
+            })));
     }
 
     function colorField(ownerKey, fields, msgs) {
@@ -914,14 +994,15 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         return def.track === "moon" ? chk.defs.night : def.track === "sun" ? chk.defs.day : null;
     }
 
-    // The health and rise an event without its own has: its track's base definition's, or none without a track.
+    // The health, rise and visuals an event without its own has: its track's base definition's, or none without a track.
     function inheritedOf(def, chk) {
         var base = baseOf(def, chk);
         var out = {};
-        ["health", "rise"].forEach(function (key) {
+        ["health", "rise", "sky", "fogcolor"].concat(VISUAL_NUMBERS).forEach(function (key) {
             var v = base === null ? undefined : base[key];
-            out[key] = base === null ? null : typeof v === "object" ? C.luaString(v.from) + ".." + C.luaString(v.to)
-                : String(v === undefined ? NEUTRAL[key] : v);
+            out[key] = base === null || (v === undefined && NEUTRAL[key] === undefined) ? null
+                : typeof v === "object" ? C.luaString(v.from) + ".." + C.luaString(v.to)
+                    : typeof v === "string" ? v : C.luaString(v === undefined ? NEUTRAL[key] : v);
         });
         return out;
     }
@@ -982,11 +1063,13 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                     textField(ownerKey, fields, "tempmin", "Min °C", { "class": "small", inputmode: "decimal" }, msgs),
                     textField(ownerKey, fields, "tempmax", "Max °C", { "class": "small", inputmode: "decimal" }, msgs)),
                 textField(ownerKey, fields, "chance", "Chance %", { "class": "small", inputmode: "decimal", placeholder: "100" }, msgs)),
-            zombiesSet(ownerKey, fields, msgs, true, inheritedOf(def, chk), def, baseOf(def, chk)),
+            zombiesSet(ownerKey, fields, msgs, true, inheritedOf(def, chk)),
             h("fieldset", { "data-key": "monsters" }, h("legend", null, "Monsters"), offField(ownerKey, fields, msgs, chk, true)),
             setRows(ownerKey, fields, cls, msgs),
             h("fieldset", { "data-key": "say" }, h("legend", null, "Announcement"), sayField(ownerKey, fields, msgs), colorField(ownerKey, fields, msgs),
                 soundField(ownerKey, fields, msgs)),
+            skySet(ownerKey, fields, msgs, inheritedOf(def, chk)),
+            growSet(ownerKey, fields, msgs, def, baseOf(def, chk)),
             otherFields(ownerKey, fields, cls),
             h("div", { "class": "field" },
                 h("label", { "for": idOf("f", ownerKey, "raw") }, "This event as text"),
@@ -1003,12 +1086,14 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 msgs.errors.length ? h("span", { "class": "badge error" }, msgs.errors.length + " skipped") : null),
             h("p", { "class": "help" }, name === "Day" ? "What changes by day while no event runs. A sun event starts from these values, except say=, color= and sound=." : "What changes by night while no event runs. A moon event starts from these values except say=, color= and sound=, even when it runs into the day."),
             msgList(rest.errors, rest.warnings),
-            zombiesSet(name, fields, msgs, false, { health: "1", rise: "0" }, name === "Day" ? chk.defs.day : chk.defs.night, null),
+            zombiesSet(name, fields, msgs, false, { health: "1", rise: "0" }),
             offField(name, fields, msgs, chk, false),
             setRows(name, fields, cls, msgs),
             h("fieldset", { "data-key": "say" }, h("legend", null, "Announcement"),
                 h("p", { "class": "help" }, "Shown when the " + name.toLowerCase() + " begins, unless an event covers it."),
                 sayField(name, fields, msgs), colorField(name, fields, msgs), soundField(name, fields, msgs)),
+            skySet(name, fields, msgs, {}),
+            growSet(name, fields, msgs, name === "Day" ? chk.defs.day : chk.defs.night, null),
             otherFields(name, fields, cls),
             h("div", { "class": "field" },
                 h("label", { "for": "raw-" + name }, name + " as text"),
@@ -1387,9 +1472,10 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         return w.id + " due from " + stamp(clock, w.from) + (w.to > w.from ? " to " + stamp(clock, w.to) : "") + later;
     }
 
+    // Whether a zombie value grows.
     function grows(chk) {
         return [chk.defs.day, chk.defs.night].concat(chk.defs.events).some(function (d) {
-            return GROWING.some(function (k) { return typeof d[k] === "object"; });
+            return ["speed", "health", "rise"].some(function (k) { return typeof d[k] === "object"; });
         });
     }
 
@@ -1406,6 +1492,29 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             if (v === undefined) { v = NEUTRAL[key]; }
             return key + " " + shown(key, v);
         }).join(", ") + " (" + (ev ? ev.id : base.label) + ", world day " + day + ")";
+    }
+
+    var VISUAL_KEYS = ["sky", "fogcolor"].concat(VISUAL_NUMBERS);
+
+    function hasVisuals(chk) {
+        return [chk.defs.day, chk.defs.night].concat(chk.defs.events).some(function (d) {
+            return VISUAL_KEYS.some(function (k) { return d[k] !== undefined; });
+        });
+    }
+
+    // The visuals in effect in occasion r at world-age hours, as the mod resolves them.
+    function visualsAt(chk, r, hours) {
+        var run = r.events.filter(function (x) { return x.startsAt <= hours + 1 / 120 && (x.endedAt === null || x.endedAt > hours); })[0];
+        var ev = run ? chk.defs.byId[run.id] : undefined;
+        var base = (ev ? ev.track === "moon" : r.phase === "night") ? chk.defs.night : chk.defs.day;
+        var day = C.Schedule.worldDay(r, hours);
+        var parts = [];
+        VISUAL_KEYS.forEach(function (key) {
+            var owner = ev !== undefined && ev[key] !== undefined ? ev : base;
+            var v = C.Defs.at(owner, key, day);
+            if (v !== undefined) { parts.push(key + " " + (typeof v === "string" ? v : shown(key, v))); }
+        });
+        return (parts.length ? parts.join(", ") : "the game's own") + " (" + (ev ? ev.id : base.label) + ", world day " + day + ")";
     }
 
     function detailFor(chk, result, byDate, key) {
@@ -1425,7 +1534,8 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             h("p", null, "Moon: " + MOON_LABELS[phase] + (first ? " (the first day of this phase: moon=" + MOONS[phase] + " can match)" : "") + ". World day " + worldDay + "."),
             occs.length === 0 && !lasting ? h("p", { "class": "muted" }, "No day or night opens on this date.") : null,
             lasting ? h("p", null, "The endless " + lasting.phase + " of " + lasting.key + " goes on."
-                + (grows(chk) ? " Zombies at noon: " + zombiesAt(chk, lasting, C.Schedule.noon(lasting, lasting.start + 24 * C.Sim.daysBetween(lasting.date, date))) + "." : "")) : null,
+                + (grows(chk) ? " Zombies at noon: " + zombiesAt(chk, lasting, C.Schedule.noon(lasting, lasting.start + 24 * C.Sim.daysBetween(lasting.date, date))) + "." : "")
+                + (hasVisuals(chk) ? " Sky at noon: " + visualsAt(chk, lasting, C.Schedule.noon(lasting, lasting.start + 24 * C.Sim.daysBetween(lasting.date, date))) + "." : "")) : null,
             occs.map(function (r) {
                 var pool = r.pool;
                 return h("div", { "data-key": "occ-" + r.index },
@@ -1437,6 +1547,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                             + (run.startsAt < r.start - 1 / 120 ? " (covers this " + r.phase + ")" : ""));
                     })) : h("p", null, "No event."),
                     grows(chk) ? h("p", null, "Zombies as it begins: " + zombiesAt(chk, r, r.start) + ".") : null,
+                    hasVisuals(chk) ? h("p", null, "Sky as it begins: " + visualsAt(chk, r, r.start) + ".") : null,
                     r.waits.length ? h("p", null, "Intervals after its decision: " + r.waits.map(function (w) { return waitText(w, clock, start); }).join("; ") + ".") : null,
                     pool && pool.ids.length ? h("p", null, "Candidates: " + pool.ids.map(function (id) {
                         var ev = chk.defs.byId[id];
@@ -1735,6 +1846,22 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 var on = box.querySelector("[data-part=on]").checked;
                 var hex = part === "picker" ? el.value.slice(1) : part === "hex" ? clean(el).replace(/^#/, "").trim() : (box.querySelector("[data-part=hex]").value || "ffffff");
                 editDef(owner, function (f) { setField(f, "color", on ? hex.toLowerCase() : null); });
+            } else if (act === "sky") {
+                // The typed text, or the picker with the strength.
+                var skyAct = el.getAttribute("data-part");
+                var skyHex = box.querySelector("[data-part=hex]");
+                var typed = skyAct === "hex" ? clean(skyHex).replace(/^#/, "").trim() : skyHex.value.trim();
+                var a = Number(box.querySelector("[data-part=alpha]").value);
+                var aa = (a < 16 ? "0" : "") + a.toString(16);
+                var picked = box.querySelector("[data-part=picker]").value.slice(1);
+                var skyText = skyAct === "picker" ? picked + aa
+                    : skyAct === "alpha" ? (/^[0-9a-fA-F]{6}/.test(typed) ? typed.slice(0, 6) : picked) + aa : typed || NIGHT_SKY;
+                editDef(owner, function (f) { setField(f, "sky", box.querySelector("[data-part=on]").checked ? skyText.toLowerCase() : null); });
+            } else if (act === "fogcolor") {
+                var fpart = el.getAttribute("data-part");
+                var fon = box.querySelector("[data-part=on]").checked;
+                var fhex = fpart === "picker" ? el.value.slice(1) : fpart === "hex" ? clean(el).replace(/^#/, "").trim() : (box.querySelector("[data-part=hex]").value || GAME_FOG);
+                editDef(owner, function (f) { setField(f, "fogcolor", fon ? fhex.toLowerCase() : null); });
             } else if (act === "off") {
                 var mode = box.querySelector("[data-part=mode]:checked").value;
                 var kinds = Array.prototype.filter.call(box.querySelectorAll("[data-part=kind]"), function (c) { return c.checked; }).map(function (c) { return c.value; });

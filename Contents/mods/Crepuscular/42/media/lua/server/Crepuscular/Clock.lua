@@ -11,6 +11,7 @@ local Sandbox = require "Crepuscular/Sandbox"
 local Kinds = require "Crepuscular/Kinds"
 local CryOfFear = require "Crepuscular/CryOfFear"
 local Zombies = require "Crepuscular/Zombies"
+local Visuals = require "Crepuscular/Visuals"
 
 local Clock = {}
 
@@ -211,7 +212,7 @@ end
 local NEUTRAL = { speed = 0, steps = 1, health = 1 }
 local CORPSES = { rise = 0, wake = false }
 
--- Resolves the definition in effect (3.1), applies its sandbox values and publishes on change.
+-- Resolves the definition in effect, applies its sandbox values and visuals and publishes on change.
 -- now: world-age hours.
 local function update(state, ledger, defs, now)
     local clock = ledger.occasion.phase
@@ -268,23 +269,31 @@ local function update(state, ledger, defs, now)
     end
 
     local day = Schedule.worldDay(ledger.occasion, now)
+    -- A range grows with the grow= of the definition it belongs to.
+    local function value(key)
+        local owner = base
+        if ev ~= nil and ev[key] ~= nil then
+            owner = ev
+        end
+        return Defs.at(owner, key, day)
+    end
     local function resolve(into, keys)
         for key, neutral in pairs(keys) do
-            -- A range grows with the grow= of the definition it belongs to.
-            local owner = base
-            if ev ~= nil and ev[key] ~= nil then
-                owner = ev
+            local v = value(key)
+            if v == nil then
+                v = neutral
             end
-            local value = Defs.at(owner, key, day)
-            if value == nil then
-                value = neutral
-            end
-            into[key] = value
+            into[key] = v
         end
         return into
     end
     local effects = resolve({ off = copy(off), fmax = defs.fmax, smax = defs.smax }, NEUTRAL)
     Clock.risers = resolve({}, CORPSES)
+    local visuals = {}
+    for _, key in ipairs(Visuals.KEYS) do
+        visuals[key] = value(key)
+    end
+    Visuals.sync(visuals, label)
 
     local sandbox, changed = Sandbox.sync(defs.names, wanted, label)
     local fresh = {

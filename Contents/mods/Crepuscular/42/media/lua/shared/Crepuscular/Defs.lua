@@ -38,7 +38,7 @@ local CONDITIONS = {
 }
 
 -- Number effects that may be a range a..b, which grow= of the same definition moves along.
-local GROWING = { "speed", "health", "rise" }
+local GROWING = { "speed", "health", "rise", "fog", "desat", "dark", "ambient" }
 -- Of those, the ones that are whole numbers.
 local WHOLE = { speed = true, rise = true }
 
@@ -438,12 +438,25 @@ function PARSE.say(v)
     return v
 end
 
+local function hex(text, digits)
+    return #text == digits and string.find(text, "^[0-9a-f]+$") ~= nil
+end
+
 function PARSE.color(v)
-    if string.find(v, "^[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$") == nil then
+    if not hex(v, 6) then
         return nil, quote(v) .. " is not a colour as rrggbb"
     end
     return v
 end
+
+function PARSE.sky(v)
+    if not hex(v, 8) then
+        return nil, quote(v) .. " is not a colour as rrggbbaa"
+    end
+    return v
+end
+
+PARSE.fogcolor = PARSE.color
 
 function PARSE.sound(v)
     if string.find(v, "^[A-Za-z0-9_]+$") == nil then
@@ -481,6 +494,16 @@ function PARSE.rise(v)
     return growing(v, true, 0, 100, "a whole number from 0 to 100", "whole numbers from 0 to 100 such as 25..100")
 end
 
+-- Climate values from 0 to 1.
+local function climate(v)
+    return growing(v, false, 0, 1, "a number from 0 to 1", "numbers from 0 to 1 such as 0.2..0.6")
+end
+
+PARSE.fog = climate
+PARSE.desat = climate
+PARSE.dark = climate
+PARSE.ambient = climate
+
 function PARSE.wake(v)
     if v ~= "true" and v ~= "false" then
         return nil, quote(v) .. " is not true or false"
@@ -512,7 +535,8 @@ end
 -- Keys a base definition may have; the rest belong to events.
 local EFFECTS = {
     off = true, say = true, color = true, sound = true, speed = true, steps = true, health = true, rise = true,
-    wake = true, grow = true,
+    wake = true, grow = true, sky = true, fogcolor = true, fog = true, desat = true, dark = true,
+    ambient = true,
 }
 
 -- A range needs grow= in its own definition: an event's grow never moves what it inherits. Without
