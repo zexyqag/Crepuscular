@@ -19,7 +19,9 @@ end
 
 -- name: a-z, 0-9 and _, not none, cof, mutants or a kind of the Kinds option.
 -- spec.isMember(z) -> boolean, on the server and on players' games; spec.despawn = false keeps far
--- members while the kind is off. The same name again replaces its spec.
+-- members while the kind is off. The same name again replaces its spec. Members keep their own speed
+-- and health on every game, so a member isMember misses on the player's game that runs it gets
+-- capped there, and the server takes that health.
 -- Returns true, or false and why.
 function API.registerKind(name, spec)
     if type(name) ~= "string" or string.find(name, "^[a-z0-9_]+$") == nil then

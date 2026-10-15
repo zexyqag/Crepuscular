@@ -36,10 +36,39 @@ else
     end
 end
 
+-- In single player a zombie gets its outfit ID when the game dresses it, which it does when it first
+-- draws it or is asked its outfit name; until then the ID is 0.
+local solo = not isClient() and not isServer()
+
+local function outfitID(z)
+    local id = z:getPersistentOutfitID()
+    if id == 0 and solo then
+        z:getOutfitName()
+        id = z:getPersistentOutfitID()
+    end
+    return id
+end
+
+-- zombie -> { id, h, roll }: its hashes, kept until its outfit ID changes.
+local known = setmetatable({}, { __mode = "k" })
+
+local function hashes(z, id)
+    local entry = known[z]
+    if entry == nil or entry.id ~= id then
+        entry = { id = id, h = Tuning.hash(id), roll = Tuning.roll(id) }
+        known[z] = entry
+    end
+    return entry
+end
+
 -- Left alone: dead, crawling, dragged corpses, zombies playing dead, Bandits and every kind's members.
+-- A single player zombie is dressed before its kind is told, so the kinds see its outfit.
 local function ordinary(z, kindOf)
-    return not z:isDead() and not z:isCrawling() and not z:isReanimatedForGrappleOnly() and not z:isFakeDead()
-        and not Kinds.isBandit(z) and kindOf(z) == nil
+    if z:isDead() or z:isCrawling() or z:isReanimatedForGrappleOnly() or z:isFakeDead() or Kinds.isBandit(z) then
+        return false
+    end
+    outfitID(z)
+    return kindOf(z) == nil
 end
 
 -- What the definition in effect asks, with the game settings it depends on, read live.
@@ -53,22 +82,29 @@ local function rules(effects)
     }
 end
 
--- Gives a zombie that some definition's speed reaches the tier of the definition in effect.
-local function speed(z, r)
-    local id = z:getPersistentOutfitID()
-    -- A player's game dresses a zombie without an outfit ID at random, so its hash would differ.
+-- The tier the definition in effect gives a zombie some definition's speed reaches, or nil when it
+-- has it already or none reaches it.
+local function retier(z, r)
+    local id = outfitID(z)
+    -- In multiplayer each player's game dresses a zombie without an outfit ID at random, so its hash
+    -- would differ from one game to the next.
     if id == 0 then
-        return
+        return nil
     end
-    local h = Tuning.hash(id)
-    if not Tuning.managed(h, r.fmax, r.smax) then
-        return
+    local entry = hashes(z, id)
+    if not Tuning.managed(entry.h, r.fmax, r.smax) then
+        return nil
     end
-    local tier = Tuning.target(h, Tuning.base(id, r.game, r.percent), r.speed, r.steps)
-    if Tuning.tier(z:getWalkType()) ~= tier then
-        setTier(z, tier)
-        counts.tiers = counts.tiers + 1
+    local tier = Tuning.target(entry.h, Tuning.base(entry.roll, r.game, r.percent), r.speed, r.steps)
+    if Tuning.tier(z:getWalkType()) == tier then
+        return nil
     end
+    return tier
+end
+
+local function retiered(z, tier)
+    setTier(z, tier)
+    counts.tiers = counts.tiers + 1
 end
 
 -- The next index in the zombie list.
@@ -92,11 +128,17 @@ local function sweep()
         end
         local z = zombies:get(cursor)
         cursor = cursor + 1
-        if ordinary(z, kindOf) then
-            if r.reach and runs(z) then
-                speed(z, r)
+        -- Telling a zombie's kind costs more than everything else here, so it comes last.
+        local tier = nil
+        if r.reach and runs(z) then
+            tier = retier(z, r)
+        end
+        local capped = r.cap ~= nil and Tuning.above(z:getHealth(), r.cap)
+        if (tier ~= nil or capped) and ordinary(z, kindOf) then
+            if tier ~= nil then
+                retiered(z, tier)
             end
-            if r.cap ~= nil and Tuning.above(z:getHealth(), r.cap) then
+            if capped then
                 z:setHealth(r.cap)
                 counts.capped = counts.capped + 1
             end
@@ -107,7 +149,8 @@ end
 Events.EveryOneMinute.Add(sweep)
 
 -- No player's game runs a zombie being created, and its health was just rolled, so the factor
--- can't heal a wound.
+-- can't heal a wound. A zombie a mod spawns in an outfit is dressed after this event, which changes
+-- its outfit ID: the sweep gives it its tier again, and health the mod sets wins.
 local function created(z)
     local state = State.get()
     if not Kinds.started() or state == nil then
@@ -127,7 +170,10 @@ local function created(z)
         return
     end
     if r.reach then
-        speed(z, r)
+        local tier = retier(z, r)
+        if tier ~= nil then
+            retiered(z, tier)
+        end
     end
     if f ~= 1 then
         z:setHealth(Tuning.created(z:getHealth(), f))

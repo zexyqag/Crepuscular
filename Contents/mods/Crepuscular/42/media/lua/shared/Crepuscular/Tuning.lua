@@ -28,8 +28,13 @@ local function mix(id, first, second)
     if x < 0 then
         x = x + 4294967296
     end
+    -- Bit 15 is the game's fallen-hat flag, which machines set at different times in a zombie's life.
+    if wrap(x, 65536) >= 32768 then
+        x = x - 32768
+    end
     x = mulmod(x + 1, first)
-    -- Swapping the 16-bit halves keeps the result from being linear in the ID.
+    -- Swapping the 16-bit halves only scrambles a little: neighbouring IDs still land one of a few
+    -- fixed steps apart, which spreads them evenly enough over the shares.
     local high = math.floor(x / 65536)
     x = (x - high * 65536) * 65536 + high
     return mulmod(x, second)
@@ -41,17 +46,21 @@ function Tuning.hash(id)
     return wrap(mix(id, 2654435761, 2246822519), 100)
 end
 
+-- 0 to 199 from the same ID by a second, unrelated hash, for Tuning.base.
+function Tuning.roll(id)
+    return wrap(mix(id, 3266489917, 668265263), 200)
+end
+
 -- The tier the game's ZombieLore.Speed gives: 1 to 3 as they are; 4 (random) as the game rolls it,
--- percent sprinters and the rest split evenly, but fixed per zombie by a second, unrelated hash.
-function Tuning.base(id, speed, percent)
+-- percent sprinters and the rest split evenly, but fixed per zombie by its roll.
+function Tuning.base(roll, speed, percent)
     if speed ~= 4 then
         return speed
     end
-    local h = wrap(mix(id, 3266489917, 668265263), 200)
-    if math.floor(h / 2) < percent then
+    if math.floor(roll / 2) < percent then
         return 1
     end
-    return 2 + wrap(h, 2)
+    return 2 + wrap(roll, 2)
 end
 
 -- Whether some definition's speed reaches a zombie with hash h: fmax is the largest +N, smax the
