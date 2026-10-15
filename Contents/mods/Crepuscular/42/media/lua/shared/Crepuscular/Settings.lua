@@ -126,6 +126,17 @@ function Settings.riseDelayMax()
     return number("RiseDelayMax", 0, 48)
 end
 
+-- The two, the lower first.
+function Settings.riseDelay()
+    local low, high = Settings.riseDelayMin(), Settings.riseDelayMax()
+    if low > high then
+        Log.warnOnce("setting RiseDelay", "Crepuscular.RiseDelayMin is " .. tostring(low) .. ", above Crepuscular.RiseDelayMax "
+            .. tostring(high) .. "; using " .. tostring(high) .. " to " .. tostring(low))
+        return high, low
+    end
+    return low, high
+end
+
 -- 0 for no limit.
 function Settings.maxRises()
     return integer("MaxRises", 0, 20)

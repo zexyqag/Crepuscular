@@ -61,18 +61,23 @@ local function hashes(z, id)
     return entry
 end
 
--- The kind z belongs to. A single player zombie is dressed first, so the kinds see its outfit.
+-- The kind z belongs to, without dressing it: one without an outfit ID belongs to none, since the
+-- outfit the game would dress it in is random.
 function Zombies.kindOf(z, kindOf)
-    outfitID(z)
+    if z:getPersistentOutfitID() == 0 then
+        return nil
+    end
     return kindOf(z)
 end
 
 -- Left alone: dead, crawling, dragged corpses, zombies playing dead, Bandits and every kind's members.
+-- A single player zombie is dressed before its kind is told, so the kinds see its outfit.
 local function ordinary(z, kindOf)
     if z:isDead() or z:isCrawling() or z:isReanimatedForGrappleOnly() or z:isFakeDead() or Kinds.isBandit(z) then
         return false
     end
-    return Zombies.kindOf(z, kindOf) == nil
+    outfitID(z)
+    return kindOf(z) == nil
 end
 
 -- What the definition in effect asks, with the game settings it depends on, read live.

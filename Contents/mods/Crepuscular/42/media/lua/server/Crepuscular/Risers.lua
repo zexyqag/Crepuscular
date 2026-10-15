@@ -13,9 +13,9 @@ local Clock = require "Crepuscular/Clock"
 -- does, so the zombie stays one of the population.
 --
 -- Registry: { next = the next id, low = no registered id is below it, count, entries = { [id] = {
---   x, y, z, due, died, misses, found } } }, ids given in registration order. x, y, z: the square the
---   zombie died on, or once found = true the one its corpse lies on; due and died: world-age hours;
---   misses: scans that found the square loaded but neither the corpse nor someone dragging it.
+--   x, y, z, due, died, misses } } }, ids given in registration order. x, y, z: the square the zombie
+--   died on, or the one its corpse was put down on; due and died: world-age hours; misses: scans that
+--   found the area loaded but neither the corpse nor someone dragging it.
 -- Marker, the modData field Crepuscular, which a corpse copies from its zombie and a zombie from the
 --   corpse it rose from: { id, rises, due, died } on a registered corpse, { rises } on a risen zombie.
 --   A corpse without an id never rises.
@@ -24,9 +24,11 @@ local Risers = {}
 -- Scans that miss a corpse before its entry is dropped: a corpse being dragged is a zombie, not a
 -- corpse, until it is put down.
 local MISSES = 3
--- Tiles around, and the level below, where a zombie died that are searched for its corpse until it is
--- found: a corpse can slide or fall while the zombie dies.
+-- Tiles around the square of an entry, and the level below, searched for a corpse that isn't on it: a
+-- corpse can slide or fall while the zombie dies.
 local SEARCH = 3
+-- Searches around entries a scan may make per rise RisesPerScan allows; the other entries wait.
+local SEARCHES = 5
 -- Tiles a player may be from a corpse to finish it off, or from a zombie to report a head hit.
 local REACH = 3
 -- Milliseconds between a head-hit report and the death it belongs to, in either order.
@@ -72,8 +74,11 @@ local function add(reg, id, entry)
         reg.count = reg.count + 1
     end
     reg.entries[id] = entry
-    reg.low = math.min(reg.low, id)
     trim(reg)
+end
+
+local function tooOld(died, now, maxAge)
+    return maxAge > 0 and now - died > maxAge
 end
 
 local function marker(o)
@@ -105,8 +110,8 @@ end
 
 -- Zombie -> when a player's game reported a floor head hit on it, in milliseconds.
 local reports = setmetatable({}, { __mode = "k" })
--- Online ID -> { at, x, y, z, id } of a registered zombie that just died, for a report that comes
--- after the death: the hit and the report travel in different packets.
+-- Online ID -> { at, x, y, z, id, zombie } of a registered zombie that just died, for a report that
+-- comes after the death: the hit and the report travel in different packets.
 local deaths = {}
 
 local function headHit(z)
@@ -126,7 +131,7 @@ local function rememberDeath(z, id, x, y, level)
     for _, key in ipairs(old) do
         deaths[key] = nil
     end
-    deaths[z:getOnlineID()] = { at = now, x = x, y = y, z = level, id = id }
+    deaths[z:getOnlineID()] = { at = now, x = x, y = y, z = level, id = id, zombie = z }
 end
 
 -- ------------------------------------------------------------------ marking at death
@@ -171,8 +176,7 @@ local function staysDown(z, m, defs)
 end
 
 local function delay()
-    local a, b = Settings.riseDelayMin(), Settings.riseDelayMax()
-    local low, high = math.min(a, b), math.max(a, b)
+    local low, high = Settings.riseDelay()
     if high > low then
         return ZombRandFloat(low, high)
     end
@@ -180,20 +184,32 @@ local function delay()
 end
 
 -- A dragged corpse is a zombie until it is put down, and dies again then: its new corpse takes the
--- marker, and the entry moves to where it lies, made again from the marker if a scan dropped it.
+-- marker, and the entry moves to where it lies, made again from the marker if scans missed it. A
+-- corpse the limit or its age dropped stays down.
 local function dropped(z, m)
     if m == nil or m.id == nil then
         return
     end
     local reg = registry()
     local entry = reg.entries[m.id]
+    local x, y, level = math.floor(z:getX()), math.floor(z:getY()), math.floor(z:getZ())
     if entry == nil then
+        local why = nil
+        if m.id < reg.low then
+            why = "it is older than RiserLimit keeps"
+        elseif tooOld(m.died, hours(), Settings.riseMaxAgeHours()) then
+            why = "it is older than RiseMaxAgeHours"
+        end
+        if why ~= nil then
+            z:getModData().Crepuscular = nil
+            Log.info("corpse " .. m.id .. " put down at " .. place(x, y, level) .. " stays down: " .. why)
+            return
+        end
         entry = { due = m.due, died = m.died }
         add(reg, m.id, entry)
     end
-    entry.x, entry.y, entry.z = math.floor(z:getX()), math.floor(z:getY()), math.floor(z:getZ())
-    entry.found, entry.misses = false, 0
-    Log.info("corpse " .. m.id .. " put down at " .. place(entry.x, entry.y, entry.z))
+    entry.x, entry.y, entry.z, entry.misses = x, y, level, 0
+    Log.info("corpse " .. m.id .. " put down at " .. place(x, y, level))
 end
 
 local function died(z)
@@ -226,7 +242,7 @@ local function died(z)
         rises = m.rises
     end
     z:getModData().Crepuscular = { id = id, rises = rises, due = due, died = now }
-    add(reg, id, { x = x, y = y, z = level, due = due, died = now, misses = 0, found = false })
+    add(reg, id, { x = x, y = y, z = level, due = due, died = now, misses = 0 })
     counts.marked = counts.marked + 1
     if isServer() and Settings.headHitsStayDown() then
         rememberDeath(z, id, x, y, level)
@@ -252,17 +268,14 @@ local function holder(square, id)
     return nil
 end
 
--- Calls fn(square) for every loaded square of the search area of an entry, until fn returns a value.
-local function around(cell, e, fn)
+-- The corpse marked id anywhere in the search area of the entry e, or nil.
+local function search(cell, e, id)
     for level = e.z, e.z - 1, -1 do
         for dx = -SEARCH, SEARCH do
             for dy = -SEARCH, SEARCH do
-                local square = cell:getGridSquare(e.x + dx, e.y + dy, level)
-                if square ~= nil then
-                    local found = fn(square)
-                    if found ~= nil then
-                        return found
-                    end
+                local body = holder(cell:getGridSquare(e.x + dx, e.y + dy, level), id)
+                if body ~= nil then
+                    return body
                 end
             end
         end
@@ -270,26 +283,30 @@ local function around(cell, e, fn)
     return nil
 end
 
-local function find(cell, e, id)
-    if e.found then
-        return holder(cell:getGridSquare(e.x, e.y, e.z), id)
-    end
-    return around(cell, e, function(square)
-        return holder(square, id)
-    end)
-end
-
-local function dragged(cell, e, id)
-    return around(cell, e, function(square)
-        local movers = square:getMovingObjects()
-        for i = 0, movers:size() - 1 do
-            local o = movers:get(i)
-            if instanceof(o, "IsoZombie") and o:isReanimatedForGrappleOnly() and marked(o, id) then
-                return true
+-- Marker id -> the zombie that is that corpse while someone drags it.
+local function carriers()
+    local out = {}
+    local zombies = getCell():getZombieList()
+    for i = 0, zombies:size() - 1 do
+        local z = zombies:get(i)
+        if z:isReanimatedForGrappleOnly() then
+            local m = marker(z)
+            if m ~= nil and m.id ~= nil then
+                out[m.id] = z
             end
         end
-        return nil
-    end) ~= nil
+    end
+    return out
+end
+
+-- Whether the dragged corpse z, or nil, is in the search area of the entry e.
+local function nearby(z, e)
+    if z == nil then
+        return false
+    end
+    local level = math.floor(z:getZ())
+    return math.abs(math.floor(z:getX()) - e.x) <= SEARCH and math.abs(math.floor(z:getY()) - e.y) <= SEARCH
+        and (level == e.z or level == e.z - 1)
 end
 
 local function keepDown(reg, id, body, why)
@@ -301,10 +318,12 @@ local function keepDown(reg, id, body, why)
     Log.info("corpse " .. id .. " stays down: " .. why)
 end
 
+-- Cry of Fear's marks that a monster's health buffer is on: in single player a monster that rose
+-- with them would skip its health and die again at once.
 local function strip(data)
     local keys = {}
     for key in pairs(data) do
-        if type(key) == "string" and string.sub(key, 1, 4) == "COF_" then
+        if type(key) == "string" and (string.find(key, "^COF_%w+Initialized$") or string.find(key, "^COF_%w+Padded$")) then
             keys[#keys + 1] = key
         end
     end
@@ -320,7 +339,6 @@ local function raise(reg, id, body)
         keepDown(reg, id, body, "it lies in a safehouse")
         return false
     end
-    local was = body:isFakeDead()
     body:setFakeDead(true)
     if not body:isFakeDead() then
         keepDown(reg, id, body, "it can't play dead")
@@ -331,16 +349,8 @@ local function raise(reg, id, body)
     local data = body:getModData()
     local m = data.Crepuscular
     data.Crepuscular = { rises = m.rises + 1 }
-    -- Cry of Fear's marks of the monster that died: in single player a monster that rose with them
-    -- would skip its health and die again at once.
     strip(data)
     local z = body:reanimate()
-    if z == nil then
-        -- The server has no free zombie ID; the corpse tries again next scan.
-        data.Crepuscular = m
-        body:setFakeDead(was)
-        return false
-    end
     Zombies.risen(z)
     remove(reg, id)
     counts.rose = counts.rose + 1
@@ -366,7 +376,7 @@ local function scan()
     local now = hours()
     local old, due = {}, {}
     for id, e in pairs(reg.entries) do
-        if maxAge > 0 and now - e.died > maxAge then
+        if tooOld(e.died, now, maxAge) then
             old[#old + 1] = id
         elseif wake and e.due <= now then
             due[#due + 1] = id
@@ -379,31 +389,40 @@ local function scan()
     table.sort(due)
     local cell = getCell()
     local budget = Settings.risesPerScan()
-    local result = { at = now, due = #due, rose = 0, unloaded = 0, missed = 0 }
+    local searches = SEARCHES * budget
+    local dragging = nil
+    local result = { at = now, due = #due, rose = 0, unloaded = 0, missed = 0, waiting = 0 }
     for _, id in ipairs(due) do
         if result.rose >= budget then
             break
         end
         local e = reg.entries[id]
-        if cell:getGridSquare(e.x, e.y, e.z) == nil then
-            -- Not loaded, which doesn't use up the scan.
+        -- Not loaded, which doesn't use up the scan. A loaded chunk has every square of its ground level,
+        -- while the square of the entry may not exist.
+        if cell:getGridSquare(e.x, e.y, 0) == nil then
             result.unloaded = result.unloaded + 1
         else
-            local body = find(cell, e, id)
-            if body ~= nil then
-                local square = body:getSquare()
-                e.x, e.y, e.z, e.found, e.misses = square:getX(), square:getY(), square:getZ(), true, 0
-                if raise(reg, id, body) then
-                    result.rose = result.rose + 1
+            local body = holder(cell:getGridSquare(e.x, e.y, e.z), id)
+            if body == nil and searches == 0 then
+                result.waiting = result.waiting + 1
+            elseif body == nil then
+                dragging = dragging or carriers()
+                if not nearby(dragging[id], e) then
+                    searches = searches - 1
+                    body = search(cell, e, id)
+                    if body == nil then
+                        result.missed = result.missed + 1
+                        e.misses = e.misses + 1
+                        if e.misses >= MISSES then
+                            remove(reg, id)
+                            counts.gone = counts.gone + 1
+                            Log.info("corpse " .. id .. " is gone: burned, removed or carried off")
+                        end
+                    end
                 end
-            elseif not dragged(cell, e, id) then
-                result.missed = result.missed + 1
-                e.misses = e.misses + 1
-                if e.misses >= MISSES then
-                    remove(reg, id)
-                    counts.gone = counts.gone + 1
-                    Log.info("corpse " .. id .. " is gone: burned, removed or carried off")
-                end
+            end
+            if body ~= nil and raise(reg, id, body) then
+                result.rose = result.rose + 1
             end
         end
     end
@@ -419,7 +438,7 @@ Events.EveryTenMinutes.Add(scan)
 -- ------------------------------------------------------------------ finish off and head hits
 
 -- args: { x, y, z, ids = { object IDs of corpses on that square } }: the game's own corpse ID, which
--- every game shares, since a player's game can't read the markers. Returns how many it kept down.
+-- every game shares. Returns how many of them were marked to rise.
 function Risers.finishOff(player, args)
     if not Settings.finishOff() or type(args.x) ~= "number" or type(args.y) ~= "number" or type(args.z) ~= "number"
         or type(args.ids) ~= "table" then
@@ -443,15 +462,14 @@ function Risers.finishOff(player, args)
             local m = marker(body)
             if m ~= nil and m.id ~= nil then
                 remove(reg, m.id)
-            end
-            if m ~= nil then
                 body:getModData().Crepuscular = nil
+                n = n + 1
             end
-            n = n + 1
         end
     end
     counts.finished = counts.finished + n
-    Log.info(player:getUsername() .. " finished off " .. n .. " corpses at " .. place(args.x, args.y, args.z))
+    Log.info(player:getUsername() .. " finished off corpses at " .. place(args.x, args.y, args.z) .. ", " .. n
+        .. " of them marked to rise")
     return n
 end
 
@@ -478,10 +496,12 @@ local function headHitById(player, id)
         return
     end
     deaths[id] = nil
+    -- Its corpse may come later, with a copy of its modData.
+    death.zombie:getModData().Crepuscular = nil
     local reg = registry()
     local e = reg.entries[death.id]
     if e ~= nil then
-        keepDown(reg, death.id, find(getCell(), e, death.id), "hit on the head on the floor")
+        keepDown(reg, death.id, search(getCell(), e, death.id), "hit on the head on the floor")
     end
 end
 
@@ -505,13 +525,10 @@ end
 function Risers.status()
     local reg = registry()
     local now = hours()
-    local due, found = 0, 0
+    local due = 0
     for _, e in pairs(reg.entries) do
         if e.due <= now then
             due = due + 1
-        end
-        if e.found then
-            found = found + 1
         end
     end
     local r = Clock.risers
@@ -522,11 +539,11 @@ function Risers.status()
     local scanned = "no scan yet"
     if last ~= nil then
         scanned = "last scan " .. Phase.stamp(Clock.now(), last.at) .. ": " .. last.due .. " due, " .. last.rose .. " rose, "
-            .. last.unloaded .. " not loaded, " .. last.missed .. " not found"
+            .. last.unloaded .. " not loaded, " .. last.missed .. " not found, " .. last.waiting .. " left for the next check"
     end
     return {
         "risers: rise " .. r.rise .. ", wake " .. wake .. "; " .. reg.count .. " corpses registered (at most "
-            .. Settings.riserLimit() .. "), " .. due .. " due, " .. found .. " found; " .. scanned,
+            .. Settings.riserLimit() .. "), " .. due .. " due; " .. scanned,
         "this session: " .. counts.marked .. " marked to rise, " .. counts.down .. " kept down, " .. counts.rose .. " rose, "
             .. counts.finished .. " finished off, " .. counts.gone .. " gone, " .. counts.expired .. " too old, "
             .. counts.dropped .. " over the limit",

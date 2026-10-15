@@ -4,9 +4,9 @@ require "TimedActions/ISTimedActionQueue"
 local Settings = require "Crepuscular/Settings"
 local State = require "Crepuscular/State"
 
--- What a player does to keep a corpse down: Finish off on every zombie corpse, since a player's game
--- can't tell which corpses are marked to rise, and a floor head hit. The server, or single player,
--- keeps the corpses down.
+-- What a player does to keep a corpse down: Finish off, and a floor head hit. Finish off is on every
+-- zombie corpse, so the menu doesn't show which ones would rise. The server, or single player, keeps
+-- the corpses down.
 
 -- A timed action's time advances by the game's multiplier, 48 a second at normal speed.
 local PER_SECOND = 48
@@ -23,12 +23,34 @@ local function zombieCorpses(square, ids)
     local bodies = square:getDeadBodys()
     for i = 0, bodies:size() - 1 do
         local body = bodies:get(i)
-        local id = body:getObjectIDAsLong()
-        if body:isZombie() and (wanted == nil or wanted[id]) then
-            list[#list + 1] = id
+        if body:isZombie() then
+            local id = body:getObjectIDAsLong()
+            if wanted == nil or wanted[id] then
+                list[#list + 1] = id
+            end
         end
     end
     return list
+end
+
+-- The zombie corpse nearest the player on the squares of the objects clicked, the first of equals, as
+-- the game picks the one corpse its own corpse options act on.
+local function nearest(player, worldObjects)
+    local best, seen = nil, {}
+    for _, o in ipairs(worldObjects) do
+        local square = o:getSquare()
+        if square ~= nil and not seen[square] then
+            seen[square] = true
+            local bodies = square:getDeadBodys()
+            for i = 0, bodies:size() - 1 do
+                local body = bodies:get(i)
+                if body:isZombie() and (best == nil or best:DistToSquared(player) > body:DistToSquared(player)) then
+                    best = body
+                end
+            end
+        end
+    end
+    return best
 end
 
 local FinishOff = ISBaseTimedAction:derive("CrepuscularFinishOff")
@@ -80,18 +102,16 @@ Events.OnFillWorldObjectContextMenu.Add(function(playerIndex, context, worldObje
     if player == nil then
         return
     end
-    local seen = {}
-    for _, o in ipairs(worldObjects) do
-        local square = o:getSquare()
-        if square ~= nil and not seen[square] then
-            seen[square] = true
-            local ids = zombieCorpses(square, nil)
-            if #ids == 1 then
-                context:addOption(getText("ContextMenu_Crepuscular_FinishOff"), player, finish, square, ids)
-            elseif #ids > 1 then
-                context:addOption(getText("ContextMenu_Crepuscular_FinishOffAll", #ids), player, finish, square, ids)
-            end
-        end
+    local body = nearest(player, worldObjects)
+    if body == nil then
+        return
+    end
+    local square = body:getSquare()
+    local ids = zombieCorpses(square, nil)
+    if #ids == 1 then
+        context:addOption(getText("ContextMenu_Crepuscular_FinishOff"), player, finish, square, ids)
+    else
+        context:addOption(getText("ContextMenu_Crepuscular_FinishOffAll", #ids), player, finish, square, ids)
     end
 end)
 

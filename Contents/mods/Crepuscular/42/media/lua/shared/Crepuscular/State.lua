@@ -13,9 +13,9 @@ local State = {}
 State.NAME = "Crepuscular"
 State.VERSION = 2
 State.MODULE = "Crepuscular"
--- Server only, never sent: see Schedule.
+-- Kept by the server, which never sends them, though a player's game could ask for either: the
+-- ledger (see Schedule) and the registry of corpses that rise (see Risers).
 State.LEDGER = "CrepuscularLedger"
--- Server only, never sent: see Risers.
 State.RISERS = "CrepuscularRisers"
 
 -- The state, or nil while there is none of this version yet.
