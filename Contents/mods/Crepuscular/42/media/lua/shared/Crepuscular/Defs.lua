@@ -38,7 +38,9 @@ local CONDITIONS = {
 }
 
 -- Number effects that may be a range a..b, which grow= of the same definition moves along.
-local GROWING = { "speed", "health" }
+local GROWING = { "speed", "health", "rise" }
+-- Of those, the ones that are whole numbers.
+local WHOLE = { speed = true, rise = true }
 
 -- UTF-8 bytes, as the game writes the option. Kahlua strings are Java strings: string.byte gives
 -- UTF-16 units, and a surrogate pair is 4 bytes.
@@ -475,6 +477,17 @@ function PARSE.health(v)
     return growing(v, false, 0.1, 5, "a number from 0.1 to 5", "numbers from 0.1 to 5 such as 0.7..0.4")
 end
 
+function PARSE.rise(v)
+    return growing(v, true, 0, 100, "a whole number from 0 to 100", "whole numbers from 0 to 100 such as 25..100")
+end
+
+function PARSE.wake(v)
+    if v ~= "true" and v ~= "false" then
+        return nil, quote(v) .. " is not true or false"
+    end
+    return v == "true"
+end
+
 -- Whole world days: Nd -> N.
 local function wholeDays(text)
     local amount = string.match(text, "^(.-) *d$")
@@ -498,7 +511,8 @@ end
 
 -- Keys a base definition may have; the rest belong to events.
 local EFFECTS = {
-    off = true, say = true, color = true, sound = true, speed = true, steps = true, health = true, grow = true,
+    off = true, say = true, color = true, sound = true, speed = true, steps = true, health = true, rise = true,
+    wake = true, grow = true,
 }
 
 -- A range needs grow= in its own definition: an event's grow never moves what it inherits. Without
@@ -520,6 +534,14 @@ local function ungrown(def, list, fail)
     end
 end
 
+-- Whether a rise= value, or either end of its range, marks any corpse.
+local function marks(v)
+    if type(v) == "table" then
+        return v.from > 0 or v.to > 0
+    end
+    return v ~= nil and v > 0
+end
+
 local function idleGrow(def, warn)
     if def.grow == nil then
         return
@@ -533,8 +555,8 @@ local function idleGrow(def, warn)
 end
 
 -- A number effect of def on world day `day`: a range goes linearly from its first value on the
--- first day of grow= to its second on the last, and keeps its ends outside them. Speed shares are
--- whole numbers, rounded half away from 0.
+-- first day of grow= to its second on the last, and keeps its ends outside them. Speed and rise
+-- shares are whole numbers, rounded half away from 0.
 function Defs.at(def, key, day)
     local v = def[key]
     if type(v) ~= "table" then
@@ -547,7 +569,7 @@ function Defs.at(def, key, day)
     elseif day < grow.to then
         x = v.from + (v.to - v.from) * (day - grow.from) / (grow.to - grow.from)
     end
-    if key ~= "speed" then
+    if not WHOLE[key] then
         return x
     end
     local n = math.floor(math.abs(x) + 0.5)
@@ -696,7 +718,8 @@ end
 -- texts: option name -> text; rule: the clock rule (Phase.occasion); builtin: set of the built-in
 -- kind names; registered: set of the names other mods registered, or nil while they may still be
 -- missing, which leaves off= unchecked.
--- Returns { day, night, events (valid, in order), byId, ids, kinds, errors, warnings, failed }.
+-- Returns { day, night, events (valid, in order), byId, ids, kinds, errors, warnings, failed, known =
+-- the kind names off= may name, or nil while unchecked }.
 function Defs.parse(texts, rule, builtin, registered)
     local result = { events = {}, byId = {}, ids = {}, errors = {}, warnings = {}, failed = 0 }
 
@@ -885,7 +908,33 @@ function Defs.parse(texts, rule, builtin, registered)
             end
         end
     end
+
+    local all = { result.day, result.night }
+    for _, ev in ipairs(result.events) do
+        all[#all + 1] = ev
+    end
+    local wakes = false
+    for _, def in ipairs(all) do
+        wakes = wakes or def.wake == true
+    end
+    if not wakes then
+        for _, def in ipairs(all) do
+            if marks(def.rise) then
+                warn(def, "rise", "no definition has wake=true, so marked corpses never get up")
+            end
+        end
+    end
+    result.known = known
     return result
+end
+
+-- The RiseKinds option: kind names as in off=, or empty for none. Returns the set, or nil and why.
+function Defs.kinds(text)
+    local v = string.lower(strip(text))
+    if v == "" then
+        return {}
+    end
+    return PARSE.off(v)
 end
 
 return Defs

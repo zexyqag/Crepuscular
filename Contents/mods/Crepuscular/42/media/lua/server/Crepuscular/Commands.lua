@@ -13,6 +13,7 @@ local Despawn = require "Crepuscular/Despawn"
 local Mutants = require "Crepuscular/Mutants"
 local CryOfFear = require "Crepuscular/CryOfFear"
 local Zombies = require "Crepuscular/Zombies"
+local Risers = require "Crepuscular/Risers"
 
 local Commands = {}
 
@@ -146,6 +147,9 @@ local function status()
     for _, line in ipairs(Zombies.status()) do
         add(line)
     end
+    for _, line in ipairs(Risers.status()) do
+        add(line)
+    end
 
     local overridden = 0
     for name, entry in pairs(ModData.getOrCreate(Sandbox.STORE)) do
@@ -173,7 +177,8 @@ local function status()
     end
     return {
         text = "IGUI_Crepuscular_Status",
-        args = { translated("IGUI_Crepuscular_Phase_" .. state.phase), event, #defs.events, defs.failed, overridden },
+        args = { translated("IGUI_Crepuscular_Phase_" .. state.phase), event, #defs.events, defs.failed, overridden,
+            Risers.count() },
         lines = lines,
     }
 end

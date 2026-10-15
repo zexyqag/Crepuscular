@@ -40,7 +40,7 @@ option Crepuscular.Day
 option Crepuscular.Night
 {
     type = string,
-    default = speed=-50;off=mutants,
+    default = speed=-50;rise=50;wake=true;off=mutants,
     page = Crepuscular,
     translation = Crepuscular_Night,
 }
@@ -48,7 +48,7 @@ option Crepuscular.Night
 option Crepuscular.Events1
 {
     type = string,
-    default = id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c,
+    default = id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;rise=100;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c,
     page = Crepuscular,
     translation = Crepuscular_Events1,
 }
@@ -153,6 +153,124 @@ option Crepuscular.ZombiesPerSweep
     default = 400,
     page = Crepuscular,
     translation = Crepuscular_ZombiesPerSweep,
+}
+
+option Crepuscular.RiseDelayMin
+{
+    type = double,
+    min = 0.0,
+    max = 48.0,
+    default = 1.0,
+    page = Crepuscular,
+    translation = Crepuscular_RiseDelayMin,
+}
+
+option Crepuscular.RiseDelayMax
+{
+    type = double,
+    min = 0.0,
+    max = 48.0,
+    default = 2.0,
+    page = Crepuscular,
+    translation = Crepuscular_RiseDelayMax,
+}
+
+option Crepuscular.MaxRises
+{
+    type = integer,
+    min = 0,
+    max = 20,
+    default = 1,
+    page = Crepuscular,
+    translation = Crepuscular_MaxRises,
+}
+
+option Crepuscular.RiseMaxAgeHours
+{
+    type = integer,
+    min = 0,
+    max = 8760,
+    default = 168,
+    page = Crepuscular,
+    translation = Crepuscular_RiseMaxAgeHours,
+}
+
+option Crepuscular.FireStaysDown
+{
+    type = boolean,
+    default = true,
+    page = Crepuscular,
+    translation = Crepuscular_FireStaysDown,
+}
+
+option Crepuscular.FinishOff
+{
+    type = boolean,
+    default = true,
+    page = Crepuscular,
+    translation = Crepuscular_FinishOff,
+}
+
+option Crepuscular.FinishOffSeconds
+{
+    type = integer,
+    min = 1,
+    max = 30,
+    default = 3,
+    page = Crepuscular,
+    translation = Crepuscular_FinishOffSeconds,
+}
+
+option Crepuscular.HeadHitsStayDown
+{
+    type = boolean,
+    default = false,
+    page = Crepuscular,
+    translation = Crepuscular_HeadHitsStayDown,
+}
+
+option Crepuscular.RiseInSafehouses
+{
+    type = boolean,
+    default = false,
+    page = Crepuscular,
+    translation = Crepuscular_RiseInSafehouses,
+}
+
+option Crepuscular.RisePlayers
+{
+    type = boolean,
+    default = false,
+    page = Crepuscular,
+    translation = Crepuscular_RisePlayers,
+}
+
+option Crepuscular.RiseKinds
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_RiseKinds,
+}
+
+option Crepuscular.RisesPerScan
+{
+    type = integer,
+    min = 1,
+    max = 100,
+    default = 10,
+    page = Crepuscular,
+    translation = Crepuscular_RisesPerScan,
+}
+
+option Crepuscular.RiserLimit
+{
+    type = integer,
+    min = 100,
+    max = 50000,
+    default = 5000,
+    page = Crepuscular,
+    translation = Crepuscular_RiserLimit,
 }
 
 option Crepuscular.Notifications

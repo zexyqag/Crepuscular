@@ -213,9 +213,9 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         NightMode: { name: "Night mode", options: ["Fixed hours", "Seasonal night"], tooltip: "How night is decided. Fixed hours: night runs between the two hours below, every day of the year, whatever the Day/Night Cycle setting. Seasonal night: the game's own dusk and dawn, which move with the seasons and follow the Day/Night Cycle setting (endless day has no night, endless night is always night)." },
         NightStartHour: { name: "Night starts at", tooltip: "Hour of the day, 0 to 23, at which night begins when Night mode is Fixed hours. Night can run past midnight. If both hours are the same there is no night at all, and the log says so." },
         NightEndHour: { name: "Night ends at", tooltip: "Hour of the day, 0 to 23, at which night ends when Night mode is Fixed hours." },
-        Day: { name: "Day", tooltip: "What changes by day while no event runs. Fields are key=value, separated by ;. speed=+25 makes 25 percent of ordinary zombies one tier faster (shambler to fast shambler, fast shambler to sprinter) and speed=-50 makes 50 percent one tier slower; a zombie that speeds up is among the last to slow down, and speed=0 keeps every zombie at the game's speed. steps=2 moves them two tiers: always sprinters or always shamblers. health=0.7 gives new and reloaded zombies 70 percent of the health they roll and lowers any zombie above 70 percent of the most a new one can have; health=1.5 gives new and reloaded zombies 150 percent, and zombies already around keep theirs. Both can grow with the days since the world began: speed=+25..+75;grow=60d goes from +25 on world day 0 to +75 on world day 60 and stays there, grow=30d..90d moves it between those days instead, and health=0.7..0.4 works the same way. World days are counted at noon, as for every= and mindays=, and a speed share is rounded to a whole percent. A range needs grow= in the same definition, and grow= moves only that definition's own ranges. Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. off=cof,mutants turns those monster kinds off (off=none turns none off): far ones are removed, The Mutants makes no new mutants and Cry of Fear Monster NPCs spawns nothing new. A kind no definition turns off is left alone. For Cry of Fear monsters only at night, write off=cof here and keep its own Night only option off; as with that option, each time cof is on again every Cry of Fear home may be filled again, so killed monsters come back too. set.Table.Option=value changes a sandbox option, for example set.ZombieLore.Toughness=1, or set.Option=value for an option without a table, for example set.HoursForCorpseRemoval=24; it goes back to its base value when the day ends. say=text shows a line to every player when the day begins (say=@Key shows that translation), and color=rrggbb gives its colour. sound=Name plays that game sound on every player's game at the same moment, with or without a line, for example sound=MetaWolfHowl; upper and lower case matter. A player who joins or loads the game while the day lasts gets the line and the sound then. A sun event starts from these values, except say=, color= and sound=. The default, speed=+25;health=0.7, makes a quarter of the zombies faster and the zombies more fragile. A bad field is skipped and logged, and the rest applies." },
-        Night: { name: "Night", tooltip: "What changes by night while no event runs, written as for Day: speed=-50 or speed=+25, steps=2, health=1.5, a range that grows such as speed=-25..-75;grow=60d, off=mutants,cof or off=none, set.Table.Option=value, say=text, color=rrggbb and sound=Name. The values go back to their base when the night ends. A moon event starts from these values except say=, color= and sound=, even when it runs into the day. The default, speed=-50;off=mutants, makes half of the zombies slower, keeps The Mutants from making mutants at night and removes far mutants." },
-        Events1: { name: "Events 1", tooltip: "Moons and suns: special nights and days. Events are separated by |, fields by ;. Each event needs id=name (letters a-z, digits and _) and track=moon (decided when night begins) or track=sun (decided when day begins). Conditions, which must all hold: moon=full (the first night of a full moon; also new, waxingcrescent, firstquarter, waxinggibbous, waninggibbous, thirdquarter, waningcrescent), date=10-31 or date=12-20..01-05, month=6..8, season=summer, every=30 (every 30 days since the world began; every=30+5 shifts it by 5), mindays=30 and maxdays=365 (days since the world began), nth=4 (every 4th time its calendar conditions hold), after=id (the first time after that event ended), cooldown=20d or 36h, interval=3d..7d (after each start it waits a random 3 to 7 whole days, counted in world days, before it can happen again, and the first wait counts from world day 0, the day mindays= and every= count from, or for hours from 07:00 that day; interval=7d waits exactly 7 days, interval=12h..36h whole hours from its start time, but hours drift against a seasonal dusk or dawn, so days suit a nightly or daily rhythm; once the wait is over it stays a candidate until it starts, so a lost chance or a higher prio doesn't roll a new wait, and an admin start counts as a start), weather=rain, snow, storm, fog or clear, tempmin=0 and tempmax=30 (degrees C), chance=50. A list such as moon=full,new holds when any item does. Timing: at=HH:MM starts it later in its night or day, and for=phase (the default), 2p (phases), 6h or 3.5d sets how long it lasts. prio=10: when several events qualify, the highest is tried first. Effects: speed, steps, health, off, set., say, color and sound, as in Day and Night, with grow= for its own ranges; a moon starts from Night and a sun from Day except for say, color and sound, and a range it takes from them grows with their grow=. One event runs at a time, and nothing else is decided while it runs. An event with an error is skipped and logged. Keep each option under 32000 bytes." },
+        Day: { name: "Day", tooltip: "What changes by day while no event runs. Fields are key=value, separated by ;. speed=+25 makes 25 percent of ordinary zombies one tier faster (shambler to fast shambler, fast shambler to sprinter) and speed=-50 makes 50 percent one tier slower; a zombie that speeds up is among the last to slow down, and speed=0 keeps every zombie at the game's speed. steps=2 moves them two tiers: always sprinters or always shamblers. health=0.7 gives new and reloaded zombies 70 percent of the health they roll and lowers any zombie above 70 percent of the most a new one can have; health=1.5 gives new and reloaded zombies 150 percent, and zombies already around keep theirs. rise=50 marks 50 percent of the zombies killed while the day lasts to get up again (rise=100 all of them, rise=0 none), and wake=true lets marked corpses get up while it lasts; a corpse marked by day without wake=true gets up once a definition with it applies, such as the default Night. When and how often they rise is set by the options below. speed, health and rise can grow with the days since the world began: speed=+25..+75;grow=60d goes from +25 on world day 0 to +75 on world day 60 and stays there, grow=30d..90d moves it between those days instead, and health=0.7..0.4 and rise=25..100 work the same way. World days are counted at noon, as for every= and mindays=, and a speed or rise share is rounded to a whole percent. A range needs grow= in the same definition, and grow= moves only that definition's own ranges. Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. off=cof,mutants turns those monster kinds off (off=none turns none off): far ones are removed, The Mutants makes no new mutants and Cry of Fear Monster NPCs spawns nothing new. A kind no definition turns off is left alone. For Cry of Fear monsters only at night, write off=cof here and keep its own Night only option off; as with that option, each time cof is on again every Cry of Fear home may be filled again, so killed monsters come back too. set.Table.Option=value changes a sandbox option, for example set.ZombieLore.Toughness=1, or set.Option=value for an option without a table, for example set.HoursForCorpseRemoval=24; it goes back to its base value when the day ends. say=text shows a line to every player when the day begins (say=@Key shows that translation), and color=rrggbb gives its colour. sound=Name plays that game sound on every player's game at the same moment, with or without a line, for example sound=MetaWolfHowl; upper and lower case matter. A player who joins or loads the game while the day lasts gets the line and the sound then. A sun event starts from these values, except say=, color= and sound=. The default, speed=+25;health=0.7, makes a quarter of the zombies faster and the zombies more fragile, and zombies killed by day stay down. A bad field is skipped and logged, and the rest applies." },
+        Night: { name: "Night", tooltip: "What changes by night while no event runs, written as for Day: speed=-50 or speed=+25, steps=2, health=1.5, rise=50, wake=true, a range that grows such as speed=-25..-75;grow=60d, off=mutants,cof or off=none, set.Table.Option=value, say=text, color=rrggbb and sound=Name. The values go back to their base when the night ends. A moon event starts from these values except say=, color= and sound=, even when it runs into the day. The default, speed=-50;rise=50;wake=true;off=mutants, makes half of the zombies slower, marks half of the zombies killed at night to get up again and lets marked corpses get up at night, keeps The Mutants from making mutants at night and removes far mutants." },
+        Events1: { name: "Events 1", tooltip: "Moons and suns: special nights and days. Events are separated by |, fields by ;. Each event needs id=name (letters a-z, digits and _) and track=moon (decided when night begins) or track=sun (decided when day begins). Conditions, which must all hold: moon=full (the first night of a full moon; also new, waxingcrescent, firstquarter, waxinggibbous, waninggibbous, thirdquarter, waningcrescent), date=10-31 or date=12-20..01-05, month=6..8, season=summer, every=30 (every 30 days since the world began; every=30+5 shifts it by 5), mindays=30 and maxdays=365 (days since the world began), nth=4 (every 4th time its calendar conditions hold), after=id (the first time after that event ended), cooldown=20d or 36h, interval=3d..7d (after each start it waits a random 3 to 7 whole days, counted in world days, before it can happen again, and the first wait counts from world day 0, the day mindays= and every= count from, or for hours from 07:00 that day; interval=7d waits exactly 7 days, interval=12h..36h whole hours from its start time, but hours drift against a seasonal dusk or dawn, so days suit a nightly or daily rhythm; once the wait is over it stays a candidate until it starts, so a lost chance or a higher prio doesn't roll a new wait, and an admin start counts as a start), weather=rain, snow, storm, fog or clear, tempmin=0 and tempmax=30 (degrees C), chance=50. A list such as moon=full,new holds when any item does. Timing: at=HH:MM starts it later in its night or day, and for=phase (the default), 2p (phases), 6h or 3.5d sets how long it lasts. prio=10: when several events qualify, the highest is tried first. Effects: speed, steps, health, rise, wake, off, set., say, color and sound, as in Day and Night, with grow= for its own ranges; a moon starts from Night and a sun from Day except for say, color and sound, and a range it takes from them grows with their grow=. One event runs at a time, and nothing else is decided while it runs. An event with an error is skipped and logged. Keep each option under 32000 bytes." },
         Kinds: { name: "Monster kinds", tooltip: "Monsters of other mods, told by their outfit: name=prefix,prefix;name=prefix, for example wraiths=ZW_,Wraith;husks=Husk_. A zombie whose outfit name starts with one of the prefixes (upper and lower case don't matter) belongs to that kind. Names are made of a-z, 0-9 and _. cof (Cry of Fear Monster NPCs) and mutants (The Mutants) are built in, and other mods can add kinds of their own. Put a kind in off= of Day, Night or an event to remove its far members while that applies; it can't keep a mod from turning zombies into its monsters. When The Mutants is loaded, members of every kind are never turned into mutants." },
     };
     Defs.SLOTS.slice(1).forEach(function (slot) {
@@ -235,11 +235,11 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
 
     // Where a new field goes, so written text reads like the mod's own examples.
     var KEY_ORDER = ["id", "track", "moon", "date", "month", "season", "every", "nth", "mindays", "maxdays", "after",
-        "cooldown", "interval", "weather", "tempmin", "tempmax", "chance", "at", "for", "prio", "speed", "steps", "health", "grow", "off", "set.",
-        "say", "color", "sound"];
+        "cooldown", "interval", "weather", "tempmin", "tempmax", "chance", "at", "for", "prio", "speed", "steps", "health", "rise", "wake",
+        "grow", "off", "set.", "say", "color", "sound"];
     var EVENT_KEYS = KEY_ORDER.filter(function (k) { return k !== "set."; });
-    var BASE_KEYS = ["speed", "steps", "health", "grow", "off", "say", "color", "sound"];
-    var GROWING = ["speed", "health"];
+    var BASE_KEYS = ["speed", "steps", "health", "rise", "wake", "grow", "off", "say", "color", "sound"];
+    var GROWING = ["speed", "health", "rise"];
 
     // Sounds the game itself plays by name, all of them once rather than in a loop.
     var SOUNDS = [
@@ -272,7 +272,9 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         speed: "A share of the ordinary zombies, in percent, moves a tier faster or slower (shambler, fast shambler, sprinter). The same zombies are picked every time, on the server and on every player's game, and the ones that speed up are the last to slow down. 0 keeps every zombie at the game's speed. A range goes from its first share to its second over the days of Grows, rounded to whole percents.",
         steps: "How many tiers they move: 2 makes them always sprinters (faster) or always shamblers (slower).",
         health: "0.1 to 5. Below 1, new and reloaded zombies get that share of the health they roll, and no zombie keeps more than that share of the most a new one can have. Above 1, new and reloaded zombies get that much more; zombies already around keep theirs. 1 changes nothing. A range such as 0.7..0.4 goes from the first to the second over the days of Grows.",
-        grow: "The world days over which this definition's ranges (speed or health a..b) go from their first value to their second; before and after, they keep their ends. Empty from means world day 0. World days are counted at noon, as for every. Only this definition's own ranges grow: an event that takes a range from Day or Night follows their Grows.",
+        rise: "0 to 100: the percent of the zombies killed while this applies that are marked to get up again (100 all of them, 0 none). When they come due, how often and what keeps them down are the mod's other options. A range such as 25..100 goes from the first to the second over the days of Grows, rounded to whole percents.",
+        wake: "Whether marked corpses get up while this applies. A corpse that comes due at another time waits for a definition with wake=true, so corpses marked by day can get up at night.",
+        grow: "The world days over which this definition's ranges (speed, health or rise a..b) go from their first value to their second; before and after, they keep their ends. Empty from means world day 0. World days are counted at noon, as for every. Only this definition's own ranges grow: an event that takes a range from Day or Night follows their Grows.",
         say: "A line shown to every player when it starts, and to a player who joins or loads the game while it lasts; @Key shows that translation. ; and | can't be part of it.",
         color: "The colour of that line; white when not set.",
         sound: "A game sound played on every player's game when it starts, with or without a line, and for a player who joins or loads the game while it lasts; upper and lower case matter. The suggestions are sounds of the game itself; another mod's sound works by its name, and the mod's log warns about a name the game doesn't know.",
@@ -700,6 +702,15 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         return (n > 0 ? "+" : "") + C.luaString(n);
     }
 
+    // The values a definition has for the keys it doesn't set and its base doesn't either.
+    var NEUTRAL = { speed: 0, steps: 1, health: 1, rise: 0, wake: false };
+
+    function shown(key, v) {
+        if (key === "speed") { return signed(v); }
+        if (key === "wake") { return v ? "on" : "off"; }
+        return C.luaString(Math.round(v * 1000) / 1000);
+    }
+
     // What the definition gives on a world day, with what it takes from its base: shown while a range grows.
     function growPreview(ownerKey, def, base) {
         var ranges = [def].concat(base ? [base] : []).some(function (d) {
@@ -711,8 +722,8 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         var parts = GROWING.map(function (key) {
             var owner = def[key] !== undefined || !base ? def : base;
             var v = C.Defs.at(owner, key, day);
-            if (v === undefined) { v = key === "speed" ? 0 : 1; }
-            return key + " " + (key === "speed" ? signed(v) : C.luaString(Math.round(v * 1000) / 1000)) + (owner !== def ? " (from " + owner.label + ")" : "");
+            if (v === undefined) { v = NEUTRAL[key]; }
+            return key + " " + shown(key, v) + (owner !== def ? " (from " + owner.label + ")" : "");
         });
         return h("div", { "class": "field", "data-key": "grow-preview" },
             h("label", { "for": id }, "On world day"),
@@ -802,14 +813,25 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         }, msgs);
     }
 
-    // inherited: the health the definition has without its own, as text; def and base: the parsed definition
-    // and, for an event, its track's base definition.
+    function wakeField(ownerKey, fields, msgs, isEvent) {
+        var raw = getField(fields, "wake");
+        var v = raw === null ? "" : raw;
+        return fieldBox(ownerKey, "wake", "Corpses get up", HELP.wake, function (id) {
+            return select(id, v, [["", isEvent ? "not set: as its track's base" : "not set: no"], ["true", "yes (wake=true)"], ["false", "no (wake=false)"]]
+                .concat(["", "true", "false"].indexOf(v) < 0 ? [[v, v + " (as written)"]] : []), { "data-act": "choice", "aria-describedby": id + "-help" });
+        }, msgs);
+    }
+
+    // inherited: what the definition has without its own health and rise, as text; def and base: the parsed
+    // definition and, for an event, its track's base definition.
     function zombiesSet(ownerKey, fields, msgs, isEvent, inherited, def, base) {
         return h("fieldset", { "data-key": "zombies" }, h("legend", null, "Zombies"),
             h("p", { "class": "help" }, "Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too."),
             speedField(ownerKey, fields, msgs, isEvent),
             stepsField(ownerKey, fields, msgs, isEvent),
-            textField(ownerKey, fields, "health", "Health factor", { "class": "small", inputmode: "decimal", placeholder: inherited }, msgs),
+            textField(ownerKey, fields, "health", "Health factor", { "class": "small", inputmode: "decimal", placeholder: inherited.health }, msgs),
+            textField(ownerKey, fields, "rise", "Rise again, percent of kills", { "class": "small", inputmode: "numeric", placeholder: inherited.rise }, msgs),
+            wakeField(ownerKey, fields, msgs, isEvent),
             growField(ownerKey, fields, msgs),
             growPreview(ownerKey, def, base));
     }
@@ -892,12 +914,16 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         return def.track === "moon" ? chk.defs.night : def.track === "sun" ? chk.defs.day : null;
     }
 
-    // The health an event without its own has: its track's base definition's, or none without a track.
-    function inheritedHealth(def, chk) {
+    // The health and rise an event without its own has: its track's base definition's, or none without a track.
+    function inheritedOf(def, chk) {
         var base = baseOf(def, chk);
-        if (base === null) { return null; }
-        if (typeof base.health === "object") { return C.luaString(base.health.from) + ".." + C.luaString(base.health.to); }
-        return base.health === undefined ? "1" : String(base.health);
+        var out = {};
+        ["health", "rise"].forEach(function (key) {
+            var v = base === null ? undefined : base[key];
+            out[key] = base === null ? null : typeof v === "object" ? C.luaString(v.from) + ".." + C.luaString(v.to)
+                : String(v === undefined ? NEUTRAL[key] : v);
+        });
+        return out;
     }
 
     function eventForm(ev, def, chk, g, count) {
@@ -956,7 +982,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                     textField(ownerKey, fields, "tempmin", "Min °C", { "class": "small", inputmode: "decimal" }, msgs),
                     textField(ownerKey, fields, "tempmax", "Max °C", { "class": "small", inputmode: "decimal" }, msgs)),
                 textField(ownerKey, fields, "chance", "Chance %", { "class": "small", inputmode: "decimal", placeholder: "100" }, msgs)),
-            zombiesSet(ownerKey, fields, msgs, true, inheritedHealth(def, chk), def, baseOf(def, chk)),
+            zombiesSet(ownerKey, fields, msgs, true, inheritedOf(def, chk), def, baseOf(def, chk)),
             h("fieldset", { "data-key": "monsters" }, h("legend", null, "Monsters"), offField(ownerKey, fields, msgs, chk, true)),
             setRows(ownerKey, fields, cls, msgs),
             h("fieldset", { "data-key": "say" }, h("legend", null, "Announcement"), sayField(ownerKey, fields, msgs), colorField(ownerKey, fields, msgs),
@@ -977,7 +1003,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 msgs.errors.length ? h("span", { "class": "badge error" }, msgs.errors.length + " skipped") : null),
             h("p", { "class": "help" }, name === "Day" ? "What changes by day while no event runs. A sun event starts from these values, except say=, color= and sound=." : "What changes by night while no event runs. A moon event starts from these values except say=, color= and sound=, even when it runs into the day."),
             msgList(rest.errors, rest.warnings),
-            zombiesSet(name, fields, msgs, false, "1", name === "Day" ? chk.defs.day : chk.defs.night, null),
+            zombiesSet(name, fields, msgs, false, { health: "1", rise: "0" }, name === "Day" ? chk.defs.day : chk.defs.night, null),
             offField(name, fields, msgs, chk, false),
             setRows(name, fields, cls, msgs),
             h("fieldset", { "data-key": "say" }, h("legend", null, "Announcement"),
@@ -1367,18 +1393,18 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         });
     }
 
-    // Speed, steps and health in effect in occasion r at world-age hours, resolved as the mod does on its world day.
+    // Speed, steps, health, rise and wake in effect in occasion r at world-age hours, resolved as the mod does on
+    // its world day.
     function zombiesAt(chk, r, hours) {
         var run = r.events.filter(function (x) { return x.startsAt <= hours + 1 / 120 && (x.endedAt === null || x.endedAt > hours); })[0];
         var ev = run ? chk.defs.byId[run.id] : undefined;
         var base = (ev ? ev.track === "moon" : r.phase === "night") ? chk.defs.night : chk.defs.day;
         var day = C.Schedule.worldDay(r, hours);
-        var neutral = { speed: 0, steps: 1, health: 1 };
-        return ["speed", "steps", "health"].map(function (key) {
+        return ["speed", "steps", "health", "rise", "wake"].map(function (key) {
             var owner = ev !== undefined && ev[key] !== undefined ? ev : base;
             var v = C.Defs.at(owner, key, day);
-            if (v === undefined) { v = neutral[key]; }
-            return key + " " + (key === "speed" ? signed(v) : C.luaString(Math.round(v * 1000) / 1000));
+            if (v === undefined) { v = NEUTRAL[key]; }
+            return key + " " + shown(key, v);
         }).join(", ") + " (" + (ev ? ev.id : base.label) + ", world day " + day + ")";
     }
 

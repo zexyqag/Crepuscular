@@ -10,7 +10,7 @@
 })(this, function () {
     "use strict";
 
-    var MOD_VERSION = "0.6.0";
+    var MOD_VERSION = "0.7.0";
 
     // User text becomes keys, so tables keyed by it have no prototype ("constructor", "__proto__").
     function dict(from) {
@@ -229,7 +229,9 @@
     ];
 
     // Number effects that may be a range a..b, which grow= of the same definition moves along.
-    var GROWING = ["speed", "health"];
+    var GROWING = ["speed", "health", "rise"];
+    // Of those, the ones that are whole numbers.
+    var WHOLE = dict({ speed: true, rise: true });
 
     // UTF-8 bytes, counted per UTF-16 unit as the game's Lua sees the text: a surrogate pair is 4.
     Defs.bytes = function (text) {
@@ -668,6 +670,17 @@
         return growing(v, false, 0.1, 5, "a number from 0.1 to 5", "numbers from 0.1 to 5 such as 0.7..0.4");
     };
 
+    PARSE.rise = function (v) {
+        return growing(v, true, 0, 100, "a whole number from 0 to 100", "whole numbers from 0 to 100 such as 25..100");
+    };
+
+    PARSE.wake = function (v) {
+        if (v !== "true" && v !== "false") {
+            return new Bad(quote(v) + " is not true or false");
+        }
+        return v === "true";
+    };
+
     // Whole world days: Nd -> N, or null.
     function wholeDays(text) {
         var m = /^([\s\S]*?) *d$/.exec(text);
@@ -692,7 +705,8 @@
 
     // Keys a base definition may have; the rest belong to events.
     var EFFECTS = dict({
-        off: true, say: true, color: true, sound: true, speed: true, steps: true, health: true, grow: true,
+        off: true, say: true, color: true, sound: true, speed: true, steps: true, health: true, rise: true,
+        wake: true, grow: true,
     });
 
     // A range needs grow= in its own definition: an event's grow never moves what it inherits. Without
@@ -709,6 +723,14 @@
         });
     }
 
+    // Whether a rise= value, or either end of its range, marks any corpse.
+    function marks(v) {
+        if (typeof v === "object") {
+            return v.from > 0 || v.to > 0;
+        }
+        return v !== undefined && v > 0;
+    }
+
     function idleGrow(def, warn) {
         if (def.grow === undefined) {
             return;
@@ -720,8 +742,8 @@
     }
 
     // A number effect of def on world day `day`: a range goes linearly from its first value on the
-    // first day of grow= to its second on the last, and keeps its ends outside them. Speed shares are
-    // whole numbers, rounded half away from 0.
+    // first day of grow= to its second on the last, and keeps its ends outside them. Speed and rise
+    // shares are whole numbers, rounded half away from 0.
     Defs.at = function (def, key, day) {
         var v = def[key];
         if (typeof v !== "object") {
@@ -734,7 +756,7 @@
         } else if (day < grow.to) {
             x = v.from + (v.to - v.from) * (day - grow.from) / (grow.to - grow.from);
         }
-        if (key !== "speed") {
+        if (!WHOLE[key]) {
             return x;
         }
         var n = Math.floor(Math.abs(x) + 0.5);
@@ -1060,6 +1082,18 @@
                 }
             }
         });
+
+        var all = [result.day, result.night].concat(result.events);
+        var wakes = all.some(function (def) {
+            return def.wake === true;
+        });
+        if (!wakes) {
+            all.forEach(function (def) {
+                if (marks(def.rise)) {
+                    warn(def, "rise", "no definition has wake=true, so marked corpses never get up");
+                }
+            });
+        }
         result.definitions = parsed;
         return result;
     };
@@ -1657,8 +1691,8 @@
         NightStartHour: 20,
         NightEndHour: 4,
         Day: "speed=+25;health=0.7",
-        Night: "speed=-50;off=mutants",
-        Events1: "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
+        Night: "speed=-50;rise=50;wake=true;off=mutants",
+        Events1: "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;rise=100;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
         Events2: "",
         Events3: "",
         Events4: "",
@@ -1670,7 +1704,9 @@
     };
 
     // Every Crepuscular option, for set. entries that name one.
-    var OWN_OPTIONS = OPTION_ORDER.concat(["KeepDistance", "RemovalsPerMinute", "MutantRequeue", "ZombiesPerSweep", "Notifications", "Verbose"]);
+    var OWN_OPTIONS = OPTION_ORDER.concat(["KeepDistance", "RemovalsPerMinute", "MutantRequeue", "ZombiesPerSweep",
+        "RiseDelayMin", "RiseDelayMax", "MaxRises", "RiseMaxAgeHours", "FireStaysDown", "FinishOff", "FinishOffSeconds",
+        "HeadHitsStayDown", "RiseInSafehouses", "RisePlayers", "RiseKinds", "RisesPerScan", "RiserLimit", "Notifications", "Verbose"]);
 
     // Cry of Fear Monster NPCs options a definition sets for its spawn levels (1 = None ... 5 = High).
     var COF_OPTIONS = {

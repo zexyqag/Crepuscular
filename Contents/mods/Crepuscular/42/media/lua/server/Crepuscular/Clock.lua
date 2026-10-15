@@ -17,6 +17,10 @@ local Clock = {}
 -- "day" or "night" while an admin forces the phase. Never saved.
 Clock.forced = nil
 
+-- What the definition in effect asks of corpses: { rise, wake }. It stays on the server, as
+-- players' games have nothing to do with it.
+Clock.risers = nil
+
 -- A dedicated server can transmit only once it has started listening.
 local started = false
 
@@ -72,11 +76,13 @@ local parsed = nil
 -- The definitions, parsed again whenever a text, the fixed hours or the registered kinds change.
 -- defs.names: every sandbox option they set; defs.cof: what the Cry of Fear adapter sets while
 -- cof is off, nil when no definition turns it off or Cry of Fear isn't loaded; defs.fmax and
--- defs.smax: the largest speed=+N and speed=-N of all of them, 0 for none.
+-- defs.smax: the largest speed=+N and speed=-N of all of them, 0 for none; defs.riseKinds: the
+-- set of the RiseKinds option.
 function Clock.definitions(rule)
     local texts = {}
+    local riseKinds = Settings.riseKinds()
     local same = parsed ~= nil and source.mode == rule.mode and source.start == rule.start
-        and source.finish == rule.finish and source.revision == Kinds.revision()
+        and source.finish == rule.finish and source.revision == Kinds.revision() and source.riseKinds == riseKinds
     for _, name in ipairs(Defs.OPTIONS) do
         texts[name] = Settings.definition(name)
         same = same and source[name] == texts[name]
@@ -117,6 +123,23 @@ function Clock.definitions(rule)
         defs.warnings[#defs.warnings + 1] = "Cry of Fear: off=cof, but Cry of Fear Monster NPCs is not loaded,"
             .. " so the kind cof has no members"
     end
+    local kinds, why = Defs.kinds(riseKinds)
+    if kinds == nil then
+        defs.errors[#defs.errors + 1] = "RiseKinds: " .. why .. ", so no monster's corpse rises"
+        kinds = {}
+    elseif defs.known ~= nil then
+        local names = {}
+        for kind in pairs(kinds) do
+            if not defs.known[kind] then
+                names[#names + 1] = kind
+            end
+        end
+        table.sort(names)
+        for _, kind in ipairs(names) do
+            defs.warnings[#defs.warnings + 1] = "RiseKinds: '" .. kind .. "' is not a known kind"
+        end
+    end
+    defs.riseKinds = kinds
     for _, text in ipairs(defs.errors) do
         Log.warnOnce(text, text)
     end
@@ -132,6 +155,7 @@ function Clock.definitions(rule)
     end
     Log.info(#defs.events .. " events loaded, " .. defs.failed .. " definitions with errors")
     texts.mode, texts.start, texts.finish, texts.revision = rule.mode, rule.start, rule.finish, Kinds.revision()
+    texts.riseKinds = riseKinds
     source = texts
     parsed = defs
     return defs
@@ -182,8 +206,10 @@ local function same(a, b)
     return true
 end
 
--- The zombie keys of a definition, with the value they have when no definition sets them.
+-- The zombie keys of a definition, with the value they have when no definition sets them: those
+-- players' games act on, and those for corpses.
 local NEUTRAL = { speed = 0, steps = 1, health = 1 }
+local CORPSES = { rise = 0, wake = false }
 
 -- Resolves the definition in effect (3.1), applies its sandbox values and publishes on change.
 -- now: world-age hours.
@@ -241,20 +267,24 @@ local function update(state, ledger, defs, now)
         }
     end
 
-    local effects = { off = copy(off), fmax = defs.fmax, smax = defs.smax }
     local day = Schedule.worldDay(ledger.occasion, now)
-    for key, neutral in pairs(NEUTRAL) do
-        -- A range grows with the grow= of the definition it belongs to.
-        local owner = base
-        if ev ~= nil and ev[key] ~= nil then
-            owner = ev
+    local function resolve(into, keys)
+        for key, neutral in pairs(keys) do
+            -- A range grows with the grow= of the definition it belongs to.
+            local owner = base
+            if ev ~= nil and ev[key] ~= nil then
+                owner = ev
+            end
+            local value = Defs.at(owner, key, day)
+            if value == nil then
+                value = neutral
+            end
+            into[key] = value
         end
-        local value = Defs.at(owner, key, day)
-        if value == nil then
-            value = neutral
-        end
-        effects[key] = value
+        return into
     end
+    local effects = resolve({ off = copy(off), fmax = defs.fmax, smax = defs.smax }, NEUTRAL)
+    Clock.risers = resolve({}, CORPSES)
 
     local sandbox, changed = Sandbox.sync(defs.names, wanted, label)
     local fresh = {

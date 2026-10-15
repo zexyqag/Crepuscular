@@ -7,8 +7,8 @@ local DEFAULTS = {
     NightStartHour = 20,
     NightEndHour = 4,
     Day = "speed=+25;health=0.7",
-    Night = "speed=-50;off=mutants",
-    Events1 = "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
+    Night = "speed=-50;rise=50;wake=true;off=mutants",
+    Events1 = "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;rise=100;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
     Events2 = "",
     Events3 = "",
     Events4 = "",
@@ -21,6 +21,19 @@ local DEFAULTS = {
     RemovalsPerMinute = 50,
     MutantRequeue = false,
     ZombiesPerSweep = 400,
+    RiseDelayMin = 1.0,
+    RiseDelayMax = 2.0,
+    MaxRises = 1,
+    RiseMaxAgeHours = 168,
+    FireStaysDown = true,
+    FinishOff = true,
+    FinishOffSeconds = 3,
+    HeadHitsStayDown = false,
+    RiseInSafehouses = false,
+    RisePlayers = false,
+    RiseKinds = "",
+    RisesPerScan = 10,
+    RiserLimit = 5000,
     Notifications = true,
 }
 
@@ -41,6 +54,14 @@ end
 local function integer(name, min, max)
     local value = read(name)
     if type(value) ~= "number" or value ~= math.floor(value) or value < min or value > max then
+        return invalid(name, value)
+    end
+    return value
+end
+
+local function number(name, min, max)
+    local value = read(name)
+    if type(value) ~= "number" or value < min or value > max then
         return invalid(name, value)
     end
     return value
@@ -94,6 +115,62 @@ end
 
 function Settings.zombiesPerSweep()
     return integer("ZombiesPerSweep", 50, 5000)
+end
+
+-- In-game hours after death before a marked corpse may get up.
+function Settings.riseDelayMin()
+    return number("RiseDelayMin", 0, 48)
+end
+
+function Settings.riseDelayMax()
+    return number("RiseDelayMax", 0, 48)
+end
+
+-- 0 for no limit.
+function Settings.maxRises()
+    return integer("MaxRises", 0, 20)
+end
+
+-- 0 for no limit.
+function Settings.riseMaxAgeHours()
+    return integer("RiseMaxAgeHours", 0, 8760)
+end
+
+function Settings.fireStaysDown()
+    return boolean("FireStaysDown")
+end
+
+function Settings.finishOff()
+    return boolean("FinishOff")
+end
+
+function Settings.finishOffSeconds()
+    return integer("FinishOffSeconds", 1, 30)
+end
+
+function Settings.headHitsStayDown()
+    return boolean("HeadHitsStayDown")
+end
+
+function Settings.riseInSafehouses()
+    return boolean("RiseInSafehouses")
+end
+
+function Settings.risePlayers()
+    return boolean("RisePlayers")
+end
+
+-- Kind names, as in off=.
+function Settings.riseKinds()
+    return text("RiseKinds")
+end
+
+function Settings.risesPerScan()
+    return integer("RisesPerScan", 1, 100)
+end
+
+function Settings.riserLimit()
+    return integer("RiserLimit", 100, 50000)
 end
 
 -- Whether players' games show the definitions' lines and play their sounds.

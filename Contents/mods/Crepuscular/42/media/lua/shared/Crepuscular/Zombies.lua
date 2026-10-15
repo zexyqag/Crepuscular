@@ -7,7 +7,7 @@ local Tuning = require "Crepuscular/Tuning"
 -- Speed tiers and health of ordinary zombies, by the definition in effect. Every game sweeps its
 -- zombies each in-game minute: the speed only of those it runs, whose packets carry it to the
 -- others, and the health cap of all, since a new owner sends its own copy's health. The server
--- also sets both when it creates or loads a zombie.
+-- also sets both when it creates, loads or raises a zombie.
 local Zombies = {}
 
 -- Since this game started, for the status.
@@ -61,14 +61,18 @@ local function hashes(z, id)
     return entry
 end
 
+-- The kind z belongs to. A single player zombie is dressed first, so the kinds see its outfit.
+function Zombies.kindOf(z, kindOf)
+    outfitID(z)
+    return kindOf(z)
+end
+
 -- Left alone: dead, crawling, dragged corpses, zombies playing dead, Bandits and every kind's members.
--- A single player zombie is dressed before its kind is told, so the kinds see its outfit.
 local function ordinary(z, kindOf)
     if z:isDead() or z:isCrawling() or z:isReanimatedForGrappleOnly() or z:isFakeDead() or Kinds.isBandit(z) then
         return false
     end
-    outfitID(z)
-    return kindOf(z) == nil
+    return Zombies.kindOf(z, kindOf) == nil
 end
 
 -- What the definition in effect asks, with the game settings it depends on, read live.
@@ -148,9 +152,28 @@ end
 
 Events.EveryOneMinute.Add(sweep)
 
--- No player's game runs a zombie being created, and its health was just rolled, so the factor
--- can't heal a wound. A zombie a mod spawns in an outfit is dressed after this event, which changes
--- its outfit ID: the sweep gives it its tier again, and health the mod sets wins.
+-- The tier and the health factor f of the definition in effect, for a zombie whose health was just
+-- rolled and that no player's game runs yet, so the factor can't heal a wound. Returns whether it gave
+-- the factor.
+local function creation(z, r, f)
+    if not ordinary(z, Kinds.test()) then
+        return false
+    end
+    if r.reach then
+        local tier = retier(z, r)
+        if tier ~= nil then
+            retiered(z, tier)
+        end
+    end
+    if f ~= 1 then
+        z:setHealth(Tuning.created(z:getHealth(), f))
+        return true
+    end
+    return false
+end
+
+-- A zombie a mod spawns in an outfit is dressed after this event, which changes its outfit ID: the
+-- sweep gives it its tier again, and health the mod sets wins.
 local function created(z)
     local state = State.get()
     if not Kinds.started() or state == nil then
@@ -166,18 +189,17 @@ local function created(z)
     if getCell():getZombieList():contains(z) then
         return
     end
-    if not ordinary(z, Kinds.test()) then
-        return
-    end
-    if r.reach then
-        local tier = retier(z, r)
-        if tier ~= nil then
-            retiered(z, tier)
-        end
-    end
-    if f ~= 1 then
-        z:setHealth(Tuning.created(z:getHealth(), f))
+    if creation(z, r, f) then
         counts.created = counts.created + 1
+    end
+end
+
+-- A zombie that just rose from its corpse, which rolled its health as it rose.
+function Zombies.risen(z)
+    local effects = State.get().effects
+    local r = rules(effects)
+    if r.reach or effects.health ~= 1 then
+        creation(z, r, effects.health)
     end
 end
 

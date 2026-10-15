@@ -4,7 +4,7 @@
     "IGUI_Crepuscular_Phase_day": "Day",
     "IGUI_Crepuscular_Phase_night": "Night",
     "IGUI_Crepuscular_None": "none",
-    "IGUI_Crepuscular_Status": "Crepuscular: %1, event %2. %3 events loaded, %4 definitions with errors, %5 options overridden. Details are in the log.",
+    "IGUI_Crepuscular_Status": "Crepuscular: %1, event %2. %3 events loaded, %4 definitions with errors, %5 options overridden, %6 corpses waiting to rise. Details are in the log.",
     "IGUI_Crepuscular_Forced": "Crepuscular phase: %1",
     "IGUI_Crepuscular_Started": "Crepuscular: %1 started.",
     "IGUI_Crepuscular_Unknown": "Crepuscular: there is no event %1.",
