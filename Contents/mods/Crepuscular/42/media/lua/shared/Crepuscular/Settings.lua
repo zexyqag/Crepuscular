@@ -16,10 +16,10 @@ local DEFAULTS = {
     Events6 = "",
     Events7 = "",
     Events8 = "",
-    MutantKeepDistance = 40,
-    MutantRemovalsPerMinute = 50,
+    Kinds = "",
+    KeepDistance = 40,
+    RemovalsPerMinute = 50,
     MutantRequeue = false,
-    ExcludedOutfits = "",
 }
 
 local function invalid(name, value)
@@ -73,26 +73,21 @@ function Settings.nightEndHour()
     return integer("NightEndHour", 0, 23)
 end
 
--- name is Day, Night or Events1 to Events8.
+-- name is Day, Night, Events1 to Events8 or Kinds.
 function Settings.definition(name)
     return text(name)
 end
 
-function Settings.mutantKeepDistance()
-    return integer("MutantKeepDistance", 0, 300)
+function Settings.keepDistance()
+    return integer("KeepDistance", 0, 300)
 end
 
-function Settings.mutantRemovalsPerMinute()
-    return integer("MutantRemovalsPerMinute", 1, 500)
+function Settings.removalsPerMinute()
+    return integer("RemovalsPerMinute", 1, 500)
 end
 
 function Settings.mutantRequeue()
     return boolean("MutantRequeue")
-end
-
--- Comma-separated outfit name prefixes.
-function Settings.excludedOutfits()
-    return text("ExcludedOutfits")
 end
 
 return Settings

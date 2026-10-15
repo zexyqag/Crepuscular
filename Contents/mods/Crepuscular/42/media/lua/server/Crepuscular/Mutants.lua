@@ -7,15 +7,14 @@ local State = require "Crepuscular/State"
 local Kinds = require "Crepuscular/Kinds"
 local Clock = require "Crepuscular/Clock"
 
--- The Mutants adapter: a gate on new mutants, removal of far mutants while the definition in
--- effect has off=mutants, and an optional requeue of loaded zombies when they come back on.
+-- The Mutants adapter: a gate on new mutants while the definition in effect has off=mutants, and
+-- an optional requeue of loaded zombies when they come back on. Far mutants are removed by
+-- Despawn, as any kind that is off.
 local Mutants = {}
 
 local OWNER = "Crepuscular"
 local REQUEUE_PER_MINUTE = 200
 
--- Mutants removed since this game started.
-local removed = 0
 -- The latest requeue: { began, offered, finished }.
 local lastRequeue = nil
 
@@ -39,13 +38,9 @@ local function claim(z)
     if not mutantsOn() then
         return "mutants are off"
     end
-    local monster = Kinds.cryOfFear(z)
-    if monster ~= nil then
-        return "Cry of Fear " .. monster
-    end
-    local prefix = Kinds.excluded(z)
-    if prefix ~= nil then
-        return "ExcludedOutfits " .. prefix
+    local kind = Kinds.of(z)
+    if kind ~= nil and kind ~= "mutants" then
+        return "kind " .. kind
     end
     return nil
 end
@@ -93,7 +88,7 @@ local function check()
     end
     if gated == nil then
         Log.error("The Mutants has no ForeignOwnership.isClaimed, so it can't be kept from making new mutants;"
-            .. " far mutants are still removed")
+            .. " far mutants are still removed while they are off")
     end
     if type(PZTheMutants.PendingZombies) ~= "table" then
         Log.warn("The Mutants has no PendingZombies, so MutantRequeue does nothing")
@@ -103,76 +98,9 @@ end
 Events.OnServerStarted.Add(check)
 Events.OnGameStart.Add(check)
 
--- Single player: the local players. getOnlinePlayers() is empty outside multiplayer.
-local function players()
-    local list = {}
-    if isServer() then
-        local online = getOnlinePlayers()
-        for i = 0, online:size() - 1 do
-            list[#list + 1] = online:get(i)
-        end
-    else
-        for i = 0, getNumActivePlayers() - 1 do
-            local player = getSpecificPlayer(i)
-            if player ~= nil then
-                list[#list + 1] = player
-            end
-        end
-    end
-    return list
-end
-
-local function near(z, list, distance)
-    local x, y = z:getX(), z:getY()
-    for _, player in ipairs(list) do
-        local dx, dy = player:getX() - x, player:getY() - y
-        if dx * dx + dy * dy <= distance * distance then
-            return true
-        end
-    end
-    return false
-end
-
--- A Cry of Fear monster never passes isMutant: both identities come from the same outfit index.
-local function removable(z, list, distance)
-    return not z:isDead() and Kinds.isMutant(z) and not z:isReanimatedForGrappleOnly()
-        and z:getTarget() == nil and not near(z, list, distance) and Kinds.excluded(z) == nil
-end
-
-local function cleanup()
-    local cap = Settings.mutantRemovalsPerMinute()
-    local distance = Settings.mutantKeepDistance()
-    local list = players()
-    local zombies = getCell():getZombieList()
-    local doomed = {}
-    for i = 0, zombies:size() - 1 do
-        local z = zombies:get(i)
-        if removable(z, list, distance) then
-            doomed[#doomed + 1] = z
-            if #doomed == cap then
-                break
-            end
-        end
-    end
-    if #doomed == 0 then
-        return
-    end
-    -- Removing a zombie clears its online ID, so the batch is written first.
-    local out = {}
-    for i, z in ipairs(doomed) do
-        out[i] = { id = z:getOnlineID(), x = z:getX(), y = z:getY() }
-        VirtualZombieManager.instance:removeZombieFromWorld(z)
-    end
-    removed = removed + #doomed
-    -- Sent at once, as the server may give a removed zombie's online ID to a new one. Does nothing
-    -- in single player.
-    sendServerCommand(State.MODULE, "out", { list = out })
-    Log.info("removed " .. #doomed .. " mutants while they are off")
-end
-
+-- Members of every kind stay as they are: a mutant offered again would be healed.
 local function ordinary(z)
-    return not z:isDead() and not z:isReanimatedForGrappleOnly() and not Kinds.isMutant(z)
-        and Kinds.cryOfFear(z) == nil and Kinds.excluded(z) == nil and not Kinds.isBandit(z)
+    return not z:isDead() and not z:isReanimatedForGrappleOnly() and not Kinds.isBandit(z) and Kinds.of(z) == nil
 end
 
 -- Requeue in progress: the next index in the zombie list.
@@ -228,7 +156,6 @@ local function minute()
         end
     else
         cursor = nil
-        cleanup()
     end
     wasOn = open
 end
@@ -260,7 +187,7 @@ function Mutants.status()
     end
     return {
         "The Mutants: " .. gate .. "; mutants " .. now,
-        "The Mutants: " .. removed .. " mutants removed this session; last requeue " .. last,
+        "The Mutants: last requeue " .. last,
     }
 end
 

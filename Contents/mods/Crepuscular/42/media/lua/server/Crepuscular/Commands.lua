@@ -6,7 +6,9 @@ local Phase = require "Crepuscular/Phase"
 local State = require "Crepuscular/State"
 local Defs = require "Crepuscular/Defs"
 local Sandbox = require "Crepuscular/Sandbox"
+local Kinds = require "Crepuscular/Kinds"
 local Clock = require "Crepuscular/Clock"
+local Despawn = require "Crepuscular/Despawn"
 local Mutants = require "Crepuscular/Mutants"
 local CryOfFear = require "Crepuscular/CryOfFear"
 
@@ -105,11 +107,20 @@ local function status()
     for _, id in ipairs(sorted(ledger.follow)) do
         add("chain flag " .. id .. ": " .. table.concat(sorted(ledger.follow[id]), ", "))
     end
+    local kinds = {}
+    for _, kind in ipairs(Kinds.list()) do
+        local source = kind.source
+        if kind.hidden then
+            source = source .. ", replaced by the Kinds option"
+        end
+        kinds[#kinds + 1] = kind.name .. " (" .. source .. ")"
+    end
+    add("kinds: " .. table.concat(kinds, ", "))
     local off = sorted(state.effects.off)
     if #off == 0 then
         off = { "none" }
     end
-    add("kinds off: " .. table.concat(off, ", "))
+    add("kinds off: " .. table.concat(off, ", ") .. "; far members " .. Despawn.status())
 
     local overridden = 0
     for name, entry in pairs(ModData.getOrCreate(Sandbox.STORE)) do
@@ -129,7 +140,7 @@ local function status()
     for _, line in ipairs(Mutants.status()) do
         add(line)
     end
-    add(CryOfFear.status())
+    add(CryOfFear.status(defs.cof ~= nil, state.effects.off.cof == true))
 
     local event = translated("IGUI_Crepuscular_None")
     if current ~= nil then

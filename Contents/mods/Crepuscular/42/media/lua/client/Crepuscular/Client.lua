@@ -4,7 +4,7 @@ local Overrides = require "Crepuscular/Overrides"
 local Kinds = require "Crepuscular/Kinds"
 
 -- The server may have given the online ID to another zombie by now, so a copy is only removed near
--- where the server's mutant was.
+-- where the server's zombie was.
 local OUT_RANGE = 30
 
 -- Serial of the last announcement this game has shown.
@@ -40,8 +40,19 @@ end
 
 State.listen(announce)
 
--- The server removed these mutants; the game doesn't remove this game's copies of zombies a script
--- removes, and the copy this game runs would go on attacking.
+-- Cry of Fear's own answer to its server's out command (its COF_NetClient.lua): it finds the copy
+-- by online ID, checks it is a monster within 30 tiles of the server's one, stops its looping
+-- sounds and removes it.
+local function cryOfFearOut()
+    local answers = COF_NetClient
+    if type(answers) == "table" and type(answers.out) == "function" then
+        return answers.out
+    end
+    return nil
+end
+
+-- The server removed these zombies, { id, x, y, kind } each; the game doesn't remove this game's
+-- copies of zombies a script removes, and the copy this game runs would go on attacking.
 local function takeOut(list)
     local byId = {}
     local zombies = getCell():getZombieList()
@@ -49,12 +60,17 @@ local function takeOut(list)
         local z = zombies:get(i)
         byId[z:getOnlineID()] = z
     end
+    local cofOut = cryOfFearOut()
     for _, entry in ipairs(list) do
-        local z = byId[entry.id]
-        if z ~= nil and Kinds.isMutant(z) then
-            local dx, dy = z:getX() - entry.x, z:getY() - entry.y
-            if dx * dx + dy * dy <= OUT_RANGE * OUT_RANGE then
-                VirtualZombieManager.instance:removeZombieFromWorld(z)
+        if entry.kind == "cof" and cofOut ~= nil then
+            cofOut(entry)
+        else
+            local z = byId[entry.id]
+            if z ~= nil and Kinds.of(z) == entry.kind then
+                local dx, dy = z:getX() - entry.x, z:getY() - entry.y
+                if dx * dx + dy * dy <= OUT_RANGE * OUT_RANGE then
+                    Kinds.remove(z, entry.kind)
+                end
             end
         end
     end

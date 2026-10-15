@@ -4,6 +4,7 @@
 --   effects = { off = { [kind] = true } },
 --   announce = { serial, text, color } or nil,
 --   sandbox = { [option name] = current value },
+--   kinds = { { name, prefixes } } from the Kinds option,
 --   ids = { event ids }, errors = number of definitions with errors }
 local State = {}
 
@@ -13,10 +14,19 @@ State.MODULE = "Crepuscular"
 -- Server only, never sent: see Schedule.
 State.LEDGER = "CrepuscularLedger"
 
+-- The state, or nil while there is none of this version yet.
+function State.get()
+    local state = ModData.get(State.NAME)
+    if state == nil or state.version ~= State.VERSION then
+        return nil
+    end
+    return state
+end
+
 local listeners = {}
 
--- Single player has no network, so the server code hands the state to the client code directly;
--- an MP client hands on what it receives.
+-- Listeners get each new state: from the server code in single player and on a server, and from
+-- what an MP client receives.
 function State.listen(listener)
     listeners[#listeners + 1] = listener
 end

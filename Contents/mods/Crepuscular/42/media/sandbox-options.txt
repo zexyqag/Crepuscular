@@ -109,24 +109,32 @@ option Crepuscular.Events8
     translation = Crepuscular_Events8,
 }
 
-option Crepuscular.MutantKeepDistance
+option Crepuscular.Kinds
+{
+    type = string,
+    default = ,
+    page = Crepuscular,
+    translation = Crepuscular_Kinds,
+}
+
+option Crepuscular.KeepDistance
 {
     type = integer,
     min = 0,
     max = 300,
     default = 40,
     page = Crepuscular,
-    translation = Crepuscular_MutantKeepDistance,
+    translation = Crepuscular_KeepDistance,
 }
 
-option Crepuscular.MutantRemovalsPerMinute
+option Crepuscular.RemovalsPerMinute
 {
     type = integer,
     min = 1,
     max = 500,
     default = 50,
     page = Crepuscular,
-    translation = Crepuscular_MutantRemovalsPerMinute,
+    translation = Crepuscular_RemovalsPerMinute,
 }
 
 option Crepuscular.MutantRequeue
@@ -135,14 +143,6 @@ option Crepuscular.MutantRequeue
     default = false,
     page = Crepuscular,
     translation = Crepuscular_MutantRequeue,
-}
-
-option Crepuscular.ExcludedOutfits
-{
-    type = string,
-    default = ,
-    page = Crepuscular,
-    translation = Crepuscular_ExcludedOutfits,
 }
 
 option Crepuscular.Verbose

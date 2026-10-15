@@ -1,12 +1,14 @@
--- Parses the Day, Night and Events1-8 options. Pure: the clock rule and known kinds are passed in.
+-- Parses the Day, Night, Events1-8 and Kinds options. Pure: the clock rule and the kinds code
+-- registers are passed in.
 local Phase = require "Crepuscular/Phase"
 
 local Defs = {}
 
 Defs.BASES = { "Day", "Night" }
 Defs.SLOTS = { "Events1", "Events2", "Events3", "Events4", "Events5", "Events6", "Events7", "Events8" }
+Defs.KINDS = "Kinds"
 Defs.OPTIONS = {}
-for _, list in ipairs({ Defs.BASES, Defs.SLOTS }) do
+for _, list in ipairs({ Defs.BASES, Defs.SLOTS, { Defs.KINDS } }) do
     for _, name in ipairs(list) do
         Defs.OPTIONS[#Defs.OPTIONS + 1] = name
     end
@@ -511,9 +513,45 @@ local function message(label, key, reason)
     return label .. ": " .. key .. ": " .. reason
 end
 
--- texts: option name -> text; rule: the clock rule (Phase.occasion); kinds: set of known kind names.
--- Returns { day, night, events (valid, in order), byId, ids, errors, warnings, failed }.
-function Defs.parse(texts, rule, kinds)
+-- The Kinds option: name=prefix,prefix;name=prefix. A bad entry is skipped and the rest kept.
+-- Returns { { name, prefixes } } in order, prefixes lowercased.
+local function parseKinds(text, builtin, fail)
+    local kinds, seen = {}, {}
+    for _, f in ipairs(fields(text)) do
+        if f.bad ~= nil then
+            fail(f.name, f.bad)
+        elseif not idText(f.name) then
+            fail(quote(f.name), "is not made of a-z, 0-9 and _")
+        elseif f.name == "none" or builtin[f.name] then
+            fail(f.name, "is a kind name Crepuscular has")
+        elseif seen[f.name] then
+            fail(f.name, "is repeated")
+        else
+            seen[f.name] = true
+            local prefixes = {}
+            local ok, why = list(f.value, function(item, set)
+                item = string.lower(item)
+                if not set[item] then
+                    prefixes[#prefixes + 1] = item
+                end
+                set[item] = true
+                return true
+            end, "a list of outfit name prefixes")
+            if ok == nil then
+                fail(f.name, why)
+            else
+                kinds[#kinds + 1] = { name = f.name, prefixes = prefixes }
+            end
+        end
+    end
+    return kinds
+end
+
+-- texts: option name -> text; rule: the clock rule (Phase.occasion); builtin: set of the built-in
+-- kind names; registered: set of the names other mods registered, or nil while they may still be
+-- missing, which leaves off= unchecked.
+-- Returns { day, night, events (valid, in order), byId, ids, kinds, errors, warnings, failed }.
+function Defs.parse(texts, rule, builtin, registered)
     local result = { events = {}, byId = {}, ids = {}, errors = {}, warnings = {}, failed = 0 }
 
     local function warn(def, key, reason)
@@ -525,13 +563,38 @@ function Defs.parse(texts, rule, kinds)
         def.errors = def.errors + 1
     end
 
+    local option = { label = Defs.KINDS, errors = 0 }
+    result.kinds = parseKinds(texts[Defs.KINDS], builtin, function(key, reason)
+        fail(option, key, reason)
+    end)
+    if option.errors > 0 then
+        result.failed = result.failed + 1
+    end
+
+    local known = nil
+    if registered ~= nil then
+        known = {}
+        for name in pairs(builtin) do
+            known[name] = true
+        end
+        for name in pairs(registered) do
+            known[name] = true
+        end
+        for _, kind in ipairs(result.kinds) do
+            if registered[kind.name] then
+                warn(option, kind.name, "replaces the kind another mod registered under this name")
+            end
+            known[kind.name] = true
+        end
+    end
+
     local function checkKinds(def)
-        if def.off == nil then
+        if def.off == nil or known == nil then
             return
         end
         local names = {}
         for kind in pairs(def.off) do
-            if not kinds[kind] then
+            if not known[kind] then
                 names[#names + 1] = kind
             end
         end
