@@ -10,7 +10,7 @@
 })(this, function () {
     "use strict";
 
-    var MOD_VERSION = "0.8.0";
+    var MOD_VERSION = "0.8.1";
 
     // User text becomes keys, so tables keyed by it have no prototype ("constructor", "__proto__").
     function dict(from) {
@@ -1716,7 +1716,7 @@
         NightEndHour: 4,
         Day: "speed=+25;health=0.7",
         Night: "speed=-50;rise=50;wake=true;off=mutants",
-        Events1: "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;rise=100;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
+        Events1: "id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;rise=100;wake=true;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c",
         Events2: "",
         Events3: "",
         Events4: "",

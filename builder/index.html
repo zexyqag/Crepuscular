@@ -151,6 +151,8 @@ details.tip p { font-size: 0.9rem; color: var(--muted); }
 .kindrow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto; gap: 6px; margin: 6px 0 0; align-items: center; }
 .kindrow input { width: 100%; }
 pre.out { white-space: pre-wrap; word-break: break-all; background: var(--field); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin: 6px 0; max-height: 26em; overflow: auto; }
+.preset ul { margin: 4px 0; padding-left: 1.2em; font-size: 0.9rem; }
+.preset .notes { color: var(--muted); }
 
 .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 8px 0; font-size: 0.9rem; }
 .month { margin: 18px 0; }
@@ -200,10 +202,12 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
 <noscript><p>This page needs JavaScript; it runs entirely in your browser and sends nothing anywhere.</p></noscript>
 </div>
 <script src="events.js"></script>
+<script src="presets.js"></script>
 <script>
 (function () {
     "use strict";
     var C = window.Crepuscular;
+    var P = window.CrepuscularPresets;
     var Defs = C.Defs, Text = C.Text;
     var STORE = "crepuscular-builder";
 
@@ -299,6 +303,8 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         return {
             values: values,
             registered: "",
+            // Optional mods ticked as in the game, by kind name.
+            mods: {},
             tab: "defs",
             open: {},
             showAll: false,
@@ -311,6 +317,10 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             stats: null, notice: null,
             // Definitions whose off= is set to "these kinds" before any kind is ticked.
             offList: {},
+            // The preset or example chosen in each picker, by its owner's key or "examples".
+            picks: {},
+            // The last preset applied or example added, shown while the options are as it left them.
+            result: null,
         };
     }
 
@@ -326,6 +336,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                     if (ok) { s.values[name] = v; }
                 });
                 if (typeof saved.registered === "string") { s.registered = saved.registered; }
+                Object.keys(P.MODS).forEach(function (k) { if (saved.mods && saved.mods[k] === true) { s.mods[k] = true; } });
                 if (["defs", "cal", "import", "export"].indexOf(saved.tab) >= 0) { s.tab = saved.tab; }
                 s.showAll = saved.showAll === true;
                 Object.keys(s.cal).forEach(function (k) {
@@ -341,7 +352,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
     function save() {
         try {
             window.localStorage.setItem(STORE, JSON.stringify({
-                values: state.values, registered: state.registered, tab: state.tab, showAll: state.showAll, cal: state.cal,
+                values: state.values, registered: state.registered, mods: state.mods, tab: state.tab, showAll: state.showAll, cal: state.cal,
             }));
         } catch (e) {
             return;
@@ -486,6 +497,16 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         return r < 0 ? KEY_ORDER.length : r;
     }
 
+    // A new field after the fields that come before it in KEY_ORDER, set. ones after the other set. ones.
+    function place(fields, name, value) {
+        var f = { name: name, value: value, eq: true };
+        var r = rank(f), pos = fields.length;
+        for (var j = 0; j < fields.length; j++) {
+            if (rank(fields[j]) > r) { pos = j; break; }
+        }
+        fields.splice(pos, 0, f);
+    }
+
     function setField(fields, key, value) {
         var at = -1;
         for (var i = 0; i < fields.length; i++) {
@@ -499,11 +520,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             fields[at].value = value;
             return;
         }
-        var r = KEY_ORDER.indexOf(key), pos = fields.length;
-        for (var j = 0; j < fields.length; j++) {
-            if (rank(fields[j]) > r) { pos = j; break; }
-        }
-        fields.splice(pos, 0, { name: key, value: value, eq: true });
+        place(fields, key, value);
     }
 
     function getField(fields, key) {
@@ -1000,6 +1017,227 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             }));
     }
 
+    // ---------------------------------------------------------------- presets and examples
+    var PRESETS = {}, EXAMPLES = {};
+    P.GROUPS.forEach(function (g) {
+        g.presets.forEach(function (p) { PRESETS[p.id] = p; });
+        g.examples.forEach(function (e) { EXAMPLES[e.id] = e; });
+    });
+
+    function keyOf(owner) {
+        return owner === null ? "examples" : owner.slot ? owner.slot + ":" + owner.index : owner.name;
+    }
+
+    function andList(items) {
+        return items.length < 2 ? items.join("") : items.slice(0, -1).join(", ") + " and " + items[items.length - 1];
+    }
+
+    // set. fields by their option, as Defs.lua keeps them apart; null for text that isn't key=value.
+    function fieldKey(f) {
+        var n = lowerName(f);
+        return n !== null && n.slice(0, 4) === "set." ? "set." + f.name.slice(4) : n;
+    }
+
+    function fieldText(f) {
+        return f.eq ? f.name + "=" + f.value : f.value;
+    }
+
+    function pickList(id, kind, act, value, describedBy) {
+        return h("select", { id: id, "data-act": act, "aria-describedby": describedBy },
+            h("option", { value: "", selected: value === "" }, "Choose one"),
+            P.GROUPS.filter(function (g) { return g[kind].length > 0; }).map(function (g) {
+                return h("optgroup", { label: g.name }, g[kind].map(function (x) {
+                    return h("option", { value: x.id, selected: x.id === value }, x.name);
+                }));
+            }));
+    }
+
+    // short: only the mods that aren't ticked, without what happens then.
+    function needsLine(needs, short) {
+        var missing = needs.filter(function (k) { return state.mods[k] !== true; });
+        if (needs.length === 0 || (short && missing.length === 0)) { return null; }
+        var names = andList(needs.map(function (k) { return P.MODS[k].name + " (" + k + ")"; }));
+        if (missing.length === 0) {
+            return h("p", { "class": "msg info", "data-needs": "met" }, "Relies on " + names + ", ticked under Mods in the game.");
+        }
+        var which = andList(missing.map(function (k) { return P.MODS[k].name; })) + (missing.length === 1 ? " isn't" : " aren't") + " ticked under ";
+        return h("p", { "class": "msg warn", "data-needs": missing.join(",") }, short ? null : "Relies on " + names + ". ",
+            which, h("a", { href: "#mods" }, "Mods in the game"), short ? "." : ": without " + (missing.length === 1 ? "it, " : "them, ")
+            + missing.map(function (k) { return P.MODS[k].without; }).join("; ") + ". It can still be used.");
+    }
+
+    // The chosen preset or example: what it is, what it relies on, its caveats and its text.
+    function aboutBox(id, item, text, writes) {
+        return h("div", { id: id, "data-key": "about" }, item === undefined ? null : [
+            h("p", null, h("strong", null, item.name)),
+            item.inspiredBy ? h("p", { "class": "muted" }, item.inspiredBy + ".") : null,
+            h("p", null, item.blurb),
+            needsLine(item.needs),
+            item.notes.length ? h("ul", { "class": "notes" }, item.notes.map(function (n) { return h("li", null, n); })) : null,
+            h("p", { "class": "help" }, writes),
+            h("pre", { "class": "out" }, Text.events(text).join("|\n"))]);
+    }
+
+    function resultBox(where) {
+        var r = state.result;
+        var shown = r !== null && r.where === where && JSON.stringify(state.values) === r.after;
+        var id = idOf("result", where);
+        return h("div", { "aria-live": "polite", "data-key": "result" }, shown ? [
+            h("p", { "class": "msg info", id: id }, r.summary),
+            r.lines ? h("ul", { "class": "mono", "data-changes": "" }, r.lines.map(function (l) {
+                return h("li", null, l.from === undefined ? l.what + " " + l.text
+                    : [l.from, h("span", { "aria-hidden": "true" }, " → "), h("span", { "class": "sr" }, " becomes "), l.text]);
+            })) : null,
+            r.kept ? h("p", { "class": "help" }, r.kept) : null,
+            r.needs ? needsLine(r.needs, true) : null,
+            r.before ? h("div", { "class": "buttons" }, h("button", { type: "button", "data-act": "undo", "aria-describedby": id }, "Undo")) : null] : null);
+    }
+
+    function presetBox(ownerKey, target, isEvent) {
+        var id = idOf("f", ownerKey, "preset");
+        var p = PRESETS[state.picks[ownerKey]];
+        return h("fieldset", { "class": "preset", "data-key": "preset" },
+            h("legend", null, "Apply a preset"),
+            h("p", { "class": "help" }, "Replaces " + andList(P.ZOMBIE_KEYS) + " and every other key the preset lists, and keeps the rest"
+                + (isEvent ? ": the id, the track, the conditions and the other effects." : ".")),
+            h("label", { "for": id }, "Preset"),
+            pickList(id, "presets", "presetpick", p ? p.id : "", p ? id + "-about" : null),
+            aboutBox(id + "-about", p, p ? p.effects : "", "It writes:"),
+            h("div", { "class": "buttons" },
+                h("button", { type: "button", id: id + "-apply", "data-act": "presetapply", disabled: !p, "aria-describedby": p ? id + "-about" : null },
+                    p ? "Apply " + p.name + " to " + target : "Apply")),
+            resultBox(ownerKey));
+    }
+
+    function examplesBox() {
+        var e = EXAMPLES[state.picks.examples];
+        return h("fieldset", { "class": "preset", "data-key": "examples" },
+            h("legend", null, "Add an example event"),
+            h("p", { "class": "help" }, "Adds it after the last event, as written below. An id already in use gets a suffix such as _2, and a pair chained with after= is added together."),
+            h("label", { "for": "example" }, "Example"),
+            pickList("example", "examples", "examplepick", e ? e.id : "", e ? "example-about" : null),
+            aboutBox("example-about", e, e ? e.text : "", "It adds:"),
+            h("div", { "class": "buttons" },
+                h("button", { type: "button", id: "example-add", "data-act": "exampleadd", disabled: !e, "aria-describedby": e ? "example-about" : null },
+                    e ? "Add " + e.name : "Add")),
+            resultBox("examples"));
+    }
+
+    // The fields with the preset's in place of the zombie keys and the keys it lists, each where KEY_ORDER puts it.
+    function withPreset(fields, preset) {
+        var add = Text.fields(preset.effects);
+        // Keyed by field names, which may be "constructor" or "__proto__".
+        var replaced = Object.create(null);
+        P.ZOMBIE_KEYS.concat(add.map(fieldKey)).forEach(function (k) { replaced[k] = true; });
+        var out = fields.filter(function (f) { var k = fieldKey(f); return k === null || replaced[k] !== true; });
+        add.forEach(function (f) { place(out, f.name, f.value); });
+        return { fields: out, replaced: replaced };
+    }
+
+    // Each replaced key as it was and as it is now, in the order of the new text; those that stayed the same; the
+    // fields left alone, by name.
+    function changes(before, after, replaced) {
+        var old = Object.create(null);
+        before.forEach(function (f) {
+            var k = fieldKey(f);
+            if (k !== null && replaced[k]) { (old[k] = old[k] || []).push(fieldText(f)); }
+        });
+        var lines = [], same = [], seen = Object.create(null);
+        after.forEach(function (f) {
+            var k = fieldKey(f);
+            if (k === null || !replaced[k]) { return; }
+            seen[k] = true;
+            var was = old[k] ? old[k].join("; ") : null;
+            if (was === fieldText(f)) { same.push(was); }
+            else if (was === null) { lines.push({ what: "added", text: fieldText(f) }); }
+            else { lines.push({ from: was, text: fieldText(f) }); }
+        });
+        Object.keys(old).forEach(function (k) { if (!seen[k]) { lines.push({ what: "removed", text: old[k].join("; ") }); } });
+        var kept = before.filter(function (f) { var k = fieldKey(f); return k === null || !replaced[k]; })
+            .map(function (f) { return f.eq ? f.name : fieldText(f); });
+        return { lines: lines, same: same, kept: kept };
+    }
+
+    function snapshot() {
+        return { values: JSON.parse(JSON.stringify(state.values)), open: JSON.parse(JSON.stringify(state.open)) };
+    }
+
+    function applyPreset(owner, preset) {
+        var before = snapshot();
+        var c, name;
+        editDef(owner, function (f) {
+            var done = withPreset(f, preset);
+            c = changes(f, done.fields, done.replaced);
+            name = owner.slot ? getField(f, "id") || TEXT[owner.slot].name + " #" + (owner.index + 1) : owner.name;
+            f.splice.apply(f, [0, f.length].concat(done.fields));
+        });
+        var lines = c.lines.concat(c.same.length ? [{ what: "unchanged", text: c.same.join("; ") }] : []);
+        state.result = {
+            where: keyOf(owner), after: JSON.stringify(state.values), needs: preset.needs, lines: lines,
+            summary: "Applied " + preset.name + " to " + name + (c.lines.length ? ":" : ": its text already had every value, so nothing changed."),
+            kept: c.kept.length ? "Kept as they were: " + c.kept.join(", ") + "." : null,
+        };
+        if (c.lines.length) {
+            state.result.before = before;
+            state.result.focus = idOf("f", keyOf(owner), "preset", "apply");
+            state.result.undone = "Undid applying " + preset.name + " to " + name + ".";
+        }
+    }
+
+    // Adds the example's events after the last one; an id in use gets a suffix, and after= follows the new ids.
+    function addExample(example) {
+        var before = snapshot();
+        var list = eventList();
+        var slot = list.length ? list[list.length - 1].slot : "Events1";
+        var renamed = Object.create(null), notes = [];
+        var added = Text.events(example.text).map(function (t) {
+            var f = Text.fields(t);
+            var id = getField(f, "id");
+            var free = freeId(id, list);
+            if (free !== id) {
+                renamed[id] = free;
+                setField(f, "id", free);
+                notes.push(id + " is taken, so it is " + free);
+            }
+            list.push({ slot: slot, text: Text.join(f) });
+            return f;
+        });
+        added.forEach(function (f, i) {
+            var after = getField(f, "after");
+            if (after === null) { return; }
+            var items = after.split(",").map(function (x) { return x.trim(); });
+            if (items.some(function (x) { return renamed[x] !== undefined; })) {
+                var now = items.map(function (x) { return renamed[x] || x; }).join(",");
+                setField(f, "after", now);
+                list[list.length - added.length + i].text = Text.join(f);
+                notes.push(getField(f, "id") + " now comes after " + now);
+            }
+        });
+        setEvents(list);
+        state.open = {};
+        state.offList = {};
+        var count = Text.events(state.values[slot]).length;
+        var ids = added.map(function (f, i) {
+            state.open[slot + ":" + (count - added.length + i)] = true;
+            return getField(f, "id");
+        });
+        state.result = {
+            where: "examples", before: before, after: JSON.stringify(state.values), focus: "example-add", needs: example.needs,
+            summary: "Added " + andList(ids) + " to " + TEXT[slot].name + "." + (notes.length ? " " + notes.join("; ") + "." : ""),
+            undone: "Undid adding " + andList(ids) + ".",
+        };
+    }
+
+    function undo() {
+        var r = state.result;
+        if (r === null || !r.before || JSON.stringify(state.values) !== r.after) { return null; }
+        state.values = r.before.values;
+        state.open = r.before.open;
+        state.offList = {};
+        state.result = { where: r.where, after: JSON.stringify(state.values), summary: r.undone };
+        return r.focus;
+    }
+
     function baseOf(def, chk) {
         return def.track === "moon" ? chk.defs.night : def.track === "sun" ? chk.defs.day : null;
     }
@@ -1038,6 +1276,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 h("label", { "class": "inline", "for": idOf("f", ownerKey, "slot") }, "In option",
                     select(idOf("f", ownerKey, "slot"), ev.slot, Defs.SLOTS.map(function (s) { return [s, TEXT[s].name]; }), { "data-act": "slot" }))),
             msgList(rest.errors, rest.warnings),
+            presetBox(ownerKey, def.id || "this event", true),
             h("fieldset", { "data-key": "identity" },
                 h("legend", null, "Identity and timing"),
                 textField(ownerKey, fields, "id", "id", {}, msgs),
@@ -1096,6 +1335,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 msgs.errors.length ? h("span", { "class": "badge error" }, msgs.errors.length + " skipped") : null),
             h("p", { "class": "help" }, name === "Day" ? "What changes by day while no event runs. A sun event starts from these values, except say=, color= and sound=." : "What changes by night while no event runs. A moon event starts from these values except say=, color= and sound=, even when it runs into the day."),
             msgList(rest.errors, rest.warnings),
+            presetBox(name, name, false),
             zombiesSet(name, fields, msgs, false, { health: "1", rise: "0" }),
             offField(name, fields, msgs, chk, false),
             setRows(name, fields, cls, msgs),
@@ -1135,6 +1375,14 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 h("label", { "for": "registered" }, "Kinds other mods register"),
                 textInput("registered", state.registered, { "class": "wide", "data-act": "registered", placeholder: "for example ghosts, wisps", "aria-describedby": "registered-help" }),
                 h("p", { "class": "help", id: "registered-help" }, "Only for this page: names other mods register through Crepuscular's API, so off= can name them without a warning, as in a game where those mods are loaded.")),
+            h("div", { "class": "field" },
+                h("fieldset", { "class": "checks", id: "mods", "aria-describedby": "mods-help" },
+                    h("legend", { "class": "label" }, "Mods in the game"),
+                    Object.keys(P.MODS).map(function (k) {
+                        return h("label", null, h("input", { type: "checkbox", id: "mod-" + k, value: k, "data-act": "mod", checked: state.mods[k] === true }),
+                            P.MODS[k].name + " (" + k + ")");
+                    })),
+                h("p", { "class": "help", id: "mods-help" }, "Only for this page: presets and examples that rely on one of these mods say so while it isn't ticked.")),
             tip("Kinds"));
     }
 
@@ -1165,6 +1413,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             h("div", { "class": "buttons" },
                 h("button", { type: "button", "class": "primary", "data-act": "evadd" }, "Add an event"),
                 h("button", { type: "button", "data-act": "pack", disabled: list.length === 0 }, "Pack into the options in order")),
+            examplesBox(),
             list.map(function (ev, g) {
                 var def = defs[g];
                 var key = ev.slot + ":" + ev.index;
@@ -1872,8 +2121,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 var kinds = Array.prototype.filter.call(box.querySelectorAll("[data-part=kind]"), function (c) { return c.checked; }).map(function (c) { return c.value; });
                 var other = clean(box.querySelector("[data-part=other]")).split(",").map(function (x) { return x.trim(); }).filter(Boolean);
                 var list = kinds.concat(other).join(",");
-                var ok = owner.slot ? owner.slot + ":" + owner.index : owner.name;
-                state.offList[ok] = mode === "list" && list === "";
+                state.offList[keyOf(owner)] = mode === "list" && list === "";
                 editDef(owner, function (f) { setField(f, "off", mode === "inherit" ? null : mode === "none" ? "none" : list || null); });
             } else if (act === "setname" || act === "setvalue") {
                 var fi = Number(el.closest("[data-set]").getAttribute("data-set"));
@@ -1887,11 +2135,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                     var at = f.findIndex(function (x) { return x.eq && x.name.slice(0, 4).toLowerCase() === "set." && "set." + x.name.slice(4) === name; });
                     if (el.value === "") { if (at >= 0) { f.splice(at, 1); } }
                     else if (at >= 0) { f[at].value = el.value; }
-                    else {
-                        var pos = f.length;
-                        for (var j = 0; j < f.length; j++) { if (rank(f[j]) > KEY_ORDER.indexOf("set.")) { pos = j; break; } }
-                        f.splice(pos, 0, { name: name, value: el.value, eq: true });
-                    }
+                    else { place(f, name, el.value); }
                 });
             } else if (act === "other") {
                 var oi = Number(el.closest("[data-other]").getAttribute("data-other"));
@@ -1912,6 +2156,10 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 state.values.Kinds = Text.join(kf);
             } else if (act === "registered") {
                 state.registered = clean(el);
+            } else if (act === "mod") {
+                state.mods[el.value] = el.checked;
+            } else if (act === "presetpick" || act === "examplepick") {
+                state.picks[keyOf(owner)] = el.value;
             } else if (act === "slot") {
                 var evs = eventList();
                 var at = evs.findIndex(function (x) { return x.slot === owner.slot && x.index === owner.index; });
@@ -1957,6 +2205,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             copy(document.getElementById(el.getAttribute("data-k")), el);
             return;
         }
+        var focus = null;
         update(function () {
             state.notice = null;
             var list = eventList();
@@ -2008,11 +2257,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                     setField(f, "after", items.join(","));
                 });
             } else if (act === "setadd") {
-                editDef(owner, function (f) {
-                    var pos = f.length;
-                    for (var j = 0; j < f.length; j++) { if (rank(f[j]) > KEY_ORDER.indexOf("set.")) { pos = j; break; } }
-                    f.splice(pos, 0, { name: "set.", value: "", eq: true });
-                });
+                editDef(owner, function (f) { place(f, "set.", ""); });
             } else if (act === "setdel") {
                 var fi = Number(el.closest("[data-set]").getAttribute("data-set"));
                 editDef(owner, function (f) { f.splice(fi, 1); });
@@ -2035,6 +2280,12 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                     state.open = {};
                 state.offList = {};
                 }
+            } else if (act === "presetapply") {
+                applyPreset(owner, PRESETS[state.picks[keyOf(owner)]]);
+            } else if (act === "exampleadd") {
+                addExample(EXAMPLES[state.picks.examples]);
+            } else if (act === "undo") {
+                focus = undo();
             } else if (act === "import") {
                 doImport();
             } else if (act === "reroll") {
@@ -2046,6 +2297,8 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 computeStats(check());
             }
         });
+        // The Undo button is gone, so the focus goes back to the button that made the change.
+        if (focus !== null && document.getElementById(focus)) { document.getElementById(focus).focus(); }
     }
 
     function moveEvent(list, g, dir) {
