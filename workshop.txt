@@ -1,34 +1,38 @@
 version=1
 id=3820511464
 title=Crepuscular (testing)
-description=[b]In testing.[/b] Crepuscular has had little play so far: expect bugs, and settings may still change between updates. Please report problems at https://github.com/zexyqag/Crepuscular/issues
-description=Write Day, Night and events in the browser with the builder: https://zexyqag.github.io/Crepuscular/builder/
+description=[h1]CREPUSCULAR[/h1]
+description=[b]Action by day. Horror by night.[/b]
 description=
-description=Crepuscular divides the world clock into day and night and adds special nights and days: moons and suns. Each can make a share of the zombies faster or slower, make zombies more fragile or tougher, make a share of the killed zombies get back up, change sandbox options, tint the sky and set the fog, switch monster kinds off and show a line to every player and play a sound when it begins, and for a player who joins while it lasts.
+description=[b]In testing:[/b] expect bugs, and settings may still change between updates. Please report problems on [url=https://github.com/zexyqag/Crepuscular/issues]GitHub[/url].
 description=
-description=Night runs on fixed hours (20:00 to 04:00 by default) or follows the game's own seasonal dusk and dawn.
-description=Day and Night each have a definition: how fast and how tough zombies are, how many of the killed ones rise again, sandbox values that change while it lasts (for example ZombieLore.Toughness), the sky and fog, which monster kinds are off, and a line to show and a game sound to play when it begins or a player joins. The values go back to their base when it ends.
+description=Crepuscular gives day and night their own rules: fast, fragile hordes in daylight, slow dead that won't stay down after dark, and special moons and suns in between.
 description=
-description=Speed: a share of the ordinary zombies moves one or two tiers faster (shambler, fast shambler, sprinter) or slower. The same zombies are picked every time, on the server and on every player's game, and the ones that speed up are the last to slow down. A share of 0 leaves the game's speeds alone. By default a quarter of the zombies are faster by day, half are slower at night, and half are faster on a blood moon.
-description=Health: a factor below 1 makes zombies fragile: new and reloaded zombies get that share of their health, and no zombie keeps more than that share of the most a new one can have. Above 1, new and reloaded zombies are tougher. A zombie already around is never healed. By default zombies have 70% of their health by day.
-description=Risers: a share of the zombies killed while a definition applies is marked to get back up, one to two in-game hours later by default, and marked corpses rise only while a definition lets them (wake=true). They rise where they lie, in the outfit they died in, stand up within seconds and get the speed and health of the definition in effect. Fire keeps a zombie down, and so can a Finish off action on any zombie corpse, a limit on how often one body rises, an age limit, safehouses and, as an experiment, a floor head hit. Monsters of other mods and players' zombies stay down unless allowed, and Bandits always do. By default half of the zombies killed at night rise again at night, and day kills stay down.
-description=Every rise means one more kill for every kill counter, the game's and other mods' that count kills or give XP or traits for them. The rise share, Rises per body and Finish off limit how often one body can be killed. A risen zombie keeps its count of rises only until the game unloads it: when it walks out of the loaded area, at every restart and at every load of a single player game it is an ordinary zombie again, and its count starts over.
-description=Sky: a definition can tint the light (a colour and how strongly it tints), colour the fog, and set the fog, how grey the world looks by day, the night strength and the ambient light. These replace the game's own values while it applies, and the game's own come back when it ends. The fog works like the game's own: zombies and players also see less far in it, zombies hear less and shots miss more. In single player a darker sky or ambient light also makes players harder for zombies to spot, as the game's own darkness does; a dedicated server doesn't model light for zombie sight. The server sets them, so in multiplayer players see a change within about an in-game minute, faded in over about 5 seconds, and players who join see it at once. Admin climate overrides win, and rain and storms still mix in their own sky and fog. The defaults leave the sky alone.
-description=Speed, health, the rise share and the sky numbers can grow with the days since the world began: for example from a quarter of the zombies faster to three quarters over the first 60 days, or nights that get a little tougher every day.
-description=Monsters of every kind, Bandits and crawlers keep their own speed and are never capped. The health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too.
+description=[h2]DAY AND NIGHT[/h2]
+description=By default a quarter of the zombies run faster by day and every zombie is more fragile. At night half of them slow down, half of the night's kills get back up an hour or two later, and The Mutants stay away.
 description=
-description=Events (8 options, each holding any number of them) define moons and suns with their own conditions: moon phase, dates, months, seasons, every N days, days since the world began, every Nth time, right after another event, a cooldown, a random wait after each start (for example 3 to 7 days), weather, temperature and chance. An event can start at a set hour and last its night or day, several of them, or a number of hours or days. One event runs at a time, and each night and day is decided once, so a restart never rolls again.
-description=The default event is a blood moon: a 50% chance on the first night of each full moon, with half of the zombies faster, every zombie killed that night marked to rise again and free to get up while it lasts, The Mutants active all night and a red line on screen.
+description=[h2]THE DEAD GET BACK UP[/h2]
+description=Killed zombies can rise again where they fell. Burn them, or use Finish off on the corpse, to keep them down.
 description=
-description=Monster kinds: The Mutants (mutants) and Cry of Fear Monster NPCs (cof) are built in, and so is one kind per Zomboid Forge type, such as tlou_clicker for The Last of Us Infected's clickers. The Kinds option adds other monster mods by the start of their outfit names, and other mods can register kinds of their own. Every special-zombie mod needs a kind, even one never turned off: without it Crepuscular treats its monsters as ordinary zombies and changes their speed and health. Each definition lists the kinds that are off; a kind no definition turns off is left alone. While a kind is off, its members with no target and no player nearby (40 tiles by default) are removed from the server and from every player's game. When The Mutants is loaded, members of every kind are never turned into mutants.
+description=[h2]MOONS AND SUNS[/h2]
+description=Create your own special nights and days, by moon phase, date, season, weather, every few days, after another event or at random. Each can change zombie speed and toughness, how many kills rise, any sandbox option, the sky and fog, and which monster mods are active, and can announce itself with a line and a sound. The default blood moon has a 50% chance on each full moon.
 description=
-description=The Mutants (optional): mutants are off at night by default. While they are off, no new mutants appear and far ones are removed. Zombies already loaded can be offered to The Mutants as soon as mutants come back on.
-description=Cry of Fear Monster NPCs (optional): while cof is off, its spawns are set to None (regular and special monsters, Human Flowers and the Sawrunner's night encounters) on the server and every player's game, and far monsters are removed. When cof is on again its own values come back, and, as with its own Night only option, every one of its homes may be filled again, killed monsters' too. For its monsters only at night, add off=cof to Day and keep Cry of Fear's own Night only option off: the log warns if it is on.
+description=[h2]MONSTER MODS[/h2]
+description=Turn The Mutants, Cry of Fear Monster NPCs, the Last of Us infected (Zomboid Forge) or other monster mods on and off by day, night or event.
 description=
-description=Other mods can use Crepuscular.API (registerKind, isActive, kindOf, current) and the event OnCrepuscularChange.
+description=[h2]SET IT UP[/h2]
+description=Everything is a sandbox option, on any server. The [url=https://zexyqag.github.io/Crepuscular/builder/]online builder[/url] writes the settings for you, with presets inspired by zombie films and games.
 description=
-description=The Notifications option silences every line and sound on every player's game while the events still run.
+description=[h2]GOOD TO KNOW[/h2]
+description=[list]
+description=[*]Single player and multiplayer.
+description=[*]Every zombie that rises counts as another kill for kill-counting and XP mods.
+description=[*]Admins get a Crepuscular entry in the right-click menu: status, force day or night, start or end events.
+description=[/list]
 description=
-description=Works in single player and multiplayer, with or without these mods. Admins get a Crepuscular entry in the right-click menu to see the status (including the corpses waiting to rise, the sky values Crepuscular set and which of them an admin or another mod has overridden or turned off), force day or night, and start, end or re-decide events. Mistakes in the definitions are logged, and admins see a line about them when they join.
+description=Everything in detail: [url=https://github.com/zexyqag/Crepuscular]github.com/zexyqag/Crepuscular[/url]
+description=
+description=Workshop ID: 3820511464
+description=Mod ID: Crepuscular
 tags=Build 42;Multiplayer;Balance
 visibility=unlisted
