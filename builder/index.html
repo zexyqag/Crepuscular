@@ -1332,7 +1332,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 textField(ownerKey, fields, "id", "id", {}, msgs),
                 fieldBox(ownerKey, "track", "Track", HELP.track, function (id) {
                     var track = getField(fields, "track") || "";
-                    return select(id, track.toLowerCase(), [["", "—"], ["moon", "moon (night)"], ["sun", "sun (day)"]]
+                    return select(id, track.toLowerCase(), [["", "choose"], ["moon", "moon (night)"], ["sun", "sun (day)"]]
                         .concat(["", "moon", "sun"].indexOf(track.toLowerCase()) < 0 ? [[track, track + " (as written)"]] : []),
                     { "data-act": "track", "aria-describedby": id + "-help" });
                 }, msgs),
@@ -1937,7 +1937,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             for (var i = 1; i < starts.length; i++) { gaps.push((starts[i] - starts[i - 1]) / 24); }
             var gap = gaps.length ? gaps.reduce(function (a, b) { return a + b; }, 0) / gaps.length : null;
             return h("tr", null, h("td", null, h("span", { "class": "chip", style: chipStyle(e.color) }, e.id)), h("td", null, e.track),
-                h("td", null, (starts.length / s.years).toFixed(2)), h("td", null, gap === null ? "—" : gap.toFixed(1)));
+                h("td", null, (starts.length / s.years).toFixed(2)), h("td", null, gap === null ? "none" : gap.toFixed(1)));
         });
         return h("div", { "class": "scroll" }, h("table", null,
             h("caption", { "class": "sr" }, "Statistics"),
