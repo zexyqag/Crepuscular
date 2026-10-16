@@ -91,7 +91,7 @@ function Clock.definitions(rule)
     if same then
         return parsed
     end
-    local defs = Defs.parse(texts, rule, Kinds.BUILTIN, Kinds.registered())
+    local defs = Defs.parse(texts, rule, Kinds.builtin(), Kinds.registered())
     local all = { defs.day, defs.night }
     for _, ev in ipairs(defs.events) do
         all[#all + 1] = ev

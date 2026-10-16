@@ -739,6 +739,26 @@ local function parseKinds(text, builtin, fail)
     return kinds
 end
 
+-- Zomboid Forge's own type for the game's ordinary zombies, which stay under the speed and health of
+-- the definitions.
+Defs.FORGE_ORDINARY = "ZF_Zomboid"
+
+-- The kind of a Zomboid Forge type: its id without what isn't A-Z, a-z, 0-9 or _, lowercased. nil and
+-- why for a type that has none. own: Crepuscular's kind names, which a type can't take.
+function Defs.forgeKind(id, own)
+    if id == Defs.FORGE_ORDINARY then
+        return nil, "is Zomboid Forge's type for ordinary zombies"
+    end
+    local name = string.lower((string.gsub(id, "[^A-Za-z0-9_]", "")))
+    if name == "" then
+        return nil, "has no letter, digit or _ to name a kind by"
+    end
+    if name == "none" or own[name] then
+        return nil, "would be the kind " .. name .. ", which Crepuscular has"
+    end
+    return name
+end
+
 -- texts: option name -> text; rule: the clock rule (Phase.occasion); builtin: set of the built-in
 -- kind names; registered: set of the names other mods registered, or nil while they may still be
 -- missing, which leaves off= unchecked.

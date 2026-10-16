@@ -135,7 +135,7 @@ local function status()
     for _, kind in ipairs(Kinds.list()) do
         local source = kind.source
         if kind.hidden then
-            source = source .. ", replaced by the Kinds option"
+            source = source .. ", replaced by " .. kind.hidden
         end
         kinds[#kinds + 1] = kind.name .. " (" .. source .. ")"
     end
@@ -172,6 +172,7 @@ local function status()
         add(line)
     end
     add(CryOfFear.status(defs.cof ~= nil, state.effects.off.cof == true))
+    add("Zomboid Forge: " .. Kinds.forgeStatus())
 
     local event = translated("IGUI_Crepuscular_None")
     if current ~= nil then

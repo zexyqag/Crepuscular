@@ -1,23 +1,103 @@
 local Log = require "Crepuscular/Log"
 local State = require "Crepuscular/State"
+local Defs = require "Crepuscular/Defs"
 
 -- Monster kinds: named sets of zombies that other mods make. A zombie belongs to the first kind
--- whose test it passes: cof, mutants, the kinds of the Kinds option in order, then the kinds other
--- mods register (API.lua). Bandits belong to none.
+-- whose test it passes: cof, mutants, the kinds of the Kinds option in order, the kinds other mods
+-- register (API.lua), then the kinds of Zomboid Forge's types, last because Zomboid Forge can give
+-- every zombie a type. Bandits belong to none.
 local Kinds = {}
 
 Kinds.BUILTIN = { cof = true, mutants = true }
 
 local MUTANTS_API_VERSION = 1
 
+-- B42 mod ids start with a backslash.
+local FORGE_MOD = "\\ZomboidForge"
+-- Zomboid Forge sets no global: its own files and its add-ons require this module.
+local FORGE_MODULE = "ZomboidForge_module"
+
 -- The Mutants tries its outfit lookup only once, so a call before the game has started can switch
 -- off its identity for the whole session.
 local started = false
--- Changes with every registration and at the start, for whatever depends on the registry.
+-- Changes with every registration, at the start and when Zomboid Forge's types change, for whatever
+-- depends on the kinds.
 local revision = 0
+
+-- Zomboid Forge's module, or nil and why it can't be used.
+local function forgeApi()
+    if not getActivatedMods():contains(FORGE_MOD) then
+        return nil, "not loaded"
+    end
+    local api = require(FORGE_MODULE)
+    if type(api) ~= "table" or type(api.GetZType) ~= "function" or type(api.ZTypes) ~= "table" then
+        return nil, "loaded, but its " .. FORGE_MODULE .. " has no GetZType function and ZTypes table"
+    end
+    return api
+end
+
+-- Zomboid Forge once the game has started with its module as Crepuscular knows it, else nil:
+-- { api, kinds = type id -> kind, types = kind -> its type ids, skipped = { { id, why } }, key }.
+local forge = nil
+local forgeWhy = "not loaded"
+
+-- Whether the types changed. Zomboid Forge builds them as the world loads, and its add-ons may add
+-- more as the game starts.
+local function readForge()
+    local ids = {}
+    for id in pairs(forge.api.ZTypes) do
+        if type(id) == "string" then
+            ids[#ids + 1] = id
+        end
+    end
+    table.sort(ids)
+    local kinds, types, skipped, key = {}, {}, {}, ""
+    for _, id in ipairs(ids) do
+        local name, why = Defs.forgeKind(id, Kinds.BUILTIN)
+        if name == nil then
+            skipped[#skipped + 1] = { id = id, why = why }
+            key = key .. id .. ";"
+        else
+            kinds[id] = name
+            types[name] = types[name] or {}
+            table.insert(types[name], id)
+            key = key .. id .. "=" .. name .. ";"
+        end
+    end
+    if key == forge.key then
+        return false
+    end
+    forge.kinds, forge.types, forge.skipped, forge.key = kinds, types, skipped, key
+    for _, skip in ipairs(skipped) do
+        if skip.id ~= Defs.FORGE_ORDINARY then
+            Log.warnOnce("forge type " .. skip.id, "Zomboid Forge's type " .. skip.id .. " " .. skip.why
+                .. ", so it has no kind and Crepuscular treats its zombies as ordinary")
+        end
+    end
+    Log.info("Zomboid Forge: " .. Kinds.forgeStatus())
+    return true
+end
+
+local function minute()
+    if readForge() then
+        revision = revision + 1
+    end
+end
 
 local function start()
     started = true
+    local api, why = forgeApi()
+    forgeWhy = why
+    if api ~= nil then
+        if forge == nil then
+            Events.EveryOneMinute.Add(minute)
+        end
+        forge = { api = api }
+        readForge()
+    elseif why ~= "not loaded" then
+        Log.warnOnce("forge api", "Zomboid Forge is " .. why .. ", so its zombie types have no kinds and"
+            .. " Crepuscular treats them as ordinary zombies")
+    end
     revision = revision + 1
 end
 
@@ -211,7 +291,45 @@ local function member(entry, z)
     return result
 end
 
--- The membership test, built again when the Kinds option's kinds or the registry change.
+-- The kind of z's Zomboid Forge type, or nil. Asking the type of a zombie without an outfit ID
+-- dresses it at random, and Zomboid Forge leaves players' zombies alone.
+local function forgeKindOf(z)
+    if forge == nil or z:getPersistentOutfitID() == 0 or z:isReanimatedPlayer() then
+        return nil
+    end
+    local ok, ztype = pcall(forge.api.GetZType, z)
+    if not ok then
+        Log.warnOnce("forge GetZType", "Zomboid Forge's GetZType fails, so its zombies have no kind: " .. tostring(ztype))
+        return nil
+    end
+    return forge.kinds[ztype]
+end
+
+-- The kinds of Zomboid Forge's types, sorted.
+local function forgeNames()
+    local names = {}
+    if forge ~= nil then
+        for name in pairs(forge.types) do
+            names[#names + 1] = name
+        end
+    end
+    table.sort(names)
+    return names
+end
+
+-- Kind name -> what took it from the kinds other mods register.
+local function takenNames(options)
+    local taken = {}
+    for _, kind in ipairs(options) do
+        taken[kind.name] = "the Kinds option"
+    end
+    for _, name in ipairs(forgeNames()) do
+        taken[name] = taken[name] or "Zomboid Forge"
+    end
+    return taken
+end
+
+-- The membership test, built again when the Kinds option's kinds or the kinds change.
 local test, testKinds, testRevision = nil, nil, nil
 
 local function classifier()
@@ -219,14 +337,15 @@ local function classifier()
     if test ~= nil and testKinds == options and testRevision == revision then
         return test
     end
-    local taken = {}
-    for _, kind in ipairs(options) do
-        taken[kind.name] = true
-    end
+    local taken = takenNames(options)
     local others = {}
     for _, entry in ipairs(registered) do
-        if not taken[entry.name] then
+        if taken[entry.name] == nil then
             others[#others + 1] = entry
+        elseif taken[entry.name] == "Zomboid Forge" then
+            Log.warnOnce("forge name " .. entry.name, "the kind " .. entry.name .. " another mod registered has the"
+                .. " name of the kind of Zomboid Forge's type " .. table.concat(forge.types[entry.name], ", ")
+                .. ", which takes it")
         end
     end
     test = function(z)
@@ -253,7 +372,7 @@ local function classifier()
                 return entry.name
             end
         end
-        return nil
+        return forgeKindOf(z)
     end
     testKinds, testRevision = options, revision
     return test
@@ -269,6 +388,19 @@ function Kinds.test()
     return classifier()
 end
 
+-- Crepuscular's kind names, which the Kinds option can't take and off= may always name: cof,
+-- mutants and the kinds of Zomboid Forge's types.
+function Kinds.builtin()
+    local names = {}
+    for name in pairs(Kinds.BUILTIN) do
+        names[name] = true
+    end
+    for _, name in ipairs(forgeNames()) do
+        names[name] = true
+    end
+    return names
+end
+
 -- Of the kinds in off, those that can have members in this game and whose far members are
 -- removed; and whether there is any.
 function Kinds.removable(off)
@@ -281,7 +413,7 @@ function Kinds.removable(off)
         local can
         if Kinds.BUILTIN[name] then
             can = AVAILABLE[name]()
-        elseif options[name] then
+        elseif options[name] or (forge ~= nil and forge.types[name] ~= nil) then
             can = true
         else
             can = byName[name] ~= nil and byName[name].despawn
@@ -294,21 +426,41 @@ function Kinds.removable(off)
     return out, any
 end
 
--- Every kind in membership order: { name, source = "built in", "Kinds option" or "registered",
--- hidden = a registered kind the Kinds option has taken the name of }.
+-- Every kind in membership order: { name, source = "built in", "Kinds option", "registered" or
+-- "Zomboid Forge" and its types, hidden = what took the name of a registered kind }.
 function Kinds.list()
-    local list, taken = {}, {}
+    local list = {}
     for _, entry in ipairs(builtins) do
         list[#list + 1] = { name = entry.name, source = "built in" }
     end
-    for _, kind in ipairs(optionKinds()) do
-        taken[kind.name] = true
+    local options = optionKinds()
+    for _, kind in ipairs(options) do
         list[#list + 1] = { name = kind.name, source = "Kinds option" }
     end
+    local taken = takenNames(options)
     for _, entry in ipairs(registered) do
         list[#list + 1] = { name = entry.name, source = "registered", hidden = taken[entry.name] }
     end
+    for _, name in ipairs(forgeNames()) do
+        list[#list + 1] = { name = name, source = "Zomboid Forge " .. table.concat(forge.types[name], ", ") }
+    end
     return list
+end
+
+-- What Crepuscular makes of Zomboid Forge, for the status.
+function Kinds.forgeStatus()
+    if forge == nil then
+        return forgeWhy
+    end
+    local names = forgeNames()
+    local line = "no kinds"
+    if #names > 0 then
+        line = "kinds " .. table.concat(names, ", ")
+    end
+    for _, skip in ipairs(forge.skipped) do
+        line = line .. "; no kind for " .. skip.id .. ", which " .. skip.why
+    end
+    return line
 end
 
 -- Cry of Fear stops these looping sounds before it takes a monster out (its COF_NetSync.Loops):

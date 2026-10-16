@@ -150,6 +150,8 @@ details.tip p { font-size: 0.9rem; color: var(--muted); }
 .setrow input { width: 100%; }
 .kindrow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto; gap: 6px; margin: 6px 0 0; align-items: center; }
 .kindrow input { width: 100%; }
+.monster { margin: 8px 0 0; }
+.monster p { margin: 2px 0; }
 pre.out { white-space: pre-wrap; word-break: break-all; background: var(--field); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin: 6px 0; max-height: 26em; overflow: auto; }
 .preset ul { margin: 4px 0; padding-left: 1.2em; font-size: 0.9rem; }
 .preset .notes { color: var(--muted); }
@@ -217,10 +219,10 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         NightMode: { name: "Night mode", options: ["Fixed hours", "Seasonal night"], tooltip: "How night is decided. Fixed hours: night runs between the two hours below, every day of the year, whatever the Day/Night Cycle setting. Seasonal night: the game's own dusk and dawn, which move with the seasons and follow the Day/Night Cycle setting (endless day has no night, endless night is always night)." },
         NightStartHour: { name: "Night starts at", tooltip: "Hour of the day, 0 to 23, at which night begins when Night mode is Fixed hours. Night can run past midnight. If both hours are the same there is no night at all, and the log says so." },
         NightEndHour: { name: "Night ends at", tooltip: "Hour of the day, 0 to 23, at which night ends when Night mode is Fixed hours." },
-        Day: { name: "Day", tooltip: "What changes by day while no event runs. Fields are key=value, separated by ;. speed=+25 makes 25 percent of ordinary zombies one tier faster (shambler to fast shambler, fast shambler to sprinter) and speed=-50 makes 50 percent one tier slower; a zombie that speeds up is among the last to slow down, and speed=0 keeps every zombie at the game's speed. steps=2 moves them two tiers: always sprinters or always shamblers. health=0.7 gives new and reloaded zombies 70 percent of the health they roll and lowers any zombie above 70 percent of the most a new one can have; health=1.5 gives new and reloaded zombies 150 percent, and zombies already around keep theirs. rise=50 marks 50 percent of the zombies killed while the day lasts to get up again (rise=100 all of them, rise=0 none), and wake=true lets marked corpses get up while it lasts; a corpse marked by day without wake=true gets up once a definition with it applies, such as the default Night. When and how often they rise is set by the options below. speed, health, rise and the sky numbers can grow with the days since the world began: speed=+25..+75;grow=60d goes from +25 on world day 0 to +75 on world day 60 and stays there, grow=30d..90d moves it between those days instead, and health=0.7..0.4, rise=25..100 and fog=0.2..0.6 work the same way. World days are counted at noon, as for every= and mindays=, and a speed or rise share is rounded to a whole percent. A range needs grow= in the same definition, and grow= moves only that definition's own ranges. Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. off=cof,mutants turns those monster kinds off (off=none turns none off): far ones are removed, The Mutants makes no new mutants and Cry of Fear Monster NPCs spawns nothing new. A kind no definition turns off is left alone. For Cry of Fear monsters only at night, write off=cof here and keep its own Night only option off; as with that option, each time cof is on again every Cry of Fear home may be filled again, so killed monsters come back too. set.Table.Option=value changes a sandbox option, for example set.ZombieLore.Toughness=1, or set.Option=value for an option without a table, for example set.HoursForCorpseRemoval=24; it goes back to its base value when the day ends. say=text shows a line to every player when the day begins (say=@Key shows that translation), and color=rrggbb gives its colour. sound=Name plays that game sound on every player's game at the same moment, with or without a line, for example sound=MetaWolfHowl; upper and lower case matter. A player who joins or loads the game while the day lasts gets the line and the sound then. sky=rrggbbaa tints the light while the day lasts, aa being the strength from 00 (none) to ff (full), for example sky=ff964660. fogcolor=rrggbb colours fog, and fog=, desat= (grey), dark= (night strength) and ambient= (ambient light) set those values from 0 to 1. Each replaces the game's own value while it applies and gives it back afterwards, and one not set stays the game's. fog= works like the game's own fog: as natural fog does, it also shortens how far zombies see and hear and lowers ranged hit chance, but it sets only how thick the fog is, not the grey light natural fog brings with the weather. fogcolor= shows only with the improved fog, not with the legacy fog quality option. The game fades desat= out with the daylight, so it hardly shows in the middle of the night. dark= brings out the stars, street lights and night sounds but doesn't darken a day; ambient= and sky= do. In single player a darker sky or ambient also makes players harder for zombies to spot, as the game's own darkness does; a dedicated server doesn't model light for zombie sight. The server sets them: in multiplayer players see a change within about an in-game minute, faded in over about 5 seconds, and players who join see it at once. Admin climate overrides win, rain and storms still mix in their own sky and fog, and view distance can't be set directly; fog= shortens it as natural fog does. A sun event starts from these values, except say=, color= and sound=. The default, speed=+25;health=0.7, makes a quarter of the zombies faster and the zombies more fragile, zombies killed by day stay down, and the sky is the game's. A bad field is skipped and logged, and the rest applies." },
+        Day: { name: "Day", tooltip: "What changes by day while no event runs. Fields are key=value, separated by ;. speed=+25 makes 25 percent of ordinary zombies one tier faster (shambler to fast shambler, fast shambler to sprinter) and speed=-50 makes 50 percent one tier slower; a zombie that speeds up is among the last to slow down, and speed=0 keeps every zombie at the game's speed. steps=2 moves them two tiers: always sprinters or always shamblers. health=0.7 gives new and reloaded zombies 70 percent of the health they roll and lowers any zombie above 70 percent of the most a new one can have; health=1.5 gives new and reloaded zombies 150 percent, and zombies already around keep theirs. rise=50 marks 50 percent of the zombies killed while the day lasts to get up again (rise=100 all of them, rise=0 none), and wake=true lets marked corpses get up while it lasts; a corpse marked by day without wake=true gets up once a definition with it applies, such as the default Night. When and how often they rise is set by the options below. speed, health, rise and the sky numbers can grow with the days since the world began: speed=+25..+75;grow=60d goes from +25 on world day 0 to +75 on world day 60 and stays there, grow=30d..90d moves it between those days instead, and health=0.7..0.4, rise=25..100 and fog=0.2..0.6 work the same way. World days are counted at noon, as for every= and mindays=, and a speed or rise share is rounded to a whole percent. A range needs grow= in the same definition, and grow= moves only that definition's own ranges. Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. off=cof,mutants turns those monster kinds off (off=none turns none off): far ones are removed, The Mutants makes no new mutants and Cry of Fear Monster NPCs spawns nothing new; a Zomboid Forge kind such as tlou_clicker only loses its far members. A kind no definition turns off is left alone. For Cry of Fear monsters only at night, write off=cof here and keep its own Night only option off; as with that option, each time cof is on again every Cry of Fear home may be filled again, so killed monsters come back too. set.Table.Option=value changes a sandbox option, for example set.ZombieLore.Toughness=1, or set.Option=value for an option without a table, for example set.HoursForCorpseRemoval=24; it goes back to its base value when the day ends. say=text shows a line to every player when the day begins (say=@Key shows that translation), and color=rrggbb gives its colour. sound=Name plays that game sound on every player's game at the same moment, with or without a line, for example sound=MetaWolfHowl; upper and lower case matter. A player who joins or loads the game while the day lasts gets the line and the sound then. sky=rrggbbaa tints the light while the day lasts, aa being the strength from 00 (none) to ff (full), for example sky=ff964660. fogcolor=rrggbb colours fog, and fog=, desat= (grey), dark= (night strength) and ambient= (ambient light) set those values from 0 to 1. Each replaces the game's own value while it applies and gives it back afterwards, and one not set stays the game's. fog= works like the game's own fog: as natural fog does, it also shortens how far zombies see and hear and lowers ranged hit chance, but it sets only how thick the fog is, not the grey light natural fog brings with the weather. fogcolor= shows only with the improved fog, not with the legacy fog quality option. The game fades desat= out with the daylight, so it hardly shows in the middle of the night. dark= brings out the stars, street lights and night sounds but doesn't darken a day; ambient= and sky= do. In single player a darker sky or ambient also makes players harder for zombies to spot, as the game's own darkness does; a dedicated server doesn't model light for zombie sight. The server sets them: in multiplayer players see a change within about an in-game minute, faded in over about 5 seconds, and players who join see it at once. Admin climate overrides win, rain and storms still mix in their own sky and fog, and view distance can't be set directly; fog= shortens it as natural fog does. A sun event starts from these values, except say=, color= and sound=. The default, speed=+25;health=0.7, makes a quarter of the zombies faster and the zombies more fragile, zombies killed by day stay down, and the sky is the game's. A bad field is skipped and logged, and the rest applies." },
         Night: { name: "Night", tooltip: "What changes by night while no event runs, written as for Day: speed=-50 or speed=+25, steps=2, health=1.5, rise=50, wake=true, a range that grows such as speed=-25..-75;grow=60d, off=mutants,cof or off=none, set.Table.Option=value, say=text, color=rrggbb, sound=Name, and the sky: sky=rrggbbaa, fogcolor=rrggbb and fog=, desat=, dark= and ambient= from 0 to 1, which reach players' games within about an in-game minute. fog= works like natural fog, so zombies and players also see less far, zombies hear less and shots miss more, and desat= hardly shows in the middle of the night. The values go back to their base when the night ends. A moon event starts from these values except say=, color= and sound=, even when it runs into the day. The default, speed=-50;rise=50;wake=true;off=mutants, makes half of the zombies slower, marks half of the zombies killed at night to get up again and lets marked corpses get up at night, keeps The Mutants from making mutants at night and removes far mutants; the sky is the game's." },
         Events1: { name: "Events 1", tooltip: "Moons and suns: special nights and days. Events are separated by |, fields by ;. Each event needs id=name (letters a-z, digits and _) and track=moon (decided when night begins) or track=sun (decided when day begins). Conditions, which must all hold: moon=full (the first night of a full moon; also new, waxingcrescent, firstquarter, waxinggibbous, waninggibbous, thirdquarter, waningcrescent), date=10-31 or date=12-20..01-05, month=6..8, season=summer, every=30 (every 30 days since the world began; every=30+5 shifts it by 5), mindays=30 and maxdays=365 (days since the world began), nth=4 (every 4th time its calendar conditions hold), after=id (the first time after that event ended), cooldown=20d or 36h, interval=3d..7d (after each start it waits a random 3 to 7 whole days, counted in world days, before it can happen again, and the first wait counts from world day 0, the day mindays= and every= count from, or for hours from 07:00 that day; interval=7d waits exactly 7 days, interval=12h..36h whole hours from its start time, but hours drift against a seasonal dusk or dawn, so days suit a nightly or daily rhythm; once the wait is over it stays a candidate until it starts, so a lost chance or a higher prio doesn't roll a new wait, and an admin start counts as a start), weather=rain, snow, storm, fog (as players see it, so the fog= in effect counts) or clear, tempmin=0 and tempmax=30 (degrees C), chance=50. A list such as moon=full,new holds when any item does. Timing: at=HH:MM starts it later in its night or day, and for=phase (the default), 2p (phases), 6h or 3.5d sets how long it lasts. prio=10: when several events qualify, the highest is tried first. Effects: speed, steps, health, rise, wake, off, set., say, color, sound and the sky (sky, fogcolor, fog, desat, dark, ambient), as in Day and Night, with grow= for its own ranges; a moon starts from Night and a sun from Day except for say, color and sound, and a range it takes from them grows with their grow=. Players' games get its sky within about an in-game minute of its start, and admin climate overrides win; its fog= works like natural fog, so zombies and players also see less far, zombies hear less and shots miss more. One event runs at a time, and nothing else is decided while it runs. An event with an error is skipped and logged. Keep each option under 32000 bytes." },
-        Kinds: { name: "Monster kinds", tooltip: "Monsters of other mods, told by their outfit: name=prefix,prefix;name=prefix, for example wraiths=ZW_,Wraith;husks=Husk_. A zombie whose outfit name starts with one of the prefixes (upper and lower case don't matter) belongs to that kind. Names are made of a-z, 0-9 and _. cof (Cry of Fear Monster NPCs) and mutants (The Mutants) are built in, and other mods can add kinds of their own. Put a kind in off= of Day, Night or an event to remove its far members while that applies; it can't keep a mod from turning zombies into its monsters. When The Mutants is loaded, members of every kind are never turned into mutants." },
+        Kinds: { name: "Monster kinds", tooltip: "Monsters of other mods, told by their outfit: name=prefix,prefix;name=prefix, for example wraiths=ZW_,Wraith;husks=Husk_. A zombie whose outfit name starts with one of the prefixes (upper and lower case don't matter) belongs to that kind. Names are made of a-z, 0-9 and _. Every special-zombie mod needs a kind, even one never turned off: without it Crepuscular treats its monsters as ordinary zombies and changes their speed and health. cof (Cry of Fear Monster NPCs) and mutants (The Mutants) are built in, and so is a kind for each Zomboid Forge type, its id lowercased with only a-z, 0-9 and _ kept: tlou_clicker for The Last of Us Infected's clickers. Other mods can add kinds of their own. Put a kind in off= of Day, Night or an event to remove its far members while that applies; it can't keep a mod from turning zombies into its monsters. When The Mutants is loaded, members of every kind are never turned into mutants." },
     };
     Defs.SLOTS.slice(1).forEach(function (slot) {
         TEXT[slot] = { name: "Events " + slot.slice(6), tooltip: EVENTS_MORE };
@@ -236,6 +238,23 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
     var COF_LEVELS = ["None", "Rare", "Uncommon", "Normal", "High"];
     var COF_MONSTERS = Object.keys(C.COF_OPTIONS).filter(function (k) { return C.COF_OPTIONS[k].type === "enum"; }).map(function (k) { return k.slice(11); });
     var BUILTIN_KINDS = ["cof", "mutants"];
+    // The same names as a set without a prototype, as Defs.forgeKind takes them.
+    var OWN_KINDS = Object.create(null);
+    BUILTIN_KINDS.forEach(function (k) { OWN_KINDS[k] = true; });
+    // The Last of Us Infected's Zomboid Forge types, as its own Lua names them.
+    var FORGE_TYPES = ["TLOU_Runner", "TLOU_Stalker", "TLOU_Clicker", "TLOU_Bloater"];
+    // Monster mods a line of the Kinds option catches by their outfits.
+    var MONSTER_MODS = [
+        {
+            kind: "volatiles", prefixes: "BP_Volatile", name: "Blackout Predators", workshop: "3766513120",
+            note: "The outfit is inferred from the author's notes, not confirmed in its files. Don't put off=volatiles in Day:"
+                + " far removal would empty the nests they sleep in. Use its own spawn options through set. instead.",
+        },
+        {
+            kind: "nemesis", prefixes: "Nemesis,MrX", name: "Projeto Nemesis", workshop: "3706463588", needs: "ApocalipseBR Regiões",
+            note: "Its boss is put in one of the outfits its OutfitName option names, Nemesis,MrX in its own example: list the same names here.",
+        },
+    ];
 
     // Where a new field goes, so written text reads like the mod's own examples.
     var KEY_ORDER = ["id", "track", "moon", "date", "month", "season", "every", "nth", "mindays", "maxdays", "after",
@@ -297,6 +316,12 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
     };
 
     // ---------------------------------------------------------------- state
+    function forgeKnown() {
+        var known = {};
+        FORGE_TYPES.forEach(function (t) { known[t] = true; });
+        return known;
+    }
+
     function fresh() {
         var values = {};
         C.OPTION_ORDER.forEach(function (name) { values[name] = C.DEFAULTS[name]; });
@@ -305,6 +330,8 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
             registered: "",
             // Optional mods ticked as in the game, by kind name.
             mods: {},
+            // Zomboid Forge as in the game: whether it is, which of FORGE_TYPES are and other type ids.
+            forge: { on: false, known: forgeKnown(), other: "" },
             tab: "defs",
             open: {},
             showAll: false,
@@ -337,6 +364,12 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 });
                 if (typeof saved.registered === "string") { s.registered = saved.registered; }
                 Object.keys(P.MODS).forEach(function (k) { if (saved.mods && saved.mods[k] === true) { s.mods[k] = true; } });
+                var sf = saved.forge;
+                if (sf && typeof sf === "object") {
+                    s.forge.on = sf.on === true;
+                    FORGE_TYPES.forEach(function (t) { if (sf.known && sf.known[t] === false) { s.forge.known[t] = false; } });
+                    if (typeof sf.other === "string") { s.forge.other = sf.other; }
+                }
                 if (["defs", "cal", "import", "export"].indexOf(saved.tab) >= 0) { s.tab = saved.tab; }
                 s.showAll = saved.showAll === true;
                 Object.keys(s.cal).forEach(function (k) {
@@ -352,7 +385,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
     function save() {
         try {
             window.localStorage.setItem(STORE, JSON.stringify({
-                values: state.values, registered: state.registered, mods: state.mods, tab: state.tab, showAll: state.showAll, cal: state.cal,
+                values: state.values, registered: state.registered, mods: state.mods, forge: state.forge, tab: state.tab, showAll: state.showAll, cal: state.cal,
             }));
         } catch (e) {
             return;
@@ -365,11 +398,28 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         return state.registered.split(",").map(function (x) { return x.trim().toLowerCase(); }).filter(function (x) { return x !== ""; });
     }
 
+    // The Zomboid Forge type ids in the game, as ticked and typed.
+    function forgeTypes() {
+        if (!state.forge.on) { return []; }
+        return FORGE_TYPES.filter(function (t) { return state.forge.known[t]; })
+            .concat(state.forge.other.split(",").map(function (x) { return x.trim(); }).filter(Boolean));
+    }
+
+    // Their kinds, as the mod names them, each once.
+    function forgeKinds() {
+        var names = [];
+        forgeTypes().forEach(function (t) {
+            var k = Defs.forgeKind(t, OWN_KINDS);
+            if (typeof k === "string" && names.indexOf(k) < 0) { names.push(k); }
+        });
+        return names;
+    }
+
     var checked = null, checkedKey = null;
     function check() {
-        var key = JSON.stringify([state.values, state.registered]);
+        var key = JSON.stringify([state.values, state.registered, forgeKinds()]);
         if (key !== checkedKey) {
-            checked = C.check(state.values, registeredList());
+            checked = C.check(state.values, registeredList(), forgeKinds());
             checkedKey = key;
         }
         return checked;
@@ -774,7 +824,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
     }
 
     function kindNames(chk) {
-        var names = BUILTIN_KINDS.slice();
+        var names = BUILTIN_KINDS.concat(forgeKinds());
         chk.defs.kinds.forEach(function (k) { if (names.indexOf(k.name) < 0) { names.push(k.name); } });
         registeredList().forEach(function (k) { if (names.indexOf(k) < 0) { names.push(k); } });
         return names;
@@ -803,7 +853,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 h("div", { "class": "field" },
                     h("label", { "for": id + "-other" }, "Other kind names"),
                     textInput(id + "-other", others.join(","), { "class": "wide", "data-act": "off", "data-part": "other", disabled: mode !== "list", placeholder: "kinds other mods register" }))),
-            h("p", { "class": "help" }, "Far members of these kinds are removed while this applies; The Mutants makes no new mutants and Cry of Fear spawns nothing new. Kinds no definition turns off are left alone."),
+            h("p", { "class": "help" }, "Far members of these kinds are removed while this applies; The Mutants makes no new mutants and Cry of Fear spawns nothing new, while Zomboid Forge goes on giving its types to new zombies. Kinds no definition turns off are left alone."),
             msgList(m.errors, m.warnings));
     }
 
@@ -1358,7 +1408,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
         return h("section", { "class": "card", "data-owner": "Kinds", "aria-labelledby": "h-Kinds", "data-key": "card-Kinds" },
             h("h2", { id: "h-Kinds" }, TEXT.Kinds.name,
                 msgs.errors.length ? h("span", { "class": "badge error" }, msgs.errors.length) : null),
-            h("p", { "class": "help" }, "Monsters of other mods, told by the start of their outfit names (upper and lower case don't matter). cof and mutants are built in."),
+            h("p", { "class": "help" }, "Monsters of other mods, told by the start of their outfit names (upper and lower case don't matter). cof and mutants are built in, and so is a kind for each Zomboid Forge type ticked under Mods in the game."),
             msgList(msgs.errors, msgs.warnings),
             fields.map(function (f, fi) {
                 return h("div", { "class": "kindrow", "data-kind": fi, "data-key": "kind-" + fi },
@@ -1367,6 +1417,7 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                     h("button", { type: "button", "data-act": "kinddel" }, "Remove"));
             }),
             h("div", { "class": "buttons" }, h("button", { type: "button", "data-act": "kindadd" }, "Add a kind")),
+            monstersBox(fields),
             h("div", { "class": "field" },
                 h("label", { "for": "raw-Kinds" }, "Monster kinds as text"),
                 h("textarea", { id: "raw-Kinds", "data-act": "raw", "data-k": "Kinds", value: state.values.Kinds, spellcheck: "false", rows: 2 }),
@@ -1381,9 +1432,51 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                     Object.keys(P.MODS).map(function (k) {
                         return h("label", null, h("input", { type: "checkbox", id: "mod-" + k, value: k, "data-act": "mod", checked: state.mods[k] === true }),
                             P.MODS[k].name + " (" + k + ")");
-                    })),
-                h("p", { "class": "help", id: "mods-help" }, "Only for this page: presets and examples that rely on one of these mods say so while it isn't ticked.")),
+                    }),
+                    h("label", null, h("input", { type: "checkbox", id: "mod-forge", "data-act": "forge", "data-part": "on", checked: state.forge.on }),
+                        "Zomboid Forge (a kind per zombie type)")),
+                h("p", { "class": "help", id: "mods-help" }, "Only for this page: presets and examples that rely on one of these mods say so while it isn't ticked, and off= knows the kinds of the Zomboid Forge types in the game."),
+                state.forge.on ? forgeBox() : null),
             tip("Kinds"));
+    }
+
+    // Ready lines for the Kinds option, each added with one click.
+    function monstersBox(fields) {
+        return h("fieldset", { id: "monsters", "aria-describedby": "monsters-help" },
+            h("legend", null, "Known monster mods"),
+            h("p", { "class": "help", id: "monsters-help" }, "A special-zombie mod needs a kind even if it is never switched off: otherwise Crepuscular treats its specials as ordinary zombies and changes their speed and health."),
+            MONSTER_MODS.map(function (m) {
+                var line = m.kind + "=" + m.prefixes;
+                var taken = fields.some(function (f) { return f.eq && f.name.toLowerCase() === m.kind; });
+                return h("div", { "class": "monster", "data-monster": m.kind, "data-key": "monster-" + m.kind },
+                    h("p", null, h("strong", null, m.name), " (Workshop " + m.workshop + (m.needs ? ", needs " + m.needs : "") + "): ", h("code", null, line)),
+                    h("p", { "class": "help" }, m.note),
+                    h("button", { type: "button", id: "ready-" + m.kind, "data-act": "kindready", "data-k": m.kind, disabled: taken, "aria-label": taken ? null : "Add " + line + " to Monster kinds" },
+                        taken ? "Already a kind" : "Add"));
+            }));
+    }
+
+    // The Zomboid Forge types in the game: The Last of Us Infected's to tick, others to type.
+    function forgeBox() {
+        var typed = state.forge.other.split(",").map(function (x) { return x.trim(); }).filter(Boolean);
+        var kinds = forgeKinds();
+        return h("div", { "class": "field", id: "forge", "data-key": "forge" },
+            h("fieldset", { "class": "checks", "aria-describedby": "forge-help" },
+                h("legend", { "class": "label" }, "Zomboid Forge types in the game"),
+                FORGE_TYPES.map(function (t) {
+                    return h("label", null, h("input", { type: "checkbox", id: idOf("forge", t), value: t, "data-act": "forge", "data-part": "type", checked: state.forge.known[t] }),
+                        t + " (" + Defs.forgeKind(t, OWN_KINDS) + ")");
+                })),
+            h("div", { "class": "field" },
+                h("label", { "for": "forge-other" }, "Other Zomboid Forge types"),
+                textInput("forge-other", state.forge.other, { "class": "wide", "data-act": "forge", "data-part": "other", placeholder: "type ids separated by commas", "aria-describedby": "forge-help" })),
+            typed.map(function (t) {
+                var k = Defs.forgeKind(t, OWN_KINDS);
+                return typeof k === "string" ? null : h("p", { "class": "msg " + (t === Defs.FORGE_ORDINARY ? "info" : "warn") },
+                    t + " " + k.why + ", so it has no kind and Crepuscular treats its zombies as ordinary.");
+            }),
+            h("p", { "class": "msg info", "data-forge-kinds": kinds.join(",") }, kinds.length ? "Kinds: " + kinds.join(", ") + "." : "No Zomboid Forge kinds."),
+            h("p", { "class": "help", id: "forge-help" }, "Each type is a kind named after its id, with only A-Z, a-z, 0-9 and _ kept, lowercased: TLOU_Clicker is tlou_clicker. The ones to tick are The Last of Us Infected's types as its own Lua names them; a fork may name them otherwise, and Crepuscular's Status lists the kinds it finds in the game."));
     }
 
     function clockCard() {
@@ -2158,6 +2251,11 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 state.registered = clean(el);
             } else if (act === "mod") {
                 state.mods[el.value] = el.checked;
+            } else if (act === "forge") {
+                var fpart = el.getAttribute("data-part");
+                if (fpart === "on") { state.forge.on = el.checked; }
+                else if (fpart === "type") { state.forge.known[el.value] = el.checked; }
+                else { state.forge.other = clean(el); }
             } else if (act === "presetpick" || act === "examplepick") {
                 state.picks[keyOf(owner)] = el.value;
             } else if (act === "slot") {
@@ -2268,6 +2366,13 @@ th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--bord
                 var kf = Text.fields(state.values.Kinds);
                 kf.push({ name: "", value: "", eq: true });
                 state.values.Kinds = Text.join(kf);
+            } else if (act === "kindready") {
+                var ready = MONSTER_MODS.filter(function (x) { return x.kind === el.getAttribute("data-k"); })[0];
+                var kf3 = Text.fields(state.values.Kinds);
+                kf3.push({ name: ready.kind, value: ready.prefixes, eq: true });
+                state.values.Kinds = Text.join(kf3);
+                state.notice = "Added " + ready.kind + "=" + ready.prefixes + " to Monster kinds.";
+                focus = idOf("kind", kf3.length - 1, "n");
             } else if (act === "kinddel") {
                 var kf2 = Text.fields(state.values.Kinds);
                 kf2.splice(Number(el.closest("[data-kind]").getAttribute("data-kind")), 1);

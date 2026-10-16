@@ -10,7 +10,7 @@
 })(this, function () {
     "use strict";
 
-    var MOD_VERSION = "0.8.1";
+    var MOD_VERSION = "0.9.0";
 
     // User text becomes keys, so tables keyed by it have no prototype ("constructor", "__proto__").
     function dict(from) {
@@ -925,6 +925,26 @@
         return kinds;
     }
 
+    // Zomboid Forge's own type for the game's ordinary zombies, which stay under the speed and health
+    // of the definitions.
+    Defs.FORGE_ORDINARY = "ZF_Zomboid";
+
+    // The kind of a Zomboid Forge type: its id without what isn't A-Z, a-z, 0-9 or _, lowercased. A Bad
+    // for a type that has none. own: Crepuscular's kind names, which a type can't take.
+    Defs.forgeKind = function (id, own) {
+        if (id === Defs.FORGE_ORDINARY) {
+            return new Bad("is Zomboid Forge's type for ordinary zombies");
+        }
+        var name = lower(id.replace(/[^A-Za-z0-9_]/g, ""));
+        if (name === "") {
+            return new Bad("has no letter, digit or _ to name a kind by");
+        }
+        if (name === "none" || own[name]) {
+            return new Bad("would be the kind " + name + ", which Crepuscular has");
+        }
+        return name;
+    };
+
     // texts: option name -> text; rule: the clock rule; builtin: set of the built-in kind names;
     // registered: set of the kind names other mods registered, or null to leave off= unchecked.
     // Besides what Defs.lua returns, definitions lists every event in order, valid or not.
@@ -1782,8 +1802,8 @@
 
     // Everything the mod checks and logs for these options, as it words it.
     // values: option name -> value (definition texts and the clock options); registered: kind names
-    // other mods register.
-    function check(values, registered) {
+    // other mods register; forge: the kinds of the Zomboid Forge types in the game.
+    function check(values, registered, forge) {
         var rule = { mode: values.NightMode, start: values.NightStartHour, finish: values.NightEndHour };
         var texts = {};
         Defs.OPTIONS.forEach(function (name) {
@@ -1793,7 +1813,11 @@
         registered.forEach(function (name) {
             reg[name] = true;
         });
-        var defs = Defs.parse(texts, rule, dict({ cof: true, mutants: true }), reg);
+        var builtin = dict({ cof: true, mutants: true });
+        (forge || []).forEach(function (name) {
+            builtin[name] = true;
+        });
+        var defs = Defs.parse(texts, rule, builtin, reg);
         var errors = defs.errors.slice();
         var warnings = [];
         if (rule.mode === 1 && rule.start === rule.finish) {
