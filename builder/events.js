@@ -10,8 +10,6 @@
 })(this, function () {
     "use strict";
 
-    var MOD_VERSION = "0.9.0";
-
     // User text becomes keys, so tables keyed by it have no prototype ("constructor", "__proto__").
     function dict(from) {
         var t = Object.create(null);
@@ -2164,7 +2162,6 @@
     };
 
     return {
-        MOD_VERSION: MOD_VERSION,
         Phase: Phase,
         Defs: Defs,
         Schedule: Schedule,
