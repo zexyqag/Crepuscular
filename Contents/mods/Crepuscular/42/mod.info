@@ -2,6 +2,5 @@ name=Crepuscular
 id=Crepuscular
 description=Day and night with special moons and suns, defined in sandbox options. Each can make a share of the zombies faster or slower, make them more fragile or tougher, make a share of the killed ones get back up, change sandbox values, tint the sky and fog, switch monster kinds off and announce itself. Faster, fragile zombies by day, slower ones at night whose kills may rise again, and a blood moon by default. Optional support for The Mutants, Cry of Fear Monster NPCs and Zomboid Forge, monster kinds told by outfit, and an API for other mods.
 poster=poster.png
-modversion=0.9.0
 versionMin=42.20.2
 loadModAfter=PZTheMutants,CryOfFearMonsters
