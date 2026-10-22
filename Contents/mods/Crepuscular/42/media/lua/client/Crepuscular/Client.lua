@@ -10,6 +10,13 @@ local OUT_RANGE = 30
 -- Serial of the last announcement this game has shown.
 local announced = nil
 
+-- NotificationPlace: 1 over the head, 2 in chat, 3 both.
+local HEAD, CHAT = 1, 2
+
+-- A chat line kept until the chat has a tab: a joining player's game gets the state before the
+-- server sets up its chat.
+local waiting = nil
+
 local HEX = "0123456789abcdef"
 
 -- One colour channel of rrggbb, from 1-based position i.
@@ -19,28 +26,92 @@ local function channel(color, i)
     return high * 16 + low
 end
 
+local function players()
+    local list = {}
+    for i = 0, getNumActivePlayers() - 1 do
+        local player = getSpecificPlayer(i)
+        if player ~= nil then
+            list[#list + 1] = player
+        end
+    end
+    return list
+end
+
+local function overHead(list, text, r, g, b)
+    for _, player in ipairs(list) do
+        player:setHaloNote(text, r, g, b, 500)
+    end
+end
+
+-- What ISChat reads of a message, laid out as the game's chat lines: colour and font size tags,
+-- the speaker in brackets and the text with < and > escaped. ISChat reads it again when the player
+-- changes the font size.
+local function chatMessage(text, r, g, b)
+    local color = "<RGB:" .. r / 255 .. "," .. g / 255 .. "," .. b / 255 .. "> <SIZE:"
+    local body = "> [" .. getText("IGUI_Crepuscular_ChatTitle") .. "]: "
+        .. (string.gsub((string.gsub(text, "<", "&lt;")), ">", "&gt;"))
+    return {
+        getTextWithPrefix = function()
+            return color .. getCore():getOptionChatFontSize() .. body
+        end,
+        getAuthor = function()
+            return nil
+        end,
+    }
+end
+
+-- Adds the waiting line to the tab the player has open, where the game puts its server messages.
+local function toChat()
+    if waiting == nil or ISChat.instance == nil or ISChat.instance.chatText == nil then
+        return
+    end
+    local line = waiting
+    waiting = nil
+    local ok, err = pcall(ISChat.addLineInChat, line.message, ISChat.instance.chatText.tabID)
+    if not ok then
+        Log.warnOnce("chat failed", "the chat took no line (" .. tostring(err) .. "), so it shows over the head")
+        overHead(players(), line.text, line.r, line.g, line.b)
+    end
+end
+
 local function announce(state)
     local line = state.announce
     if line == nil or line.serial == announced then
         return
     end
+    local list = players()
+    if #list == 0 then
+        return
+    end
+    announced = line.serial
     local text = line.text
     if text ~= nil and string.sub(text, 1, 1) == "@" then
         text = getText(string.sub(text, 2))
     end
     local r, g, b = channel(line.color, 1), channel(line.color, 3), channel(line.color, 5)
-    for i = 0, getNumActivePlayers() - 1 do
-        local player = getSpecificPlayer(i)
-        if player ~= nil then
-            if text ~= nil then
-                player:setHaloNote(text, r, g, b, 500)
-            end
-            announced = line.serial
+    local head, chat = line.place ~= CHAT, line.place ~= HEAD
+    if text ~= nil and chat then
+        local missing = nil
+        if not isClient() then
+            missing = "single player has no chat"
+        elseif type(ISChat) ~= "table" or type(ISChat.addLineInChat) ~= "function" then
+            missing = "the game's chat (ISChat.addLineInChat) is missing"
         end
+        if missing ~= nil then
+            Log.warnOnce("no chat", "NotificationPlace puts lines in chat, but " .. missing .. ", so they show over the head")
+            head, chat = true, false
+        end
+    end
+    if text ~= nil and head then
+        overHead(list, text, r, g, b)
+    end
+    if text ~= nil and chat then
+        waiting = { message = chatMessage(text, r, g, b), text = text, r = r, g = g, b = b }
+        toChat()
     end
     -- One sound per game, however many players share its screen. A name the game lacks plays
     -- nothing, and the server warns about it.
-    if announced == line.serial and line.sound ~= nil then
+    if line.sound ~= nil then
         getSoundManager():playUISound(line.sound)
     end
 end
@@ -100,6 +171,9 @@ if isClient() then
     Events.OnGameStart.Add(function()
         ModData.request(State.NAME)
     end)
+
+    -- Fired once the chat has its first tab.
+    Events.OnSetDefaultTab.Add(toChat)
 
     -- The packet only raises this event; nothing is stored unless we store it.
     Events.OnReceiveGlobalModData.Add(function(tag, state)

@@ -36,6 +36,7 @@ local DEFAULTS = {
     RisesPerScan = 10,
     RiserLimit = 5000,
     Notifications = true,
+    NotificationPlace = 1,
 }
 
 local function invalid(name, value)
@@ -193,6 +194,11 @@ end
 -- Whether players' games show the definitions' lines and play their sounds.
 function Settings.notifications()
     return boolean("Notifications")
+end
+
+-- Where players' games show the lines: 1 over the head, 2 in chat, 3 both.
+function Settings.notificationPlace()
+    return integer("NotificationPlace", 1, 3)
 end
 
 return Settings

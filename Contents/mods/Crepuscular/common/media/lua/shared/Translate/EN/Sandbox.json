@@ -68,6 +68,11 @@
     "Sandbox_Crepuscular_RiserLimit_tooltip": "Most marked corpses kept waiting to rise, 100 to 50000; above it the oldest is dropped and stays down, even if it is dragged later.",
     "Sandbox_Crepuscular_Notifications": "Notifications",
     "Sandbox_Crepuscular_Notifications_tooltip": "On: when a definition begins, every player sees its line (say=) and hears its sound (sound=), and so does a player who joins or loads the game while it is in effect; turning this on shows the line and sound of the definition in effect at once. Off: no player sees or hears any of them, and the events still run as before. Admins still get the replies of the Crepuscular menu and the line about definitions with errors.",
+    "Sandbox_Crepuscular_NotificationPlace": "Where lines show",
+    "Sandbox_Crepuscular_NotificationPlace_tooltip": "Where players see the definitions' lines (say=). Over the head: a note above each player. In chat: a line in the chat tab the player has open, where the game puts its server messages, in the line's colour (color=) and led by [World], so it can be read again later. Single player has no chat, so there lines show over the head, and the log says so once. Over the head and in chat: both. Sounds (sound=) play either way.",
+    "Sandbox_Crepuscular_NotificationPlace_option1": "Over the head",
+    "Sandbox_Crepuscular_NotificationPlace_option2": "In chat",
+    "Sandbox_Crepuscular_NotificationPlace_option3": "Over the head and in chat",
     "Sandbox_Crepuscular_Verbose": "Verbose log",
     "Sandbox_Crepuscular_Verbose_tooltip": "Writes phase changes, each decision with its rolls, event starts and ends, sandbox value changes, removals of far monsters and mutant requeues to the log, prefixed [Crepuscular]. Warnings and errors, such as mistakes in the definitions, are always logged."
 }

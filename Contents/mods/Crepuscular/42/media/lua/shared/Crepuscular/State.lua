@@ -3,8 +3,8 @@
 --   event = { id, track, serial, running, startsAt, endsAt } or nil,
 --   effects = { off = { [kind] = true }, speed, steps, health of the definition in effect on today's
 --     world day, fmax, smax = the largest speed=+N and speed=-N of all definitions, ranges at either end },
---   announce = { serial, text (nil for a sound alone), color, sound or nil } or nil while nothing is to be
---     announced or Notifications is off,
+--   announce = { serial, text (nil for a sound alone), color, sound or nil, place (NotificationPlace) } or nil
+--     while nothing is to be announced or Notifications is off,
 --   sandbox = { [option name] = current value },
 --   kinds = { { name, prefixes } } from the Kinds option,
 --   ids = { event ids }, errors = number of definitions with errors }

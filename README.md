@@ -223,6 +223,7 @@ Avoid `ZombieLore.Speed`, `SprinterPercentage` and `ActiveOnly` (they fight `spe
 ### Lines and sounds
 
 - `say=text` shows a line to every player when the definition begins, and `say=@Key` shows that translation. `color=rrggbb` gives its colour.
+- **Where:** the **Where lines show** option (`NotificationPlace`) shows the line over each player's head (the default), in chat or both. In chat it goes to the tab the player has open, as the game's server messages do, in its colour and led by `[World]`. Single player has no chat, so there it shows over the head, and the log says so once.
 - `sound=Name` plays that game sound once on every player's game at the same moment, with or without a line. Names the presets use: `MetaWolfHowl`, `MetaScream`, `MetaShotgun1`, `MetaPistol1`, `MetaAssaultRifle1`, `Thunder`, `RumbleThunder`, `RadioZap`, `ZombieSurprisedPlayer`, `WorldEventElectricityShutdown`. A name the game doesn't know is a warning in the log, and players may hear nothing.
 - **`sound=` is not a world sound:** it plays on each player's game as an interface sound. Zombies don't hear it, so it can't draw them.
 - **When:** Day or Night when its phase begins, an event when it starts. A player who joins or loads the game while it lasts gets the line and the sound then. A forced phase shows no line.
@@ -669,6 +670,7 @@ Each option is `Crepuscular.<Option>` in the sandbox settings, on the **Crepuscu
 | `RisesPerScan` | Rises per check | `10` | 1 to 100 | Most corpses that rise per check (every 10 in-game minutes) on the whole server. |
 | `RiserLimit` | Most corpses waiting | `5000` | 100 to 50000 | Most marked corpses kept waiting; above it the oldest stays down. |
 | `Notifications` | Notifications | `true` | true or false | Show the definitions' lines (`say=`) and play their sounds (`sound=`) to players. |
+| `NotificationPlace` | Where lines show | `1` (Over the head) | 1 Over the head, 2 In chat, 3 Over the head and in chat | Where players see the definitions' lines: over their heads, in chat (multiplayer only) or both. |
 | `Verbose` | Verbose log | `false` | true or false | Write phase changes, each decision with its rolls, event starts and ends, sandbox value changes, removals and mutant requeues to the log. |
 
 An option with a value the game shouldn't hold is replaced by its default, and the log warns. Warnings and errors, such as mistakes in the definitions, are always logged, prefixed `[Crepuscular]`.

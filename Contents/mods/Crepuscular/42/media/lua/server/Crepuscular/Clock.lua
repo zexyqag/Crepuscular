@@ -256,6 +256,8 @@ local function update(state, ledger, defs, now)
     end
     if not Settings.notifications() then
         announce = nil
+    elseif announce ~= nil then
+        announce.place = Settings.notificationPlace()
     end
     -- Off means off, and a spawner's clock is Crepuscular's: its values win over set. entries for the
     -- same options.
