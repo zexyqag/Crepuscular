@@ -48,7 +48,7 @@ Crepuscular splits the game's clock into day and night and gives each one a **de
 
 **Events** are special nights and days (moons and suns) with conditions of their own: moon phase, date, season, weather, every few days, after another event, at random. While an event runs, its definition takes over from Day or Night.
 
-**It works as soon as it is enabled, with no setup.** The defaults below apply without any configuration. Crepuscular needs no other mod: its parts for Relentless Dead, The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs, Blackout Predators and Zomboid Forge apply only when those mods are installed, and without them the same settings have nothing to act on. Killed zombies get back up only with Relentless Dead installed.
+**It works as soon as it is enabled, with no setup.** The defaults below apply without any configuration. Crepuscular needs no other mod: its parts for [Relentless Dead](https://steamcommunity.com/sharedfiles/filedetails/?id=3824839394), [The Mutants](https://steamcommunity.com/sharedfiles/filedetails/?id=3796669056), [Cry of Fear Monster NPCs](https://steamcommunity.com/sharedfiles/filedetails/?id=3813406470), [Silent Hill Monster NPCs](https://steamcommunity.com/sharedfiles/filedetails/?id=3821752171), [Blackout Predators](https://steamcommunity.com/sharedfiles/filedetails/?id=3766513120) and [Zomboid Forge](https://steamcommunity.com/sharedfiles/filedetails/?id=3776274080) apply only when those mods are installed, and without them the same settings have nothing to act on. Killed zombies get back up only with Relentless Dead installed.
 
 ### The defaults
 
