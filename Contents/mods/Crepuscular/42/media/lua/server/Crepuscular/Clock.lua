@@ -9,7 +9,7 @@ local Schedule = require "Crepuscular/Schedule"
 local Overrides = require "Crepuscular/Overrides"
 local Sandbox = require "Crepuscular/Sandbox"
 local Kinds = require "Crepuscular/Kinds"
-local CryOfFear = require "Crepuscular/CryOfFear"
+local Spawners = require "Crepuscular/Spawners"
 local Zombies = require "Crepuscular/Zombies"
 local Visuals = require "Crepuscular/Visuals"
 
@@ -75,10 +75,10 @@ local source = {}
 local parsed = nil
 
 -- The definitions, parsed again whenever a text, the fixed hours or the registered kinds change.
--- defs.names: every sandbox option they set; defs.cof: what the Cry of Fear adapter sets while
--- cof is off, nil when no definition turns it off or Cry of Fear isn't loaded; defs.fmax and
--- defs.smax: the largest speed=+N and speed=-N of all of them, 0 for none; defs.riseKinds: the
--- set of the RiseKinds option.
+-- defs.names: every sandbox option they set; defs.spawners: kind -> what its spawner sets while the
+-- kind is off, for the spawners whose mod is loaded and whose kind some definition turns off;
+-- defs.fmax and defs.smax: the largest speed=+N and speed=-N of all of them, 0 for none;
+-- defs.riseKinds: the set of the RiseKinds option.
 function Clock.definitions(rule)
     local texts = {}
     local riseKinds = Settings.riseKinds()
@@ -98,7 +98,7 @@ function Clock.definitions(rule)
     end
     defs.names = {}
     defs.fmax, defs.smax = 0, 0
-    local cof = false
+    local turned = {}
     for _, def in ipairs(all) do
         def.values = Overrides.check(def.label, def.set, "set.", defs.warnings)
         for name in pairs(def.values) do
@@ -110,19 +110,25 @@ function Clock.definitions(rule)
             defs.warnings[#defs.warnings + 1] = def.label .. ": sound: '" .. def.sound
                 .. "' is not a sound the game knows, so players may hear nothing"
         end
-        cof = cof or (def.off ~= nil and def.off.cof == true)
+        for kind in pairs(def.off or {}) do
+            turned[kind] = true
+        end
         local low, high = span(def.speed or 0)
         defs.fmax = math.max(defs.fmax, high)
         defs.smax = math.max(defs.smax, -low)
     end
-    if cof and Kinds.cryOfFearLoaded() then
-        defs.cof = Overrides.check("Cry of Fear", CryOfFear.OFF, "", defs.warnings)
-        for name in pairs(defs.cof) do
-            defs.names[name] = true
+    defs.spawners = {}
+    for _, spawner in ipairs(Spawners.LIST) do
+        local kind = spawner.kind
+        if turned[kind] and spawner.loaded() then
+            defs.spawners[kind] = Overrides.check(spawner.name, spawner.OFF, "", defs.warnings)
+            for name in pairs(defs.spawners[kind]) do
+                defs.names[name] = true
+            end
+        elseif turned[kind] then
+            defs.warnings[#defs.warnings + 1] = spawner.name .. ": off=" .. kind .. ", but " .. spawner.mod
+                .. " is not loaded, so the kind " .. kind .. " has no members"
         end
-    elseif cof then
-        defs.warnings[#defs.warnings + 1] = "Cry of Fear: off=cof, but Cry of Fear Monster NPCs is not loaded,"
-            .. " so the kind cof has no members"
     end
     local kinds, why = Defs.kinds(riseKinds)
     if kinds == nil then
@@ -251,14 +257,17 @@ local function update(state, ledger, defs, now)
     if not Settings.notifications() then
         announce = nil
     end
-    -- Off means off: the adapter's values win over set. entries for the same options.
-    if off.cof and defs.cof ~= nil then
-        for name, value in pairs(defs.cof) do
-            wanted[name] = value
+    -- Off means off: a spawner's values win over set. entries for the same options.
+    for _, spawner in ipairs(Spawners.LIST) do
+        local values = defs.spawners[spawner.kind]
+        if values ~= nil and off[spawner.kind] then
+            for name, value in pairs(values) do
+                wanted[name] = value
+            end
+        elseif values ~= nil and state.effects ~= nil and state.effects.off[spawner.kind] then
+            -- The kind was off until now.
+            spawner.refill()
         end
-    elseif defs.cof ~= nil and state.effects ~= nil and state.effects.off.cof then
-        -- cof was off until now.
-        CryOfFear.refill()
     end
     local event = nil
     if current ~= nil then
@@ -326,7 +335,9 @@ function Clock.tick()
     local ledger = ModData.get(State.LEDGER)
     local rule = Clock.rule()
     local defs = Clock.definitions(rule)
-    CryOfFear.check(defs.cof ~= nil)
+    for _, spawner in ipairs(Spawners.LIST) do
+        spawner.check(defs.spawners[spawner.kind] ~= nil)
+    end
     Zombies.check(defs.fmax, defs.smax)
     local now = Clock.now()
     local occasion = Phase.occasion(now, rule)

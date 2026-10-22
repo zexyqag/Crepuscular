@@ -11,7 +11,7 @@ local Kinds = require "Crepuscular/Kinds"
 local Clock = require "Crepuscular/Clock"
 local Despawn = require "Crepuscular/Despawn"
 local Mutants = require "Crepuscular/Mutants"
-local CryOfFear = require "Crepuscular/CryOfFear"
+local Spawners = require "Crepuscular/Spawners"
 local Zombies = require "Crepuscular/Zombies"
 local Risers = require "Crepuscular/Risers"
 local Visuals = require "Crepuscular/Visuals"
@@ -171,7 +171,9 @@ local function status()
     for _, line in ipairs(Mutants.status()) do
         add(line)
     end
-    add(CryOfFear.status(defs.cof ~= nil, state.effects.off.cof == true))
+    for _, spawner in ipairs(Spawners.LIST) do
+        add(spawner.status(defs.spawners[spawner.kind] ~= nil, state.effects.off[spawner.kind] == true))
+    end
     add("Zomboid Forge: " .. Kinds.forgeStatus())
 
     local event = translated("IGUI_Crepuscular_None")

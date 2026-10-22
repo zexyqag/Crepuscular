@@ -3,12 +3,12 @@ local State = require "Crepuscular/State"
 local Defs = require "Crepuscular/Defs"
 
 -- Monster kinds: named sets of zombies that other mods make. A zombie belongs to the first kind
--- whose test it passes: cof, mutants, the kinds of the Kinds option in order, the kinds other mods
--- register (API.lua), then the kinds of Zomboid Forge's types, last because Zomboid Forge can give
--- every zombie a type. Bandits belong to none.
+-- whose test it passes: cof, silenthill, mutants, the kinds of the Kinds option in order, the kinds
+-- other mods register (API.lua), then the kinds of Zomboid Forge's types, last because Zomboid Forge
+-- can give every zombie a type. Bandits belong to none.
 local Kinds = {}
 
-Kinds.BUILTIN = { cof = true, mutants = true }
+Kinds.BUILTIN = { cof = true, silenthill = true, mutants = true }
 
 local MUTANTS_API_VERSION = 1
 
@@ -16,6 +16,9 @@ local MUTANTS_API_VERSION = 1
 local FORGE_MOD = "\\ZomboidForge"
 -- Zomboid Forge sets no global: its own files and its add-ons require this module.
 local FORGE_MODULE = "ZomboidForge_module"
+local SILENT_HILL_MOD = "\\SilentHillMonsters"
+-- Its monsters' outfits, SHM_ and the monster's name, lowercased as outfitName gives them.
+local SILENT_HILL_OUTFIT = "shm_"
 
 -- The Mutants tries its outfit lookup only once, so a call before the game has started can switch
 -- off its identity for the whole session.
@@ -204,19 +207,6 @@ function Kinds.isBandit(z)
     return z:getVariableBoolean("Bandit")
 end
 
-Kinds.register("cof", { isMember = function(z)
-    return Kinds.cryOfFear(z) ~= nil
-end })
-Kinds.register("mutants", { isMember = Kinds.isMutant })
-
--- Whether a built-in kind can have members in this game.
-local AVAILABLE = {
-    cof = Kinds.cryOfFearLoaded,
-    mutants = function()
-        return started and Kinds.mutantsApi() ~= nil
-    end,
-}
-
 -- Outfit index -> name, numbered as the game numbers persistent outfits: the female names sorted,
 -- then the male ones, each name once whatever its case.
 local outfitNames = nil
@@ -236,7 +226,7 @@ local function listOutfits()
         end
     end
     if count == 0 then
-        Log.error("the game lists no outfits, so the kinds of the Kinds option match nothing")
+        Log.error("the game lists no outfits, so silenthill and the kinds of the Kinds option match nothing")
     end
     return names
 end
@@ -258,6 +248,36 @@ local function outfitName(z)
     end
     return outfitNames[math.floor(id / 65536)]
 end
+
+local silentHill = getActivatedMods():contains(SILENT_HILL_MOD)
+
+function Kinds.silentHillLoaded()
+    return silentHill
+end
+
+-- Silent Hill Monster NPCs tells its monsters by the same outfit index, on the server and on every game.
+local function isSilentHill(z)
+    if not silentHill then
+        return false
+    end
+    local name = outfitName(z)
+    return name ~= nil and string.sub(name, 1, #SILENT_HILL_OUTFIT) == SILENT_HILL_OUTFIT
+end
+
+Kinds.register("cof", { isMember = function(z)
+    return Kinds.cryOfFear(z) ~= nil
+end })
+Kinds.register("silenthill", { isMember = isSilentHill })
+Kinds.register("mutants", { isMember = Kinds.isMutant })
+
+-- Whether a built-in kind can have members in this game.
+local AVAILABLE = {
+    cof = Kinds.cryOfFearLoaded,
+    silenthill = Kinds.silentHillLoaded,
+    mutants = function()
+        return started and Kinds.mutantsApi() ~= nil
+    end,
+}
 
 local EMPTY = {}
 
@@ -389,7 +409,7 @@ function Kinds.test()
 end
 
 -- Crepuscular's kind names, which the Kinds option can't take and off= may always name: cof,
--- mutants and the kinds of Zomboid Forge's types.
+-- silenthill, mutants and the kinds of Zomboid Forge's types.
 function Kinds.builtin()
     local names = {}
     for name in pairs(Kinds.BUILTIN) do

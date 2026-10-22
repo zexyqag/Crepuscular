@@ -17,9 +17,9 @@ local function refuse(name, why)
     return false, why
 end
 
--- name: a-z, 0-9 and _, not none, cof, mutants, the kind of a Zomboid Forge type or a kind of the
--- Kinds option. Zomboid Forge's types are known once the game has started: a kind registered before
--- under the name of one is set aside then.
+-- name: a-z, 0-9 and _, not none, cof, silenthill, mutants, the kind of a Zomboid Forge type or a
+-- kind of the Kinds option. Zomboid Forge's types are known once the game has started: a kind
+-- registered before under the name of one is set aside then.
 -- spec.isMember(z) -> boolean, on the server and on players' games; spec.despawn = false keeps far
 -- members while the kind is off. The same name again replaces its spec. Members keep their own speed
 -- and health on every game, so a member isMember misses on the player's game that runs it gets

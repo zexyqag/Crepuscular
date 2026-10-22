@@ -1762,6 +1762,20 @@
         "COF_Spawns.NightOnly": { type: "boolean" },
     };
 
+    // Silent Hill Monster NPCs options a definition sets for its population: the levels (1 = None ... 5 = High),
+    // Pyramid Head's own switch, and its night-only and fog-only switches.
+    var SH_OPTIONS = {
+        "SHM_Spawns.Regular": { type: "enum", min: 1, max: 5 },
+        "SHM_Spawns.PyramidHead": { type: "enum", min: 1, max: 5 },
+        "SHM_Creatures.PyramidHead": { type: "boolean" },
+        "SHM_Spawns.NightOnly": { type: "boolean" },
+        "SHM_Spawns.FogOnly": { type: "boolean" },
+    };
+    var MONSTER_OPTIONS = dict(COF_OPTIONS);
+    Object.keys(SH_OPTIONS).forEach(function (name) {
+        MONSTER_OPTIONS[name] = SH_OPTIONS[name];
+    });
+
     // Double.valueOf, which Kahlua's tonumber uses, for finite decimals; null for anything else.
     function javaNumber(text) {
         var t = text.replace(/^[\x00-\x20]+|[\x00-\x20]+$/g, "");
@@ -1771,16 +1785,16 @@
         return Number(t.replace(/[fFdD]$/, ""));
     }
 
-    // Overrides.check, for the options the builder knows: Crepuscular's own and Cry of Fear's levels.
-    // The game checks the rest when it loads.
+    // Overrides.check, for the options the builder knows: Crepuscular's own and the monster mods' spawn
+    // settings. The game checks the rest when it loads.
     function overrideWarnings(label, entries, warnings) {
         Object.keys(entries).sort().forEach(function (name) {
             var text = entries[name];
             var why = null;
             if (name.slice(0, 12) === "Crepuscular.") {
                 why = OWN_OPTIONS.indexOf(name.slice(12)) < 0 ? "no such sandbox option" : "Crepuscular's own options can't be set";
-            } else if (COF_OPTIONS[name] !== undefined) {
-                var option = COF_OPTIONS[name];
+            } else if (MONSTER_OPTIONS[name] !== undefined) {
+                var option = MONSTER_OPTIONS[name];
                 if (option.type === "boolean") {
                     if (lower(text) !== "true" && lower(text) !== "false") {
                         why = "'" + text + "' is not a valid boolean";
@@ -1811,7 +1825,7 @@
         registered.forEach(function (name) {
             reg[name] = true;
         });
-        var builtin = dict({ cof: true, mutants: true });
+        var builtin = dict({ cof: true, silenthill: true, mutants: true });
         (forge || []).forEach(function (name) {
             builtin[name] = true;
         });
@@ -2172,6 +2186,7 @@
         DEFAULTS: DEFAULTS,
         OPTION_ORDER: OPTION_ORDER,
         COF_OPTIONS: COF_OPTIONS,
+        SH_OPTIONS: SH_OPTIONS,
         check: check,
         luaString: luaString,
     };

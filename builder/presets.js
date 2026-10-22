@@ -18,6 +18,7 @@
     var MODS = {
         mutants: { name: "The Mutants", without: "no mutants appear, whatever off= allows" },
         cof: { name: "Cry of Fear Monster NPCs", without: "the game skips its set.COF_Spawns values with a warning, and no Cry of Fear monster appears" },
+        silenthill: { name: "Silent Hill Monster NPCs", without: "the game skips its set.SHM_ values with a warning, and no Silent Hill monster appears" },
     };
 
     var NOTE = {
@@ -31,18 +32,23 @@
         untuned: "The sky values are a first guess: check them in the game and adjust to taste.",
         risers: "A riser is an ordinary zombie of the definition in effect, no faster than the rest. With the mod's default options a zombie that dies burning stays down, and Finish off keeps a corpse down.",
         cold: "The temperature is the one at the decision, as the night or day begins.",
+        gates: "Keep Silent Hill's own Monsters only at night and Monsters only in fog options off, or its monsters wait for those too.",
+        foggy: "weather=fog is decided as the day begins: fog that rolls in later doesn't count.",
     };
 
     var HERD = "Inspired by Night of the Living Dead, Dawn of the Dead (1978), The Walking Dead and World War Z (novel)";
     var FRENZY = "Inspired by 28 Days Later, Dawn of the Dead (2004), Train to Busan, [REC], Zombieland and DayZ";
     var HORDE = "Inspired by Left 4 Dead 2, World War Z (film) and Days Gone";
     var TOWN = "Inspired by Silent Hill and Cry of Fear";
+    var FOG = "Inspired by Silent Hill";
     var LAB = "Inspired by Resident Evil";
     var HUNTERS = "Inspired by I Am Legend, Dying Light and Kingdom";
     var SPORES = "Inspired by The Last of Us";
     var GRAVE = "Inspired by Army of Darkness and Return of the Living Dead";
 
-    var HERD_FX = "speed=-60;steps=1;health=1;rise=0;wake=false;off=mutants,cof;set.ZombieLore.ThumpNoChasing=true;set.ZombieConfig.RallyGroupSize=40;set.ZombieConfig.RallyTravelDistance=35;say=A herd is moving through. Keep the noise down.;color=b4b4a0;sound=MetaShotgun1";
+    var HERD_FX = "speed=-60;steps=1;health=1;rise=0;wake=false;off=mutants,cof,silenthill;set.ZombieLore.ThumpNoChasing=true;set.ZombieConfig.RallyGroupSize=40;set.ZombieConfig.RallyTravelDistance=35;say=A herd is moving through. Keep the noise down.;color=b4b4a0;sound=MetaShotgun1";
+    var FOG_FX = "speed=-60;steps=1;health=1;rise=0;wake=false;off=mutants,cof;set.SHM_Spawns.Regular=5;say=The fog rolls in. The radio hisses.;color=c8c8c0;sound=RadioZap;fogcolor=d4d4cc;fog=0.85;desat=0.6";
+    var SIREN_FX = "speed=-50;steps=1;health=1.2;rise=0;wake=false;off=mutants,cof;set.SHM_Spawns.Regular=5;set.NightDarkness=1;say=A siren wails. The town is changing.;color=b03028;sound=ZombieSurprisedPlayer;sky=5a2a2a60;fogcolor=4a2a24;fog=0.3;dark=1;ambient=0.05";
     var HORDE_SETS = "off=none;set.ZombieLore.ThumpNoChasing=true;set.ZombieLore.FenceThumpersRequired=10;set.ZombieConfig.RallyGroupSize=50;set.MetaEvent=3;say=Here they come. Stay together.;color=ff9030";
 
     var GROUPS = [
@@ -66,13 +72,13 @@
                 {
                     id: "herd", name: "Herd", inspiredBy: HERD,
                     blurb: "A herd passes every 8 to 14 days after the first week, for a day and the night after it. Anyone who dies while it lasts turns.",
-                    text: "id=herd;track=sun;mindays=7;interval=8d..14d;chance=60;for=2p;prio=5;speed=-60;steps=1;health=1;rise=0;wake=false;off=mutants,cof;set.ZombieLore.ThumpNoChasing=true;set.ZombieLore.Transmission=3;set.ZombieConfig.RallyGroupSize=40;set.ZombieConfig.RallyTravelDistance=35;say=A herd is moving through. Keep the noise down.;color=b4b4a0;sound=MetaShotgun1;desat=0.35",
+                    text: "id=herd;track=sun;mindays=7;interval=8d..14d;chance=60;for=2p;prio=5;speed=-60;steps=1;health=1;rise=0;wake=false;off=mutants,cof,silenthill;set.ZombieLore.ThumpNoChasing=true;set.ZombieLore.Transmission=3;set.ZombieConfig.RallyGroupSize=40;set.ZombieConfig.RallyTravelDistance=35;say=A herd is moving through. Keep the noise down.;color=b4b4a0;sound=MetaShotgun1;desat=0.35",
                     needs: [], notes: [NOTE.transmission, NOTE.sound],
                 },
                 {
                     id: "hard-freeze", name: "Hard freeze", inspiredBy: HERD,
                     blurb: "On nights at -5 °C or colder the dead are slow and stiff: every ordinary zombie is a shambler.",
-                    text: "id=hardfreeze;track=moon;tempmax=-5;prio=6;speed=-100;steps=2;health=1;rise=0;wake=false;off=mutants,cof;say=The cold has the dead slow and stiff.;color=a0c8ff",
+                    text: "id=hardfreeze;track=moon;tempmax=-5;prio=6;speed=-100;steps=2;health=1;rise=0;wake=false;off=mutants,cof,silenthill;say=The cold has the dead slow and stiff.;color=a0c8ff",
                     needs: [], notes: [NOTE.cold],
                 },
             ],
@@ -83,19 +89,19 @@
                 {
                     id: "frenzy", name: "Frenzy", inspiredBy: FRENZY,
                     blurb: "Sprinting, fragile infected who die like people. A bite turns within hours, and nothing gets back up.",
-                    effects: "speed=+60;steps=2;health=0.8;rise=0;wake=false;off=mutants,cof;set.ZombieLore.Mortality=4;say=They are not walking any more. They are running.;color=ff5040;sound=MetaScream;desat=0.2",
+                    effects: "speed=+60;steps=2;health=0.8;rise=0;wake=false;off=mutants,cof,silenthill;set.ZombieLore.Mortality=4;say=They are not walking any more. They are running.;color=ff5040;sound=MetaScream;desat=0.2",
                     needs: [], notes: [NOTE.mortality, NOTE.sound],
                 },
                 {
                     id: "double-tap", name: "Double tap", inspiredBy: FRENZY,
                     blurb: "Fast and bright, and some of the dead get up again: make sure they stay down.",
-                    effects: "speed=+50;steps=2;health=0.8;rise=15;wake=true;off=mutants,cof;say=Make sure they stay down.;color=ffd040;sound=MetaPistol1;sky=ffe0a020",
+                    effects: "speed=+50;steps=2;health=0.8;rise=15;wake=true;off=mutants,cof,silenthill;say=Make sure they stay down.;color=ffd040;sound=MetaPistol1;sky=ffe0a020",
                     needs: [], notes: [NOTE.risers, NOTE.sound],
                 },
                 {
                     id: "starving", name: "Starving", inspiredBy: FRENZY,
                     blurb: "Sprinters who waste away: their health falls from full to 40 percent between world days 28 and 84. For Day or Night, with no line of its own.",
-                    effects: "speed=+60;steps=2;health=1..0.4;rise=0;wake=false;grow=28d..84d;off=mutants,cof;set.ZombieLore.Mortality=4;desat=0.2",
+                    effects: "speed=+60;steps=2;health=1..0.4;rise=0;wake=false;grow=28d..84d;off=mutants,cof,silenthill;set.ZombieLore.Mortality=4;desat=0.2",
                     needs: [], notes: [NOTE.mortality],
                 },
             ],
@@ -103,13 +109,13 @@
                 {
                     id: "frenzy", name: "Frenzy", inspiredBy: FRENZY,
                     blurb: "Rare: from day 3, at most every 20 days, a day and the night after it of sprinters.",
-                    text: "id=frenzy;track=sun;mindays=3;cooldown=20d;chance=10;for=2p;prio=20;speed=+60;steps=2;health=0.8;rise=0;wake=false;off=mutants,cof;set.ZombieLore.Mortality=4;say=They are not walking any more. They are running.;color=ff5040;sound=MetaScream;desat=0.2",
+                    text: "id=frenzy;track=sun;mindays=3;cooldown=20d;chance=10;for=2p;prio=20;speed=+60;steps=2;health=0.8;rise=0;wake=false;off=mutants,cof,silenthill;set.ZombieLore.Mortality=4;say=They are not walking any more. They are running.;color=ff5040;sound=MetaScream;desat=0.2",
                     needs: [], notes: [NOTE.mortality, NOTE.sound],
                 },
                 {
                     id: "blackout", name: "Blackout", inspiredBy: FRENZY,
                     blurb: "A rare night from day 5 when the lights fail: pitch black, with sprinting infected.",
-                    text: "id=blackout;track=moon;mindays=5;cooldown=15d;chance=8;prio=18;speed=+60;steps=2;health=0.8;rise=0;wake=false;off=mutants,cof;set.ZombieLore.Mortality=4;set.NightDarkness=1;say=The lights are failing. Something moves in the dark.;color=d0d0d0;sound=WorldEventElectricityShutdown;dark=1;ambient=0.05",
+                    text: "id=blackout;track=moon;mindays=5;cooldown=15d;chance=8;prio=18;speed=+60;steps=2;health=0.8;rise=0;wake=false;off=mutants,cof,silenthill;set.ZombieLore.Mortality=4;set.NightDarkness=1;say=The lights are failing. Something moves in the dark.;color=d0d0d0;sound=WorldEventElectricityShutdown;dark=1;ambient=0.05",
                     needs: [], notes: [NOTE.mortality, NOTE.darkness, NOTE.sound],
                 },
             ],
@@ -166,12 +172,50 @@
             ],
         },
         {
+            name: "Fog world",
+            presets: [
+                {
+                    id: "fog-world", name: "Fog world", inspiredBy: FOG,
+                    blurb: "A white fog over a washed-out town, slow zombies, and Silent Hill monsters at their most as the threat. Best by day.",
+                    effects: FOG_FX,
+                    needs: ["silenthill"], notes: [NOTE.gates, NOTE.fog, NOTE.sound, NOTE.untuned],
+                },
+                {
+                    id: "siren-night", name: "Siren night", inspiredBy: FOG,
+                    blurb: "Near-black, rust-red light and a thin dark fog, with Silent Hill monsters at their most. Best by night.",
+                    effects: SIREN_FX,
+                    needs: ["silenthill"], notes: [NOTE.gates, NOTE.darkness, "No siren in the game plays only once, so the siren is in the line.", NOTE.sound, NOTE.untuned],
+                },
+            ],
+            examples: [
+                {
+                    id: "fog-world-siren", name: "Fog world, then the siren", inspiredBy: FOG,
+                    blurb: "A foggy day becomes the Fog world, at most every 7 days, and the night after it may turn into the Siren night. Both are added, the second chained after the first.",
+                    text: "id=fogworld;track=sun;cooldown=7d;weather=fog;chance=60;prio=15;" + FOG_FX
+                        + "|id=sirennight;track=moon;after=fogworld;chance=50;prio=30;" + SIREN_FX,
+                    needs: ["silenthill"], notes: ["Without natural fog, give fogworld season=autumn;chance=15 or interval=5d..9d instead of weather=fog;chance=60.", NOTE.foggy, NOTE.gates, NOTE.darkness, NOTE.sound, NOTE.untuned],
+                },
+                {
+                    id: "judgement", name: "Judgement", inspiredBy: FOG,
+                    blurb: "A rare night from day 14, at most every 21 days: Pyramid Head walks, few other monsters, and the dark is rust-red.",
+                    text: "id=judgement;track=moon;mindays=14;cooldown=21d;chance=20;prio=25;speed=-50;steps=1;health=1;rise=0;wake=false;off=mutants,cof;set.SHM_Creatures.PyramidHead=true;set.SHM_Spawns.PyramidHead=5;set.SHM_Spawns.Regular=2;set.NightDarkness=1;say=Something heavy drags metal through the street.;color=8c2a1e;sky=5a2a2a60;fogcolor=4a2a24;fog=0.4;dark=0.8;ambient=0.05",
+                    needs: ["silenthill"], notes: ["When it ends Pyramid Head's own switch is off again: no new one comes, and Silent Hill Monster NPCs makes one that loads in again an ordinary zombie; one still near you stays until it unloads.", NOTE.gates, NOTE.darkness, NOTE.untuned],
+                },
+                {
+                    id: "silent-hill-night-and-fog", name: "Silent Hill monsters at night and in fog", inspiredBy: null,
+                    blurb: "With off=silenthill in Day, Silent Hill monsters roam by night and on foggy days. This adds the foggy day, which also thickens the fog; put off=silenthill in Day yourself.",
+                    text: "id=fogday;track=sun;weather=fog;prio=5;off=mutants;fog=0.8;desat=0.4",
+                    needs: ["silenthill"], notes: ["The default Night leaves them on. Without off=silenthill in Day this changes only the fog.", NOTE.foggy, NOTE.gates],
+                },
+            ],
+        },
+        {
             name: "Lab leak",
             presets: [
                 {
                     id: "lab-leak", name: "Lab leak", inspiredBy: LAB,
                     blurb: "Slow, tough dead with mutants among them, and a third of the kills get back up unless burned or finished off. Thunder as it begins.",
-                    effects: "speed=-40;steps=1;health=1.6;rise=35;wake=true;off=cof;say=Lightning shows shapes on the lawn. Burn what you put down.;color=8cb478;sound=Thunder;sky=8cb48c30;desat=0.15",
+                    effects: "speed=-40;steps=1;health=1.6;rise=35;wake=true;off=cof,silenthill;say=Lightning shows shapes on the lawn. Burn what you put down.;color=8cb478;sound=Thunder;sky=8cb48c30;desat=0.15",
                     needs: ["mutants"], notes: [NOTE.risers, NOTE.mutantRates, NOTE.sound],
                 },
             ],
@@ -179,7 +223,7 @@
                 {
                     id: "lab-leak", name: "Lab leak", inspiredBy: LAB,
                     blurb: "Stormy or rainy nights from day 10, at most every 10 days.",
-                    text: "id=lableak;track=moon;mindays=10;cooldown=10d;weather=storm,rain;chance=35;prio=12;speed=-40;steps=1;health=1.6;rise=35;wake=true;off=cof;say=Lightning shows shapes on the lawn. Burn what you put down.;color=8cb478;sound=Thunder;sky=8cb48c30;desat=0.15",
+                    text: "id=lableak;track=moon;mindays=10;cooldown=10d;weather=storm,rain;chance=35;prio=12;speed=-40;steps=1;health=1.6;rise=35;wake=true;off=cof,silenthill;say=Lightning shows shapes on the lawn. Burn what you put down.;color=8cb478;sound=Thunder;sky=8cb48c30;desat=0.15",
                     needs: ["mutants"], notes: [NOTE.risers, NOTE.mutantRates, NOTE.sound],
                 },
             ],
@@ -190,7 +234,7 @@
                 {
                     id: "sun-weakened", name: "Sun-weakened", inspiredBy: HUNTERS,
                     blurb: "Every ordinary zombie a tier slower and fragile, those already around too. For Day, with Night hunters for Night.",
-                    effects: "speed=-100;steps=1;health=0.5;rise=0;wake=false;off=mutants,cof;say=Daylight. They are hiding from the sun.;color=ffe6a0",
+                    effects: "speed=-100;steps=1;health=0.5;rise=0;wake=false;off=mutants,cof,silenthill;say=Daylight. They are hiding from the sun.;color=ffe6a0",
                     needs: [], notes: ["health=0.5 also lowers the zombies already around, and a lowered zombie never heals, so the days wear them down."],
                 },
                 {
@@ -221,7 +265,7 @@
                 {
                     id: "spore-bloom", name: "Spore bloom", inspiredBy: SPORES,
                     blurb: "Zombies that see poorly but hear everything, a third of them faster and all tougher, in a yellow haze. Sneaking works; gunfire doesn't.",
-                    effects: "speed=+30;steps=1;health=1.3;rise=0;wake=false;off=cof;set.ZombieLore.Sight=3;set.ZombieLore.Hearing=1;say=The air is thick with spores. Move quietly.;color=c8c070;sky=d8cc9030;fogcolor=c8c48c;fog=0.35;desat=0.25",
+                    effects: "speed=+30;steps=1;health=1.3;rise=0;wake=false;off=cof,silenthill;set.ZombieLore.Sight=3;set.ZombieLore.Hearing=1;say=The air is thick with spores. Move quietly.;color=c8c070;sky=d8cc9030;fogcolor=c8c48c;fog=0.35;desat=0.25",
                     needs: [], notes: [NOTE.senses, "The haze is only a look: nothing spreads through the air, and zombies never see less than 10 tiles.", NOTE.untuned],
                 },
             ],
@@ -229,7 +273,7 @@
                 {
                     id: "spore-bloom", name: "Spore bloom", inspiredBy: SPORES,
                     blurb: "Foggy or rainy days from June to October, from day 14 and at most every 15 days: three days of spore bloom.",
-                    text: "id=sporebloom;track=sun;month=6..10;mindays=14;cooldown=15d;weather=fog,rain;chance=25;for=3d;prio=14;speed=+30;steps=1;health=1.3;rise=0;wake=false;off=cof;set.ZombieLore.Sight=3;set.ZombieLore.Hearing=1;say=The air is thick with spores. Move quietly.;color=c8c070;sky=d8cc9030;fogcolor=c8c48c;fog=0.35;desat=0.25",
+                    text: "id=sporebloom;track=sun;month=6..10;mindays=14;cooldown=15d;weather=fog,rain;chance=25;for=3d;prio=14;speed=+30;steps=1;health=1.3;rise=0;wake=false;off=cof,silenthill;set.ZombieLore.Sight=3;set.ZombieLore.Hearing=1;say=The air is thick with spores. Move quietly.;color=c8c070;sky=d8cc9030;fogcolor=c8c48c;fog=0.35;desat=0.25",
                     needs: [], notes: [NOTE.senses, NOTE.untuned],
                 },
             ],

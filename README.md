@@ -43,12 +43,12 @@ Crepuscular splits the game's clock into day and night and gives each one a **de
 - how many of the zombies killed while it applies get back up;
 - which sandbox options change while it lasts;
 - the sky colour, fog and darkness;
-- which monsters are about: The Mutants and Cry of Fear stop making monsters, and other monster mods' far monsters are removed (see [Monster mods and kinds](#monster-mods-and-kinds));
+- which monsters are about: The Mutants, Cry of Fear and Silent Hill stop making monsters, and other monster mods' far monsters are removed (see [Monster mods and kinds](#monster-mods-and-kinds));
 - a line players see, and a sound they hear, when it begins.
 
 **Events** are special nights and days (moons and suns) with conditions of their own: moon phase, date, season, weather, every few days, after another event, at random. While an event runs, its definition takes over from Day or Night.
 
-**It works as soon as it is enabled, with no setup.** The defaults below apply without any configuration. Crepuscular needs no other mod: its parts for The Mutants, Cry of Fear Monster NPCs and Zomboid Forge apply only when those mods are installed, and without them the same settings have nothing to act on.
+**It works as soon as it is enabled, with no setup.** The defaults below apply without any configuration. Crepuscular needs no other mod: its parts for The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs and Zomboid Forge apply only when those mods are installed, and without them the same settings have nothing to act on.
 
 ### The defaults
 
@@ -207,7 +207,7 @@ Day, Night and events can all have these.
 - The base is the option's value before Crepuscular changed it. A change someone else makes, such as an admin or an edit of the server's sandbox file while it was stopped, becomes the new base. A save made while a definition applies gets its base back when that definition ends.
 - Names and values are checked when the definitions load. An option the game doesn't have (for example one of a mod that isn't loaded), or a value it can't take, is skipped with a warning. Crepuscular's own options can't be set.
 - Values: `true` or `false` for an on/off option, a number within the option's range for the others (a whole number for a choice or a whole-number option).
-- While `cof` is off and Cry of Fear is loaded, Crepuscular's own Cry of Fear values win over `set.` entries for the same options.
+- While `cof` or `silenthill` is off and its mod is loaded, Crepuscular's own values for that mod win over `set.` entries for the same options.
 
 **When a change takes effect.** Setting an option only stores the new value; it works when the game next reads it. From reading the 42.20.2 game code:
 
@@ -358,6 +358,15 @@ Day: speed=+25;health=0.7;off=cof
 
 Keep Cry of Fear's own Night only option off; the log warns if it is on.
 
+**Silent Hill monsters at night and in fog** (with Silent Hill Monster NPCs installed):
+
+```
+Day: speed=+25;health=0.7;off=silenthill
+id=fogday;track=sun;weather=fog;prio=5;off=mutants;fog=0.8;desat=0.4
+```
+
+By day they are off; the default Night and the foggy day leave them on, and the foggy day keeps its fog thick. Keep Silent Hill's own Monsters only at night and Monsters only in fog options off; the log warns if they are on. `weather=fog` is decided as the day begins: fog that rolls in later doesn't count.
+
 ## Risers
 
 Killed zombies can get back up where they fell.
@@ -470,9 +479,10 @@ Every special-zombie mod needs a kind, even one you never turn off. Without it C
 |---|---|---|
 | `mutants` | The Mutants | The zombies The Mutants says are mutants. |
 | `cof` | Cry of Fear Monster NPCs | Its monsters. |
+| `silenthill` | Silent Hill Monster NPCs | Its monsters, Pyramid Head among them: the zombies in its outfits (`SHM_` and the monster's name), told by their persistent outfit on the server and on every player's game. |
 | one per Zomboid Forge type | Zomboid Forge, for example The Last of Us Infected | The zombies of that type. The kind is the type's id with only A-Z, a-z, 0-9 and `_` kept, lowercased: `tlou_runner`, `tlou_stalker`, `tlou_clicker`, `tlou_bloater` for The Last of Us Infected's types as its own Lua names them. A fork may name them otherwise; Status lists the kinds it finds. `ZF_Zomboid`, the type of ordinary zombies, is no kind. |
 
-A zombie belongs to the first kind it matches, in this order: `cof`, `mutants`, the kinds of the Kinds option in order, kinds other mods register, then Zomboid Forge's types. Bandits belong to no kind.
+A zombie belongs to the first kind it matches, in this order: `cof`, `silenthill`, `mutants`, the kinds of the Kinds option in order, kinds other mods register, then Zomboid Forge's types. Bandits belong to no kind.
 
 ### The Kinds option
 
@@ -501,7 +511,7 @@ While a kind is off, each in-game minute up to `RemovalsPerMinute` of its member
 
 Keep `KeepDistance` beyond what players can see, or monsters vanish in view. A removal is not a kill: it leaves no corpse.
 
-Turning a kind off can't keep a mod from making its monsters, except as The Mutants and Cry of Fear allow below. Members nearby or with a target stay.
+Turning a kind off can't keep a mod from making its monsters, except as The Mutants, Cry of Fear and Silent Hill allow below. Members nearby or with a target stay.
 
 ### The Mutants
 
@@ -517,6 +527,20 @@ Turning a kind off can't keep a mod from making its monsters, except as The Muta
 - For its monsters only at night, put `off=cof` in Day and keep Cry of Fear's own Night only option off. The log warns if it is on.
 - Its spawn levels can be set per definition, for example `set.COF_Spawns.Regular=5` (High).
 - `off=cof` without Cry of Fear installed does nothing, and the log says so.
+- Since its version 0.68.48, Cry of Fear turns a monster it didn't make in this session into an ordinary zombie when its kind is switched off, and its levels at None count. So while `cof` is off, a Cry of Fear monster that loads in (an area that loads again, a restart, a single player load) becomes an ordinary zombie for good, and gets Crepuscular's speed and health. Its home is filled with a new monster when `cof` is on again. With the game's zombie population at None these are the only ordinary zombies. Human Flowers stay, and far ones are removed.
+
+### Silent Hill Monster NPCs
+
+Silent Hill Monster NPCs is built on the same framework as Cry of Fear Monster NPCs, by the same author, so Crepuscular treats it the same way.
+
+- While `silenthill` is off, its two population levels (regular monsters and Pyramid Head) are set to None on the server and on every player's game. Far monsters are removed; it plays no looping sounds that would need stopping.
+- When `silenthill` is on again its own values come back, and every one of its homes may be filled again, killed monsters' homes too, as its own Monsters only at night option does at dusk.
+- As Cry of Fear does, it turns a monster that loads in while `silenthill` is off into an ordinary zombie for good, and fills its home with a new one when `silenthill` is on again.
+- For its monsters only at night, put `off=silenthill` in Day; for night and fog, see [the worked example](#worked-examples). Keep its own Monsters only at night and Monsters only in fog options off: they would add their own clock or fog on top, and the log warns while a definition turns `silenthill` off.
+- With its own Monsters only in fog option on, a definition's `fog=` brings its monsters out too while `silenthill` is on: the mod reads the fog players see, which includes `fog=`.
+- Its population levels and Pyramid Head's switch can be set per definition: `set.SHM_Spawns.Regular=5` (High), `set.SHM_Spawns.PyramidHead=5`, `set.SHM_Creatures.PyramidHead=true`. Pyramid Head is off by default; when a definition that turns him on ends, no new one comes, and the mod turns one that loads in again into an ordinary zombie.
+- Its monsters that go down instead of dying are still alive: Crepuscular leaves them alone. Finish them on the floor as the mod says; Crepuscular's Finish off is for corpses marked to rise.
+- `off=silenthill` without Silent Hill Monster NPCs installed does nothing, and the log says so.
 
 ### Zomboid Forge
 
@@ -526,7 +550,7 @@ Turning a kind off can't keep a mod from making its monsters, except as The Muta
 
 ### RiseKinds
 
-**Monster kinds that rise** (`RiseKinds`) lists the kinds whose killed members can be marked to rise too, written as in `off=`: for example `cof,mutants`, `tlou_clicker`, or a kind of the Kinds option. Empty, only ordinary zombies rise. Bandits never rise. A monster rises as any corpse does, in the same outfit; what it can do after that is up to its own mod. A list that isn't kind names separated by commas is logged and no monster rises; a name that isn't a known kind is logged too.
+**Monster kinds that rise** (`RiseKinds`) lists the kinds whose killed members can be marked to rise too, written as in `off=`: for example `cof,mutants`, `tlou_clicker`, or a kind of the Kinds option. Empty, only ordinary zombies rise. Bandits never rise. A monster rises as any corpse does, in the same outfit; what it can do after that is up to its own mod. A list that isn't kind names separated by commas is logged and no monster rises; a name that isn't a known kind is logged too. `silenthill` there adds Crepuscular's rises on top of the mod's own going down: a monster finished on the floor could get up again later.
 
 ## Presets and examples
 
@@ -538,6 +562,7 @@ The builder has presets for Day, Night or an event, and ready example events. Th
 | Frenzy | 28 Days Later, Dawn of the Dead (2004), Train to Busan, [REC], Zombieland and DayZ |
 | Horde rush | Left 4 Dead 2, World War Z (film) and Days Gone |
 | Nightmare town | Silent Hill and Cry of Fear |
+| Fog world | Silent Hill |
 | Lab leak | Resident Evil |
 | Night hunters | I Am Legend, Dying Light and Kingdom |
 | Spore bloom | The Last of Us |
@@ -561,6 +586,11 @@ The builder has presets for Day, Night or an event, and ready example events. Th
 | Nightmare town | Fog town | Preset | Thick, pale fog and slow zombies; Cry of Fear monsters at their highest are the threat. Best by day. | Cry of Fear Monster NPCs |
 | Nightmare town | Nightmare | Preset | Near-black, rust-red light, a thin dark fog and Cry of Fear monsters at their highest. Best by night. | Cry of Fear Monster NPCs |
 | Nightmare town | Fog town, then the nightmare (`fogtown`, `nightmare`) | Example | A foggy day becomes Fog town, at most every 14 days, and the night after it may turn into the Nightmare. Both are added, the second chained after the first. | Cry of Fear Monster NPCs |
+| Fog world | Fog world | Preset | A white fog over a washed-out town, slow zombies, and Silent Hill monsters at their most as the threat. Best by day. | Silent Hill Monster NPCs |
+| Fog world | Siren night | Preset | Near-black, rust-red light and a thin dark fog, with Silent Hill monsters at their most. Best by night. | Silent Hill Monster NPCs |
+| Fog world | Fog world, then the siren (`fogworld`, `sirennight`) | Example | A foggy day becomes the Fog world, at most every 7 days, and the night after it may turn into the Siren night. Both are added, the second chained after the first. | Silent Hill Monster NPCs |
+| Fog world | Judgement (`judgement`) | Example | A rare night from day 14, at most every 21 days: Pyramid Head walks, few other monsters, and the dark is rust-red. | Silent Hill Monster NPCs |
+| Fog world | Silent Hill monsters at night and in fog (`fogday`) | Example | With off=silenthill in Day, Silent Hill monsters roam by night and on foggy days. This adds the foggy day, which also thickens the fog; put off=silenthill in Day yourself. | Silent Hill Monster NPCs |
 | Lab leak | Lab leak | Preset | Slow, tough dead with mutants among them, and a third of the kills get back up unless burned or finished off. Thunder as it begins. | The Mutants |
 | Lab leak | Lab leak (`lableak`) | Example | Stormy or rainy nights from day 10, at most every 10 days. | The Mutants |
 | Night hunters | Sun-weakened | Preset | Every ordinary zombie a tier slower and fragile, those already around too. For Day, with Night hunters for Night. | |
@@ -579,7 +609,8 @@ The builder has presets for Day, Night or an event, and ready example events. Th
 | More moons and suns | Halloween (`halloween`) | Example | Every 31 October, above everything else: every kill gets back up, monsters are out, and an orange glow. | Cry of Fear Monster NPCs |
 | More moons and suns | Bright moon every 30 days (`fullmoon`) | Example | Every 30 days from world day 30: a line, nothing else. It counts world days, not the moon. | |
 
-- **Needs:** without The Mutants, no mutants appear, whatever `off=` allows. Without Cry of Fear Monster NPCs, the game skips the `set.COF_Spawns` values with a warning, and no Cry of Fear monster appears.
+- **Needs:** without The Mutants, no mutants appear, whatever `off=` allows. Without Cry of Fear Monster NPCs, the game skips the `set.COF_Spawns` values with a warning, and no Cry of Fear monster appears. Without Silent Hill Monster NPCs, the game skips the `set.SHM_` values with a warning, and no Silent Hill monster appears.
+- The presets without monsters turn `cof` and `silenthill` off together; the log notes each of those mods that isn't installed.
 - The sky values of the presets are a first guess, not yet tuned in game.
 - The builder shows each preset's notes, for example which of its `set.` values stick to zombies after it ends.
 
@@ -652,13 +683,13 @@ When the definitions have errors, admins see "Crepuscular: N definitions have er
 - the sky values Crepuscular set and which of them an admin or another mod has overridden or turned off;
 - the sandbox values overridden now, with their bases, and any the game refused;
 - each text option's size in bytes;
-- the state of The Mutants, Cry of Fear and Zomboid Forge support.
+- the state of The Mutants, Cry of Fear, Silent Hill and Zomboid Forge support.
 
 ## Multiplayer and performance
 
 | Where | What runs |
 |---|---|
-| The server (or the single player game) | Each in-game minute, the speed of the zombies no player's game runs and the health cap of every zombie it has loaded. The clock and the decisions, kept in the save. Sandbox values, sent to every player. The sky and fog. The risers: marking, checks and the waiting corpses, kept in the save. Far removal. The Mutants and Cry of Fear support. The admin commands. The speed and health of the zombies it creates, loads or raises. |
+| The server (or the single player game) | Each in-game minute, the speed of the zombies no player's game runs and the health cap of every zombie it has loaded. The clock and the decisions, kept in the save. Sandbox values, sent to every player. The sky and fog. The risers: marking, checks and the waiting corpses, kept in the save. Far removal. The Mutants, Cry of Fear and Silent Hill support. The admin commands. The speed and health of the zombies it creates, loads or raises. |
 | Every player's game | Each in-game minute, the speed of the zombies that game runs and the health cap of every zombie it has loaded. The lines and sounds. The Finish off menu and head-hit reports. Removing its copies of the monsters the server removed. Taking the server's sandbox values. |
 
 The server sends its state to players whenever it changes, and a player who joins gets it at once.
@@ -685,7 +716,7 @@ The server sends its state to players whenever it changes, and a player who join
 
 **registerKind(name, spec):**
 
-- `name`: a-z, 0-9 and `_`. Not `none`, `cof`, `mutants`, the kind of a Zomboid Forge type, or a kind of the Kinds option. Zomboid Forge's types are known once the game has started: a kind registered before under the name of one is set aside then, with a warning.
+- `name`: a-z, 0-9 and `_`. Not `none`, `cof`, `silenthill`, `mutants`, the kind of a Zomboid Forge type, or a kind of the Kinds option. Zomboid Forge's types are known once the game has started: a kind registered before under the name of one is set aside then, with a warning.
 - `spec.isMember(z)`: returns whether `z` is a member. It runs on the server and on players' games, and must give the same answer on both: members keep their own speed and health on every game, so a member `isMember` misses on the player's game that runs it gets capped there, and the server takes that health. One that throws counts as no member, with a warning.
 - `spec.despawn = false`: keeps far members while the kind is off.
 - The same name again replaces its spec. A Kinds option entry with the same name replaces the registered kind, with a warning.
@@ -728,7 +759,7 @@ From the mods' descriptions and, where it is public, their code. None of these w
 
 **Fit well:**
 
-- The Mutants, Cry of Fear Monster NPCs and Zomboid Forge (The Last of Us Infected): built-in kinds.
+- The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs and Zomboid Forge (The Last of Us Infected): built-in kinds.
 - Blackout Predators and Projeto Nemesis: [ready Kinds lines](#the-kinds-option).
 - Bandits: they never rise, keep their own speed and belong to no kind.
 - Kill counters and XP mods: each rise is another kill.
@@ -745,7 +776,8 @@ From the mods' descriptions and, where it is public, their code. None of these w
 - **Risers' counts reset on unload:** a risen zombie that unloads (out of the loaded area, a restart, a single player load) is an ordinary zombie again, and `MaxRises` counts from 0 for it.
 - **Corpses on stairs**, and every corpse while `ZombieLore.DisableFakeDead` is 3, can't rise.
 - **Some `set.` values** apply only to zombies created or loaded later, stick to infections or bodies, or need a restart. See [Sandbox values](#sandbox-values-set).
-- **`off=`** removes only far members without a target. Only The Mutants and Cry of Fear also stop making new ones; other mods go on making their monsters.
+- **`off=`** removes only far members without a target. Only The Mutants, Cry of Fear and Silent Hill also stop making new ones; other mods go on making their monsters.
+- **Cry of Fear and Silent Hill** turn their monsters that load in while their kind is off into ordinary zombies, for good.
 - **A special-zombie mod without a kind** gets Crepuscular's speed and health on its monsters.
 - **Forcing a phase** isn't saved, and doesn't change the game's time or which events are decided.
 - **Each text option** must stay under 32000 bytes.
@@ -758,6 +790,7 @@ From the mods' descriptions and, where it is public, their code. None of these w
 - That a sprint set by Crepuscular is full speed on the player's game that runs the zombie in multiplayer.
 - Risers: that they stand up at once, their animation, corpses loaded from saved areas, and the order of head-hit reports.
 - Cry of Fear: that removing a monster stops its looping sounds, and the Sawrunner's night encounters, which the server can't tell apart.
+- Silent Hill Monster NPCs: that its monsters are members on the server, in single player and on players' games; `off=silenthill` (no new spawns, far ones removed, no ghosts on players' games, homes filled again at dusk); that a `fog=` brings out its fog-only spawns; `set.SHM_Creatures.PyramidHead` turned on and off mid-game; and its multiplayer, which its author has not tested yet.
 - Zomboid Forge: the Build 42.20 Workshop forks (their module and type ids), that the server and players' games agree on each zombie's kind, `set.ZombieLore.Sight` and `Hearing` against Zomboid Forge's own writes, and that far removal leaves no lingering sounds.
 - Blackout Predators' outfit name, and the default of Projeto Nemesis's OutfitName option.
 

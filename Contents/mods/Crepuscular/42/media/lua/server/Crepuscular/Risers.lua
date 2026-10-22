@@ -318,12 +318,23 @@ local function keepDown(reg, id, body, why)
     Log.info("corpse " .. id .. " stays down: " .. why)
 end
 
--- Cry of Fear's marks that a monster's health buffer is on: in single player a monster that rose
--- with them would skip its health and die again at once.
+-- Cry of Fear's and Silent Hill's marks that a monster's health buffer is on: in single player a
+-- monster that rose with them would skip its health and die again at once.
+local BUFFER_MARKS = { "^COF_%w+Initialized$", "^COF_%w+Padded$", "^SHM_%w+Initialized$", "^SHM_%w+Padded$" }
+
+local function marked(key)
+    for _, pattern in ipairs(BUFFER_MARKS) do
+        if string.find(key, pattern) then
+            return true
+        end
+    end
+    return false
+end
+
 local function strip(data)
     local keys = {}
     for key in pairs(data) do
-        if type(key) == "string" and (string.find(key, "^COF_%w+Initialized$") or string.find(key, "^COF_%w+Padded$")) then
+        if type(key) == "string" and marked(key) then
             keys[#keys + 1] = key
         end
     end
