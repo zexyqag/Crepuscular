@@ -13,7 +13,7 @@ local Despawn = require "Crepuscular/Despawn"
 local Mutants = require "Crepuscular/Mutants"
 local Spawners = require "Crepuscular/Spawners"
 local Zombies = require "Crepuscular/Zombies"
-local Risers = require "Crepuscular/Risers"
+local Rising = require "Crepuscular/Rising"
 local Visuals = require "Crepuscular/Visuals"
 
 local Commands = {}
@@ -148,7 +148,7 @@ local function status()
     for _, line in ipairs(Zombies.status()) do
         add(line)
     end
-    for _, line in ipairs(Risers.status()) do
+    for _, line in ipairs(Rising.status()) do
         add(line)
     end
     add(Visuals.status())
@@ -182,8 +182,7 @@ local function status()
     end
     return {
         text = "IGUI_Crepuscular_Status",
-        args = { translated("IGUI_Crepuscular_Phase_" .. state.phase), event, #defs.events, defs.failed, overridden,
-            Risers.count() },
+        args = { translated("IGUI_Crepuscular_Phase_" .. state.phase), event, #defs.events, defs.failed, overridden },
         lines = lines,
     }
 end

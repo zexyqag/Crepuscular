@@ -22,19 +22,7 @@ local DEFAULTS = {
     MutantRequeue = false,
     VolatilesFollowNight = true,
     ZombiesPerSweep = 400,
-    RiseDelayMin = 1.0,
-    RiseDelayMax = 2.0,
-    MaxRises = 1,
-    RiseMaxAgeHours = 168,
-    FireStaysDown = true,
-    FinishOff = true,
-    FinishOffSeconds = 3,
-    HeadHitsStayDown = false,
-    RiseInSafehouses = false,
-    RisePlayers = false,
     RiseKinds = "",
-    RisesPerScan = 10,
-    RiserLimit = 5000,
     Notifications = true,
     NotificationPlace = 1,
 }
@@ -56,14 +44,6 @@ end
 local function integer(name, min, max)
     local value = read(name)
     if type(value) ~= "number" or value ~= math.floor(value) or value < min or value > max then
-        return invalid(name, value)
-    end
-    return value
-end
-
-local function number(name, min, max)
-    local value = read(name)
-    if type(value) ~= "number" or value < min or value > max then
         return invalid(name, value)
     end
     return value
@@ -124,71 +104,9 @@ function Settings.zombiesPerSweep()
     return integer("ZombiesPerSweep", 50, 5000)
 end
 
--- In-game hours after death before a marked corpse may get up.
-function Settings.riseDelayMin()
-    return number("RiseDelayMin", 0, 48)
-end
-
-function Settings.riseDelayMax()
-    return number("RiseDelayMax", 0, 48)
-end
-
--- The two, the lower first.
-function Settings.riseDelay()
-    local low, high = Settings.riseDelayMin(), Settings.riseDelayMax()
-    if low > high then
-        Log.warnOnce("setting RiseDelay", "Crepuscular.RiseDelayMin is " .. tostring(low) .. ", above Crepuscular.RiseDelayMax "
-            .. tostring(high) .. "; using " .. tostring(high) .. " to " .. tostring(low))
-        return high, low
-    end
-    return low, high
-end
-
--- 0 for no limit.
-function Settings.maxRises()
-    return integer("MaxRises", 0, 20)
-end
-
--- 0 for no limit.
-function Settings.riseMaxAgeHours()
-    return integer("RiseMaxAgeHours", 0, 8760)
-end
-
-function Settings.fireStaysDown()
-    return boolean("FireStaysDown")
-end
-
-function Settings.finishOff()
-    return boolean("FinishOff")
-end
-
-function Settings.finishOffSeconds()
-    return integer("FinishOffSeconds", 1, 30)
-end
-
-function Settings.headHitsStayDown()
-    return boolean("HeadHitsStayDown")
-end
-
-function Settings.riseInSafehouses()
-    return boolean("RiseInSafehouses")
-end
-
-function Settings.risePlayers()
-    return boolean("RisePlayers")
-end
-
--- Kind names, as in off=.
+-- Kind names, as in off=, whose killed members Relentless Dead may raise.
 function Settings.riseKinds()
     return text("RiseKinds")
-end
-
-function Settings.risesPerScan()
-    return integer("RisesPerScan", 1, 100)
-end
-
-function Settings.riserLimit()
-    return integer("RiserLimit", 100, 50000)
 end
 
 -- Whether players' games show the definitions' lines and play their sounds.

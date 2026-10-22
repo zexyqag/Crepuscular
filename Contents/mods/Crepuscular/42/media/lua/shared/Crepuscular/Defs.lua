@@ -559,7 +559,7 @@ local function ungrown(def, list, fail)
 end
 
 -- Whether a rise= value, or either end of its range, marks any corpse.
-local function marks(v)
+function Defs.marks(v)
     if type(v) == "table" then
         return v.from > 0 or v.to > 0
     end
@@ -963,7 +963,7 @@ function Defs.parse(texts, rule, builtin, registered)
     end
     if not wakes then
         for _, def in ipairs(all) do
-            if marks(def.rise) then
+            if Defs.marks(def.rise) then
                 warn(def, "rise", "no definition has wake=true, so marked corpses never get up")
             end
         end

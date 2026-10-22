@@ -1747,9 +1747,7 @@
 
     // Every Crepuscular option, for set. entries that name one.
     var OWN_OPTIONS = OPTION_ORDER.concat(["KeepDistance", "RemovalsPerMinute", "MutantRequeue", "VolatilesFollowNight", "ZombiesPerSweep",
-        "RiseDelayMin", "RiseDelayMax", "MaxRises", "RiseMaxAgeHours", "FireStaysDown", "FinishOff", "FinishOffSeconds",
-        "HeadHitsStayDown", "RiseInSafehouses", "RisePlayers", "RiseKinds", "RisesPerScan", "RiserLimit", "Notifications",
-        "NotificationPlace", "Verbose"]);
+        "RiseKinds", "Notifications", "NotificationPlace", "Verbose"]);
 
     // Cry of Fear Monster NPCs options a definition sets for its spawn levels (1 = None ... 5 = High).
     var COF_OPTIONS = {

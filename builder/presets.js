@@ -31,7 +31,7 @@
         mutantRates: "The Mutants decides how many mutants it makes when the game starts: off=none lets them appear but can't make more.",
         fog: "A server whose MaxFogIntensity is below Normal caps fog=, and fogcolor= shows only with the improved fog.",
         untuned: "The sky values are a first guess: check them in the game and adjust to taste.",
-        risers: "A riser is an ordinary zombie of the definition in effect, no faster than the rest. With the mod's default options a zombie that dies burning stays down, and Finish off keeps a corpse down.",
+        risers: "Corpses get back up only with Relentless Dead. A riser is an ordinary zombie of the definition in effect, no faster than the rest. With Relentless Dead's default options a zombie that dies burning stays down, and burning or Finish off keeps a corpse down.",
         cold: "The temperature is the one at the decision, as the night or day begins.",
         gates: "Keep Silent Hill's own Monsters only at night and Monsters only in fog options off, or its monsters wait for those too.",
         foggy: "weather=fog is decided as the day begins: fog that rolls in later doesn't count.",
@@ -286,7 +286,7 @@
                     id: "grave-rise", name: "Grave rise", inspiredBy: GRAVE,
                     blurb: "Most of the dead get back up, tougher, and bang on doors and walls under a pale mist. Only fire or Finish off keeps them down.",
                     effects: "speed=+25;steps=1;health=1.4;rise=80;wake=true;off=mutants;set.ZombieLore.ThumpNoChasing=true;say=The dead will not stay down tonight.;color=90c890;sound=MetaWolfHowl;sky=7890c050;fogcolor=a8b8a8;fog=0.3",
-                    needs: [], notes: ["Only zombies killed while it applies get up: no corpse climbs out of the ground. Rises per body limits how often one body gets up.", NOTE.sound],
+                    needs: [], notes: ["Only zombies killed while it applies get up: no corpse climbs out of the ground. Relentless Dead's Rises per body limits how often one body gets up.", NOTE.sound],
                 },
             ],
             examples: [

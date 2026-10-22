@@ -4,7 +4,5 @@
     "ContextMenu_Crepuscular_Force": "Force phase",
     "ContextMenu_Crepuscular_Start": "Start event",
     "ContextMenu_Crepuscular_End": "End event",
-    "ContextMenu_Crepuscular_Redecide": "Re-decide this occasion",
-    "ContextMenu_Crepuscular_FinishOff": "Finish off",
-    "ContextMenu_Crepuscular_FinishOffAll": "Finish off %1 corpses"
+    "ContextMenu_Crepuscular_Redecide": "Re-decide this occasion"
 }

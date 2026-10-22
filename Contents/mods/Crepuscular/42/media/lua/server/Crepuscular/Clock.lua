@@ -18,9 +18,15 @@ local Clock = {}
 -- "day" or "night" while an admin forces the phase. Never saved.
 Clock.forced = nil
 
--- What the definition in effect asks of corpses: { rise, wake }. It stays on the server, as
--- players' games have nothing to do with it.
+-- What the definition in effect asks of corpses: { rise, wake, label }, which Relentless Dead takes
+-- (see Rising). It stays on the server, as players' games have nothing to do with it.
 Clock.risers = nil
+
+-- Whether Relentless Dead, which raises corpses, is loaded: without it rise= and wake= do nothing.
+Clock.rising = getActivatedMods():contains("\\RelentlessDead")
+
+-- The game's minute stamp of the last tick.
+Clock.minute = nil
 
 -- A dedicated server can transmit only once it has started listening.
 local started = false
@@ -147,6 +153,14 @@ function Clock.definitions(rule)
         end
     end
     defs.riseKinds = kinds
+    if not Clock.rising then
+        for _, def in ipairs(all) do
+            if Defs.marks(def.rise) then
+                Log.warnOnce("rise without Relentless Dead", "rise= marks corpses to rise, but Relentless Dead is not loaded,"
+                    .. " so rise= and wake= do nothing")
+            end
+        end
+    end
     for _, text in ipairs(defs.errors) do
         Log.warnOnce(text, text)
     end
@@ -309,7 +323,7 @@ local function update(state, ledger, defs, now)
         return into
     end
     local effects = resolve({ off = copy(off), fmax = defs.fmax, smax = defs.smax }, NEUTRAL)
-    Clock.risers = resolve({}, CORPSES)
+    Clock.risers = resolve({ label = label }, CORPSES)
     local visuals = {}
     for _, key in ipairs(Visuals.KEYS) do
         visuals[key] = value(key)
@@ -343,6 +357,7 @@ local function update(state, ledger, defs, now)
 end
 
 function Clock.tick()
+    Clock.minute = getGameTime():getMinutesStamp()
     local state = ModData.get(State.NAME)
     local ledger = ModData.get(State.LEDGER)
     local rule = Clock.rule()

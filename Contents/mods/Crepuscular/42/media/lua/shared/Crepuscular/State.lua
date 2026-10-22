@@ -13,10 +13,9 @@ local State = {}
 State.NAME = "Crepuscular"
 State.VERSION = 2
 State.MODULE = "Crepuscular"
--- Kept by the server, which never sends them, though a player's game could ask for either: the
--- ledger (see Schedule) and the registry of corpses that rise (see Risers).
+-- Kept by the server, which never sends it, though a player's game could ask for it: the ledger
+-- (see Schedule).
 State.LEDGER = "CrepuscularLedger"
-State.RISERS = "CrepuscularRisers"
 
 -- The state, or nil while there is none of this version yet.
 function State.get()

@@ -2,7 +2,7 @@
 
 **Action by day. Horror by night.**
 
-A Project Zomboid Build 42 mod that gives day and night their own rules: faster, more fragile zombies in daylight, slower dead that get back up after dark, and special moons and suns in between.
+A Project Zomboid Build 42 mod that gives day and night their own rules: faster, more fragile zombies in daylight, slower dead that get back up after dark (with [Relentless Dead](#risers)), and special moons and suns in between.
 
 > **In testing:** expect bugs, and settings may still change between updates. Please report problems on [GitHub](https://github.com/zexyqag/Crepuscular/issues).
 
@@ -40,7 +40,7 @@ A Project Zomboid Build 42 mod that gives day and night their own rules: faster,
 Crepuscular splits the game's clock into day and night and gives each one a **definition**: a short line of `key=value` fields. A definition says:
 
 - how many zombies are faster or slower, and how tough they are;
-- how many of the zombies killed while it applies get back up;
+- how many of the zombies killed while it applies get back up, and whether they may get up now (with Relentless Dead, see [Risers](#risers));
 - which sandbox options change while it lasts;
 - the sky colour, fog and darkness;
 - which monsters are about: The Mutants, Cry of Fear and Silent Hill stop making monsters, Blackout Predators stops turning zombies into Volatiles, and other monster mods' far monsters are removed (see [Monster mods and kinds](#monster-mods-and-kinds));
@@ -48,7 +48,7 @@ Crepuscular splits the game's clock into day and night and gives each one a **de
 
 **Events** are special nights and days (moons and suns) with conditions of their own: moon phase, date, season, weather, every few days, after another event, at random. While an event runs, its definition takes over from Day or Night.
 
-**It works as soon as it is enabled, with no setup.** The defaults below apply without any configuration. Crepuscular needs no other mod: its parts for The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs, Blackout Predators and Zomboid Forge apply only when those mods are installed, and without them the same settings have nothing to act on.
+**It works as soon as it is enabled, with no setup.** The defaults below apply without any configuration. Crepuscular needs no other mod: its parts for Relentless Dead, The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs, Blackout Predators and Zomboid Forge apply only when those mods are installed, and without them the same settings have nothing to act on. Killed zombies get back up only with Relentless Dead installed.
 
 ### The defaults
 
@@ -61,8 +61,8 @@ Events1  id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;rise=100;
 | When | What happens |
 |---|---|
 | Day | A quarter of the ordinary zombies are one speed tier faster (with the game's default speed, fast shamblers become sprinters). New and reloaded zombies get 70% of the health they roll, and no ordinary zombie keeps more than 70% of the most a new one can have. Zombies killed by day stay down. |
-| Night (20:00 to 04:00) | Half of the ordinary zombies are one tier slower. Half of the zombies killed at night are marked to get back up (unless something [keeps it down](#marking)) 1 to 2 in-game hours later; they get up only at night, so a kill just before dawn waits for the next night. If The Mutants is installed, it makes no new mutants at night and far mutants are removed. If Blackout Predators is installed, its Volatiles hunt from Crepuscular's dusk to its dawn, and sleep in their nests by day. |
-| Blood moon | On the first night of each full moon, a 50% chance. Half of the ordinary zombies are one tier faster, every zombie killed that night is marked to get back up (unless something [keeps it down](#marking)), The Mutants (if installed) may make mutants, and every player sees "The moon rises red. A blood moon has begun." in red. |
+| Night (20:00 to 04:00) | Half of the ordinary zombies are one tier slower. With Relentless Dead, half of the zombies killed at night are marked to get back up (unless something keeps it down) 1 to 2 in-game hours later; they get up only at night, so a kill just before dawn waits for the next night. If The Mutants is installed, it makes no new mutants at night and far mutants are removed. If Blackout Predators is installed, its Volatiles hunt from Crepuscular's dusk to its dawn, and sleep in their nests by day. |
+| Blood moon | On the first night of each full moon, a 50% chance. Half of the ordinary zombies are one tier faster, with Relentless Dead every zombie killed that night is marked to get back up (unless something keeps it down), The Mutants (if installed) may make mutants, and every player sees "The moon rises red. A blood moon has begun." in red. |
 
 The sky is the game's own unless a definition sets it.
 
@@ -163,8 +163,8 @@ Day, Night and events can all have these.
 | `speed` | Whole number, -100 to 100, or a [range](#growth) | `+N`: N percent of the ordinary zombies are one tier faster (shambler to fast shambler, fast shambler to sprinter). `-N`: N percent are one tier slower. `0`: the game's own speeds. `speed=25` means `+25`. |
 | `steps` | 1 or 2 (default 1) | Tiers moved. `steps=2` makes them always sprinters or always shamblers. |
 | `health` | 0.1 to 5, or a range (default 1) | Below 1: new and reloaded zombies get that share of the health they roll, and any ordinary zombie above that share of the most a new one can have is lowered to it. Above 1: new and reloaded zombies get that much more, and zombies already around keep theirs. A zombie is never healed. |
-| `rise` | Whole number, 0 to 100, or a range (default 0) | Percent of the zombies killed while this applies that are marked to get back up. See [Risers](#risers). |
-| `wake` | `true` or `false` (default false) | Marked corpses may get up while this applies. |
+| `rise` | Whole number, 0 to 100, or a range (default 0) | Percent of the zombies killed while this applies that are marked to get back up, with Relentless Dead. See [Risers](#risers). |
+| `wake` | `true` or `false` (default false) | Marked corpses may get up while this applies, with Relentless Dead. |
 | `off` | `none`, or kind names separated by `,` | The [monster kinds](#monster-mods-and-kinds) that are off while this applies. Default: none off. |
 | `grow` | `Nd` or `Ad..Bd` | Moves this definition's ranges with the world days. See [Growth](#growth). |
 | `set.Table.Option` or `set.Option` | The option's value | Changes a sandbox option while this applies. See [Sandbox values](#sandbox-values-set). |
@@ -303,7 +303,7 @@ Every condition that is set must hold. Inside one condition a list such as `moon
 id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;rise=100;wake=true;off=none;say=@IGUI_Crepuscular_BloodMoon;color=ff3c3c
 ```
 
-A night event on the first night of each full moon, half the time. Priority 10 beats events without a `prio=`. Half of the ordinary zombies are one tier faster, every zombie killed is marked to rise (as far as [Marking](#marking) allows) and may get up that night, no kind is off (so mutants are allowed), and the translated line shows in red. Everything else comes from Night.
+A night event on the first night of each full moon, half the time. Priority 10 beats events without a `prio=`. Half of the ordinary zombies are one tier faster, every zombie killed is marked to rise (as far as Relentless Dead's rules allow) and may get up that night, no kind is off (so mutants are allowed), and the translated line shows in red. Everything else comes from Night.
 
 **Halloween, every year, above everything else:**
 
@@ -370,65 +370,17 @@ By day they are off; the default Night and the foggy day leave them on, and the 
 
 ## Risers
 
-Killed zombies can get back up where they fell.
+Killed zombies get back up with **[Relentless Dead](https://steamcommunity.com/sharedfiles/filedetails/?id=3824839394)** (Mod ID `RelentlessDead`), a separate mod that raises corpses. Crepuscular doesn't need it, but without it `rise=` and `wake=` do nothing: the log warns once when a definition marks corpses, and the Status says Relentless Dead is not loaded.
 
-### Marking
+With Relentless Dead loaded, Crepuscular drives it:
 
-When a zombie dies, the `rise=` of the definition in effect decides: `rise=50` marks half of them, rolled for each zombie. It stays down instead when any of these hold:
+- **`rise=`** of the definition in effect is the percent of the zombies killed that are marked to get back up, rolled for each zombie. Relentless Dead's own Rise chance option rests meanwhile.
+- **`wake=`** of the definition in effect decides whether due corpses get up: a corpse that comes due while it is false waits for a definition with `wake=true`, such as the default Night. Corpses are checked every 10 in-game minutes, and the check at the minute a phase or event begins already sees it.
+- **Monster kinds stay down:** a killed member of a kind (Cry of Fear and Silent Hill monsters, Volatiles, mutants, Zomboid Forge types, the Kinds option's and registered kinds) is never marked, unless [RiseKinds](#risekinds) lists its kind.
+- **Cry of Fear and Silent Hill monsters** that rise lose the marks of their health buffer first, so in single player they don't skip their health and die again at once.
+- **Each riser** gets the speed and health of the definition in effect as it gets up.
 
-| It stays down when | Set by |
-|---|---|
-| It died while burning | `FireStaysDown` (on by default). A corpse that burns is gone either way. |
-| It died within 5 seconds of a melee hit to its head while it lay on the floor | `HeadHitsStayDown` (experimental, off by default) |
-| It has already risen as often as allowed | `MaxRises` (1 by default) |
-| It was a player | `RisePlayers` (off by default) |
-| It belongs to a monster kind | `RiseKinds` (empty by default: only ordinary zombies rise) |
-| It is a Bandit | Always |
-| The share is 0, or its roll misses | `rise=` |
-
-### Waking
-
-- A marked corpse comes due at a random time between `RiseDelayMin` and `RiseDelayMax` in-game hours after its death (1 to 2 by default).
-- Corpses are checked every 10 in-game minutes, and a due corpse gets up only while the definition in effect has `wake=true`. A corpse marked by day without `wake=true` gets up once a definition with it applies, such as the default Night.
-- It rises where it lies, in the outfit it died in, as a corpse playing dead does, and stands up within seconds. It gets the speed and health of the definition in effect. A corpse that has turned into a skeleton rises as one.
-- A corpse in an area no player has loaded waits until one does.
-- At most `RisesPerScan` corpses rise in one check on the whole server. A check searches around for at most five times that many corpses that aren't where they died, and the rest wait for the next check.
-- A dragged corpse is followed to where it is put down. A corpse that isn't found three checks in a row (burned, removed or carried off) is dropped.
-
-### What keeps a body down after it is marked
-
-| Way | Detail |
-|---|---|
-| Burn it | Fire keeps it down. |
-| **Finish off** | Right-click zombie corpses: **Finish off** for the one nearest you, as the game's own corpse options pick one, or **Finish off N corpses** when several lie on its tile. You walk up to it and work for `FinishOffSeconds` (3 by default), and it never rises again. It is offered on every zombie corpse, so the menu doesn't show which ones would rise. The server takes it only from a player within 3 tiles. |
-| Safehouses | With `RiseInSafehouses` off (the default), a corpse inside a claimed safehouse stays down. |
-| Age | A corpse whose zombie died more than `RiseMaxAgeHours` ago (168 by default) stays down. A check drops it, and dragging it later doesn't bring it back unless the option has been raised or set to 0 since. |
-| The waiting limit | Above `RiserLimit` marked corpses (5000 by default), the oldest stays down, even if it is dragged later. |
-| Stairs | A corpse on stairs can't play dead, so it stays down. So does every corpse while `ZombieLore.DisableFakeDead` is 3 (never); the log warns once. |
-
-### Kill counts and Rises per body
-
-- Every rise means one more kill for every kill counter: the game's, and other mods' that count kills or give XP or traits for them. The rise share, `MaxRises` and Finish off limit how often one body can be killed.
-- A risen zombie keeps its count of rises only until the game unloads it: when it walks out of the loaded area, at every restart and at every load of a single player game it is an ordinary zombie again, and its count starts over.
-- Only zombies killed while a definition marks them get up. No corpse climbs out of the ground.
-
-### Riser options
-
-| Option | Default | Range |
-|---|---|---|
-| `RiseDelayMin` | 1.0 | 0 to 48 hours |
-| `RiseDelayMax` | 2.0 | 0 to 48 hours. Below `RiseDelayMin`, the two are swapped and the log warns once. |
-| `MaxRises` | 1 | 0 to 20; 0 for no limit |
-| `RiseMaxAgeHours` | 168 | 0 to 8760; 0 for no limit |
-| `FireStaysDown` | true | |
-| `FinishOff` | true | |
-| `FinishOffSeconds` | 3 | 1 to 30 |
-| `HeadHitsStayDown` | false | Only the attacker's own game knows where a hit landed, so it reports the hit, and the server takes the report only from a player within 3 tiles of the zombie. Standing head hits and firearms don't count. |
-| `RiseInSafehouses` | false | |
-| `RisePlayers` | false | |
-| `RiseKinds` | empty | Kind names, as in `off=` |
-| `RisesPerScan` | 10 | 1 to 100 |
-| `RiserLimit` | 5000 | 100 to 50000 |
+Everything else is Relentless Dead's, with its own options on its own sandbox page: how soon a marked corpse comes due, how often one body can rise, what keeps a corpse down (burning, Finish off, floor head hits, safehouses, its age), Bandits and headless corpses, and its Status. Its README has the details.
 
 ## Sky and fog
 
@@ -541,7 +493,7 @@ Silent Hill Monster NPCs is built on the same framework as Cry of Fear Monster N
 - For its monsters only at night, put `off=silenthill` in Day; for night and fog, see [the worked example](#worked-examples). Keep its own Monsters only at night and Monsters only in fog options off: they would add their own clock or fog on top, and the log warns while a definition turns `silenthill` off.
 - With its own Monsters only in fog option on, a definition's `fog=` brings its monsters out too while `silenthill` is on: the mod reads the fog players see, which includes `fog=`.
 - Its population levels and Pyramid Head's switch can be set per definition: `set.SHM_Spawns.Regular=5` (High), `set.SHM_Spawns.PyramidHead=5`, `set.SHM_Creatures.PyramidHead=true`. Pyramid Head is off by default; when a definition that turns him on ends, no new one comes, and the mod turns one that loads in again into an ordinary zombie.
-- Its monsters that go down instead of dying are still alive: Crepuscular leaves them alone. Finish them on the floor as the mod says; Crepuscular's Finish off is for corpses marked to rise.
+- Its monsters that go down instead of dying are still alive: Crepuscular leaves them alone. Finish them on the floor as the mod says; Relentless Dead's Finish off is for corpses.
 - `off=silenthill` without Silent Hill Monster NPCs installed does nothing, and the log says so.
 
 ### Blackout Predators
@@ -567,7 +519,7 @@ Its Volatiles sleep in fixed nests by day and hunt at its night, when it also tu
 
 ### RiseKinds
 
-**Monster kinds that rise** (`RiseKinds`) lists the kinds whose killed members can be marked to rise too, written as in `off=`: for example `cof,mutants`, `tlou_clicker`, or a kind of the Kinds option. Empty, only ordinary zombies rise. Bandits never rise. A monster rises as any corpse does, in the same outfit; what it can do after that is up to its own mod. A list that isn't kind names separated by commas is logged and no monster rises; a name that isn't a known kind is logged too. `silenthill` there adds Crepuscular's rises on top of the mod's own going down: a monster finished on the floor could get up again later. `volatiles` there lets a Volatile's corpse rise with the mod's marks on it; how the mod then treats it is untested, so it is not recommended.
+**Monster kinds that rise** (`RiseKinds`) only matters with Relentless Dead. It lists the kinds whose killed members can be marked to rise too, written as in `off=`: for example `cof,mutants`, `tlou_clicker`, or a kind of the Kinds option. Empty, only ordinary zombies rise. Bandits never rise. A monster rises as any corpse does, in the same outfit; what it can do after that is up to its own mod. A list that isn't kind names separated by commas is logged and no monster rises; a name that isn't a known kind is logged too. `silenthill` there adds Crepuscular's rises on top of the mod's own going down: a monster finished on the floor could get up again later. `volatiles` there lets a Volatile's corpse rise with the mod's marks on it; how the mod then treats it is untested, so it is not recommended.
 
 ## Presets and examples
 
@@ -656,19 +608,7 @@ Each option is `Crepuscular.<Option>` in the sandbox settings, on the **Crepuscu
 | `MutantRequeue` | Offer zombies when mutants start | `false` | true or false | When mutants come back on, offer the loaded zombies to The Mutants (200 per minute). |
 | `VolatilesFollowNight` | Volatiles follow the night | `true` | true or false | [Blackout Predators](#blackout-predators)' night is Crepuscular's: it sets the mod's own night hours. |
 | `ZombiesPerSweep` | Zombies per sweep | `400` | 50 to 5000 | Zombies checked per in-game minute on each game for the speed and health in effect. |
-| `RiseDelayMin` | Rise after at least | `1.0` | 0.0 to 48.0 | In-game hours from death until a marked corpse may get up, at least. |
-| `RiseDelayMax` | Rise after at most | `2.0` | 0.0 to 48.0 | The same, at most. Each corpse gets a random time in between. |
-| `MaxRises` | Rises per body | `1` | 0 to 20 | Times one body can rise; 0 for no limit. The count starts over when the risen zombie unloads. |
-| `RiseMaxAgeHours` | Oldest corpse that rises | `168` | 0 to 8760 | A marked corpse older than this many in-game hours stays down; 0 for no limit. |
-| `FireStaysDown` | Burned zombies stay down | `true` | true or false | A zombie that dies burning is never marked to rise. |
-| `FinishOff` | Finish off | `true` | true or false | Offer Finish off on zombie corpses, which keeps them down. |
-| `FinishOffSeconds` | Finish off time | `3` | 1 to 30 | How long Finish off takes, in seconds at normal game speed. |
-| `HeadHitsStayDown` | Floor head hits keep zombies down | `false` | true or false | Experimental: a zombie killed within 5 seconds of a melee hit to its head while on the floor stays down. |
-| `RiseInSafehouses` | Corpses rise in safehouses | `false` | true or false | Off: a corpse inside a claimed safehouse stays down. |
-| `RisePlayers` | Players' zombies rise | `false` | true or false | A zombie that was a player can be marked to rise. |
-| `RiseKinds` | Monster kinds that rise | empty | text | Monster kinds whose killed members can be marked to rise too, as in `off=`. |
-| `RisesPerScan` | Rises per check | `10` | 1 to 100 | Most corpses that rise per check (every 10 in-game minutes) on the whole server. |
-| `RiserLimit` | Most corpses waiting | `5000` | 100 to 50000 | Most marked corpses kept waiting; above it the oldest stays down. |
+| `RiseKinds` | Monster kinds that rise | empty | text | With Relentless Dead: monster kinds whose killed members can be marked to rise too, as in `off=`. |
 | `Notifications` | Notifications | `true` | true or false | Show the definitions' lines (`say=`) and play their sounds (`sound=`) to players. |
 | `NotificationPlace` | Where lines show | `1` (Over the head) | 1 Over the head, 2 In chat, 3 Over the head and in chat | Where players see the definitions' lines: over their heads, in chat (multiplayer only) or both. |
 | `Verbose` | Verbose log | `false` | true or false | Write phase changes, each decision with its rolls, event starts and ends, sandbox value changes, removals and mutant requeues to the log. |
@@ -681,7 +621,7 @@ Right-click the world: the **Crepuscular** entry is there in single player, and 
 
 | Entry | What it does |
 |---|---|
-| **Status** | A summary on screen: the phase, the event, how many events loaded, definitions with errors, options overridden and corpses waiting to rise. The full report goes to the log. |
+| **Status** | A summary on screen: the phase, the event, how many events loaded, definitions with errors and options overridden. The full report goes to the log. |
 | **Force phase:** Automatic, Day, Night | Applies Day's or Night's definition whatever the clock says, until set back to Automatic or the game restarts (it isn't saved). A running event still applies. Decisions still follow the clock, and the phase's line isn't shown. |
 | **Start event:** each loaded event | Ends the current event and starts this one now, whatever its conditions and `at=`. It counts as a start for `cooldown=` and `interval=`. |
 | **End event** | Ends the running event, or drops one waiting for its start time. |
@@ -698,7 +638,7 @@ When the definitions have errors, admins see "Crepuscular: N definitions have er
 - the events loaded, every error and warning, and each event's counts, last start, cooldown, when its interval is due and waiting chain flags;
 - every kind and where it comes from, the kinds off now and the far members removed this session;
 - the speed, steps and health in effect, and a count of the loaded ordinary zombies by speed tier, with their health;
-- the risers: rise and wake in effect, corpses registered and due, the last check, and this session's counts;
+- Relentless Dead's own Status lines (the rise and wake in effect, corpses registered and due, the last check, this session's counts), or that it is not loaded;
 - the sky values Crepuscular set and which of them an admin or another mod has overridden or turned off;
 - the sandbox values overridden now, with their bases, and any the game refused;
 - each text option's size in bytes;
@@ -708,8 +648,8 @@ When the definitions have errors, admins see "Crepuscular: N definitions have er
 
 | Where | What runs |
 |---|---|
-| The server (or the single player game) | Each in-game minute, the speed of the zombies no player's game runs and the health cap of every zombie it has loaded. The clock and the decisions, kept in the save. Sandbox values, sent to every player. The sky and fog. The risers: marking, checks and the waiting corpses, kept in the save. Far removal. The Mutants, Cry of Fear, Silent Hill and Blackout Predators support. The admin commands. The speed and health of the zombies it creates, loads or raises. |
-| Every player's game | Each in-game minute, the speed of the zombies that game runs and the health cap of every zombie it has loaded. The lines and sounds. The Finish off menu and head-hit reports. Removing its copies of the monsters the server removed. Taking the server's sandbox values. |
+| The server (or the single player game) | Each in-game minute, the speed of the zombies no player's game runs and the health cap of every zombie it has loaded. The clock and the decisions, kept in the save. Sandbox values, sent to every player. The sky and fog. Driving Relentless Dead with `rise=` and `wake=`. Far removal. The Mutants, Cry of Fear, Silent Hill and Blackout Predators support. The admin commands. The speed and health of the zombies it creates, loads or raises. |
+| Every player's game | Each in-game minute, the speed of the zombies that game runs and the health cap of every zombie it has loaded. The lines and sounds. Removing its copies of the monsters the server removed. Taking the server's sandbox values. |
 
 The server sends its state to players whenever it changes, and a player who joins gets it at once.
 
@@ -717,8 +657,6 @@ The server sends its state to players whenever it changes, and a player who join
 |---|---|
 | `ZombiesPerSweep` (400) | Zombies each game checks per in-game minute. More is quicker after a change and costs more time each minute. |
 | `RemovalsPerMinute` (50) | Far monsters removed per minute; every player's game is told to remove its copy of each one. |
-| `RisesPerScan` (10) | Corpses that rise per check, every 10 in-game minutes; each check searches for at most five times this many moved corpses. |
-| `RiserLimit` (5000) | Marked corpses kept waiting in the save. |
 | `MutantRequeue` (off) | Up to 200 zombies offered to The Mutants per minute when mutants come back on. |
 | `Verbose` (off) | Every decision, change and removal written to the log. |
 
@@ -781,6 +719,7 @@ From the mods' descriptions and, where it is public, their code. None of these w
 - The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs, Blackout Predators and Zomboid Forge (The Last of Us Infected): built-in kinds.
 - Projeto Nemesis, and IZ Zombie Skins on multiplayer servers: [ready Kinds lines](#the-kinds-option).
 - Occult Zombies: nothing to set up, its monsters are ordinary zombies.
+- Relentless Dead: raises the corpses `rise=` marks, driven by the definition in effect (see [Risers](#risers)).
 - Bandits: they never rise, keep their own speed and belong to no kind.
 - Kill counters and XP mods: each rise is another kill.
 - Scheduled horde mods (Dynamic Horde Events, Blood Moon Hordes, Hark's Horde Night Revamped, Horde Night Revived) and night-only creature mods with their own clock (Dark Presence): their own options can be switched per definition with `set.`. Whether each reads its options while the game runs is unverified.
@@ -793,8 +732,7 @@ From the mods' descriptions and, where it is public, their code. None of these w
 - **`fogcolor=`** shows only with the improved fog. A `MaxFogIntensity` below Normal caps `fog=`. Rain, storms and admin climate overrides win over the sky values.
 - **Light and zombie sight:** a darker sky helps players hide only in single player.
 - **`sound=`** is not a world sound: zombies don't hear it.
-- **Risers' counts reset on unload:** a risen zombie that unloads (out of the loaded area, a restart, a single player load) is an ordinary zombie again, and `MaxRises` counts from 0 for it.
-- **Corpses on stairs**, and every corpse while `ZombieLore.DisableFakeDead` is 3, can't rise.
+- **`rise=` and `wake=`** do nothing without Relentless Dead.
 - **Some `set.` values** apply only to zombies created or loaded later, stick to infections or bodies, or need a restart. See [Sandbox values](#sandbox-values-set).
 - **`off=`** removes only far members without a target, and never a Volatile. Only The Mutants, Cry of Fear and Silent Hill also stop making new ones, and Blackout Predators its night swap; other mods go on making their monsters.
 - **Blackout Predators' night swap** can turn any far zombie into a Volatile, other mods' monsters too, whatever their kinds; only turning the swap off prevents it.
@@ -809,7 +747,7 @@ From the mods' descriptions and, where it is public, their code. None of these w
 - The sky values of the presets, and which of `ambient=`, `dark=` and `sky=` darken a long night's day.
 - The multiplayer timing of the sky values, and a join, a restart or an admin override in the middle of an event.
 - That a sprint set by Crepuscular is full speed on the player's game that runs the zombie in multiplayer.
-- Risers: that they stand up at once, their animation, corpses loaded from saved areas, and the order of head-hit reports.
+- Relentless Dead driven by the definitions: that a night's kills rise at night only, and the blood moon's at once, with the speed and health of the definition in effect.
 - Cry of Fear: that removing a monster stops its looping sounds, and the Sawrunner's night encounters, which the server can't tell apart.
 - Silent Hill Monster NPCs: that its monsters are members on the server, in single player and on players' games; `off=silenthill` (no new spawns, far ones removed, no ghosts on players' games, homes filled again at dusk); that a `fog=` brings out its fog-only spawns; `set.SHM_Creatures.PyramidHead` turned on and off mid-game; and its multiplayer, which its author has not tested yet.
 - Zomboid Forge: the Build 42.20 Workshop forks (their module and type ids), that the server and players' games agree on each zombie's kind, `set.ZombieLore.Sight` and `Hearing` against Zomboid Forge's own writes, and that far removal leaves no lingering sounds.
@@ -840,7 +778,7 @@ Run the **Publish** workflow (Actions, Publish, Run workflow), optionally with n
 | `feat!: ...` (any type with `!`), or a `BREAKING CHANGE:` footer | 0.10.0 | 2.0.0 |
 | any other type (`docs:`, `chore:`, ...) or message | no release | no release |
 
-A scope is fine (`fix(risers): ...`), and the highest of the commits counts. While MAJOR is 0, a breaking change raises MINOR, as a feature does. A `Release-As: X.Y.Z` footer sets the version instead; it must be higher than the latest. That is how 1.0.0 is made.
+A scope is fine (`fix(fog): ...`), and the highest of the commits counts. While MAJOR is 0, a breaking change raises MINOR, as a feature does. A `Release-As: X.Y.Z` footer sets the version instead; it must be higher than the latest. That is how 1.0.0 is made.
 
 The version is set by Publish: `mod.info` has no `modversion=` line in the repository, and Publish writes it into the uploaded copy. When the upload fails, the release stays a pre-release, and the next run uploads it again before it publishes anything newer. The builder is not part of a release: GitHub Pages serves `builder/` from the main branch.
 
