@@ -3,12 +3,12 @@ local State = require "Crepuscular/State"
 local Defs = require "Crepuscular/Defs"
 
 -- Monster kinds: named sets of zombies that other mods make. A zombie belongs to the first kind
--- whose test it passes: cof, silenthill, mutants, the kinds of the Kinds option in order, the kinds
--- other mods register (API.lua), then the kinds of Zomboid Forge's types, last because Zomboid Forge
--- can give every zombie a type. Bandits belong to none.
+-- whose test it passes: cof, silenthill, volatiles, mutants, the kinds of the Kinds option in order,
+-- the kinds other mods register (API.lua), then the kinds of Zomboid Forge's types, last because
+-- Zomboid Forge can give every zombie a type. Bandits belong to none.
 local Kinds = {}
 
-Kinds.BUILTIN = { cof = true, silenthill = true, mutants = true }
+Kinds.BUILTIN = { cof = true, silenthill = true, volatiles = true, mutants = true }
 
 local MUTANTS_API_VERSION = 1
 
@@ -19,6 +19,7 @@ local FORGE_MODULE = "ZomboidForge_module"
 local SILENT_HILL_MOD = "\\SilentHillMonsters"
 -- Its monsters' outfits, SHM_ and the monster's name, lowercased as outfitName gives them.
 local SILENT_HILL_OUTFIT = "shm_"
+local BLACKOUT_MOD = "\\blackoutpredators"
 
 -- The Mutants tries its outfit lookup only once, so a call before the game has started can switch
 -- off its identity for the whole session.
@@ -226,7 +227,7 @@ local function listOutfits()
         end
     end
     if count == 0 then
-        Log.error("the game lists no outfits, so silenthill and the kinds of the Kinds option match nothing")
+        Log.error("the game lists no outfits, so silenthill, volatiles and the kinds of the Kinds option match nothing")
     end
     return names
 end
@@ -264,10 +265,43 @@ local function isSilentHill(z)
     return name ~= nil and string.sub(name, 1, #SILENT_HILL_OUTFIT) == SILENT_HILL_OUTFIT
 end
 
+local blackout = getActivatedMods():contains(BLACKOUT_MOD)
+
+function Kinds.blackoutLoaded()
+    return blackout
+end
+
+-- The outfit Blackout Predators makes its Volatiles in, from its shared file, lowercased; nil while it
+-- has none.
+function Kinds.volatileOutfit()
+    local mod = BlackoutPredators
+    if type(mod) ~= "table" or type(mod.Outfit) ~= "string" then
+        return nil
+    end
+    return string.lower(mod.Outfit)
+end
+
+-- Its Volatiles, by their persistent outfit on the server and on every game: its own modData flag
+-- reaches players' games only with its state records.
+local function isVolatile(z)
+    if not blackout then
+        return false
+    end
+    local outfit = Kinds.volatileOutfit()
+    if outfit == nil then
+        Log.warnOnce("volatile outfit", "Blackout Predators is loaded without BlackoutPredators.Outfit, so the kind"
+            .. " volatiles has no members and Crepuscular treats its Volatiles as ordinary zombies")
+        return false
+    end
+    return outfitName(z) == outfit
+end
+
 Kinds.register("cof", { isMember = function(z)
     return Kinds.cryOfFear(z) ~= nil
 end })
 Kinds.register("silenthill", { isMember = isSilentHill })
+-- Never removed: Blackout Predators frees a nest's place only when its Volatile dies.
+Kinds.register("volatiles", { isMember = isVolatile, despawn = false })
 Kinds.register("mutants", { isMember = Kinds.isMutant })
 
 -- Whether a built-in kind can have members in this game.
@@ -409,7 +443,7 @@ function Kinds.test()
 end
 
 -- Crepuscular's kind names, which the Kinds option can't take and off= may always name: cof,
--- silenthill, mutants and the kinds of Zomboid Forge's types.
+-- silenthill, volatiles, mutants and the kinds of Zomboid Forge's types.
 function Kinds.builtin()
     local names = {}
     for name in pairs(Kinds.BUILTIN) do
@@ -432,7 +466,7 @@ function Kinds.removable(off)
     for name in pairs(off) do
         local can
         if Kinds.BUILTIN[name] then
-            can = AVAILABLE[name]()
+            can = byName[name].despawn and AVAILABLE[name]()
         elseif options[name] or (forge ~= nil and forge.types[name] ~= nil) then
             can = true
         else

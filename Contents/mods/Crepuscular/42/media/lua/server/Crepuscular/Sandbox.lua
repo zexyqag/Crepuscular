@@ -99,4 +99,24 @@ function Sandbox.sync(names, wanted, label)
     return values, changed
 end
 
+-- The option's value outside the definitions: the base Crepuscular keeps while it tracks the option, or
+-- its value while it doesn't.
+function Sandbox.base(name)
+    local entry = ModData.getOrCreate(Sandbox.STORE)[name]
+    if entry ~= nil then
+        return entry.base
+    end
+    return Overrides.current(name)
+end
+
+-- The value Crepuscular last gave the option, which a server's own sandbox file may have replaced at a
+-- restart, or its value while Crepuscular gives it none.
+function Sandbox.applied(name)
+    local entry = ModData.getOrCreate(Sandbox.STORE)[name]
+    if entry ~= nil and entry.applied ~= nil then
+        return entry.applied
+    end
+    return Overrides.current(name)
+end
+
 return Sandbox

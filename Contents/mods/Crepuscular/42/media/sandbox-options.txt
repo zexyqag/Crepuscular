@@ -145,6 +145,14 @@ option Crepuscular.MutantRequeue
     translation = Crepuscular_MutantRequeue,
 }
 
+option Crepuscular.VolatilesFollowNight
+{
+    type = boolean,
+    default = true,
+    page = Crepuscular,
+    translation = Crepuscular_VolatilesFollowNight,
+}
+
 option Crepuscular.ZombiesPerSweep
 {
     type = integer,

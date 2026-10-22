@@ -219,7 +219,7 @@ local NEUTRAL = { speed = 0, steps = 1, health = 1 }
 local CORPSES = { rise = 0, wake = false }
 
 -- Resolves the definition in effect, applies its sandbox values and visuals and publishes on change.
--- now: world-age hours.
+-- now: Clock.now().
 local function update(state, ledger, defs, now)
     local clock = ledger.occasion.phase
     local phase = Clock.forced or clock
@@ -257,7 +257,10 @@ local function update(state, ledger, defs, now)
     if not Settings.notifications() then
         announce = nil
     end
-    -- Off means off: a spawner's values win over set. entries for the same options.
+    -- Off means off, and a spawner's clock is Crepuscular's: its values win over set. entries for the
+    -- same options.
+    local names = defs.names
+    local night, hour = base == defs.night, math.floor(now.time)
     for _, spawner in ipairs(Spawners.LIST) do
         local values = defs.spawners[spawner.kind]
         if values ~= nil and off[spawner.kind] then
@@ -268,6 +271,13 @@ local function update(state, ledger, defs, now)
             -- The kind was off until now.
             spawner.refill()
         end
+        for name, value in pairs(spawner.follow(night, hour)) do
+            if names == defs.names then
+                names = copy(defs.names)
+            end
+            names[name] = true
+            wanted[name] = value
+        end
     end
     local event = nil
     if current ~= nil then
@@ -277,7 +287,7 @@ local function update(state, ledger, defs, now)
         }
     end
 
-    local day = Schedule.worldDay(ledger.occasion, now)
+    local day = Schedule.worldDay(ledger.occasion, now.hours)
     -- A range grows with the grow= of the definition it belongs to.
     local function value(key)
         local owner = base
@@ -304,7 +314,7 @@ local function update(state, ledger, defs, now)
     end
     Visuals.sync(visuals, label)
 
-    local sandbox, changed = Sandbox.sync(defs.names, wanted, label)
+    local sandbox, changed = Sandbox.sync(names, wanted, label)
     local fresh = {
         version = State.VERSION,
         phase = phase,
@@ -336,7 +346,7 @@ function Clock.tick()
     local rule = Clock.rule()
     local defs = Clock.definitions(rule)
     for _, spawner in ipairs(Spawners.LIST) do
-        spawner.check(defs.spawners[spawner.kind] ~= nil)
+        spawner.check(defs)
     end
     Zombies.check(defs.fmax, defs.smax)
     local now = Clock.now()
@@ -350,7 +360,7 @@ function Clock.tick()
         climate = climate,
         roll = roll,
     }, Log.info)
-    update(state, ledger, defs, now.hours)
+    update(state, ledger, defs, now)
 end
 
 -- phase is nil for automatic.

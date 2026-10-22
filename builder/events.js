@@ -1746,7 +1746,7 @@
     };
 
     // Every Crepuscular option, for set. entries that name one.
-    var OWN_OPTIONS = OPTION_ORDER.concat(["KeepDistance", "RemovalsPerMinute", "MutantRequeue", "ZombiesPerSweep",
+    var OWN_OPTIONS = OPTION_ORDER.concat(["KeepDistance", "RemovalsPerMinute", "MutantRequeue", "VolatilesFollowNight", "ZombiesPerSweep",
         "RiseDelayMin", "RiseDelayMax", "MaxRises", "RiseMaxAgeHours", "FireStaysDown", "FinishOff", "FinishOffSeconds",
         "HeadHitsStayDown", "RiseInSafehouses", "RisePlayers", "RiseKinds", "RisesPerScan", "RiserLimit", "Notifications", "Verbose"]);
 
@@ -1771,9 +1771,24 @@
         "SHM_Spawns.NightOnly": { type: "boolean" },
         "SHM_Spawns.FogOnly": { type: "boolean" },
     };
+    // Blackout Predators options a definition sets: its night swap (with its own default), its night hours, which are
+    // Crepuscular's while VolatilesFollowNight is on, its UV lamps and its Volatiles' speed and senses.
+    var BP_OPTIONS = {
+        "BlackoutPredators.AmbientSpawnChancePercent": { type: "integer", min: 0, max: 100, "default": 9 },
+        "BlackoutPredators.NightStartHour": { type: "integer", min: 0, max: 23 },
+        "BlackoutPredators.DayStartHour": { type: "integer", min: 0, max: 23 },
+        "BlackoutPredators.UVMechanicsEnabled": { type: "boolean" },
+        "BlackoutPredators.VolatileSpeedScale": { type: "double", min: 0.4, max: 1.6 },
+        "BlackoutPredators.VolatileStrength": { type: "enum", min: 1, max: 4 },
+        "BlackoutPredators.VolatileSight": { type: "enum", min: 1, max: 5 },
+        "BlackoutPredators.VolatileMemory": { type: "enum", min: 1, max: 6 },
+        "BlackoutPredators.VolatileHearing": { type: "enum", min: 1, max: 5 },
+    };
     var MONSTER_OPTIONS = dict(COF_OPTIONS);
-    Object.keys(SH_OPTIONS).forEach(function (name) {
-        MONSTER_OPTIONS[name] = SH_OPTIONS[name];
+    [SH_OPTIONS, BP_OPTIONS].forEach(function (options) {
+        Object.keys(options).forEach(function (name) {
+            MONSTER_OPTIONS[name] = options[name];
+        });
     });
 
     // Double.valueOf, which Kahlua's tonumber uses, for finite decimals; null for anything else.
@@ -1785,8 +1800,8 @@
         return Number(t.replace(/[fFdD]$/, ""));
     }
 
-    // Overrides.check, for the options the builder knows: Crepuscular's own and the monster mods' spawn
-    // settings. The game checks the rest when it loads.
+    // Overrides.check, for the options the builder knows: Crepuscular's own and the monster mods' settings
+    // above. The game checks the rest when it loads.
     function overrideWarnings(label, entries, warnings) {
         Object.keys(entries).sort().forEach(function (name) {
             var text = entries[name];
@@ -1801,8 +1816,8 @@
                     }
                 } else {
                     var n = javaNumber(text);
-                    if (n === null || !isFinite(n) || n < option.min || n > option.max || n !== Math.floor(n)) {
-                        why = "'" + text + "' is not a valid enum from " + option.min + " to " + option.max;
+                    if (n === null || !isFinite(n) || n < option.min || n > option.max || (option.type !== "double" && n !== Math.floor(n))) {
+                        why = "'" + text + "' is not a valid " + option.type + " from " + option.min + " to " + option.max;
                     }
                 }
             }
@@ -1825,7 +1840,7 @@
         registered.forEach(function (name) {
             reg[name] = true;
         });
-        var builtin = dict({ cof: true, silenthill: true, mutants: true });
+        var builtin = dict({ cof: true, silenthill: true, volatiles: true, mutants: true });
         (forge || []).forEach(function (name) {
             builtin[name] = true;
         });
@@ -2187,6 +2202,7 @@
         OPTION_ORDER: OPTION_ORDER,
         COF_OPTIONS: COF_OPTIONS,
         SH_OPTIONS: SH_OPTIONS,
+        BP_OPTIONS: BP_OPTIONS,
         check: check,
         luaString: luaString,
     };

@@ -43,12 +43,12 @@ Crepuscular splits the game's clock into day and night and gives each one a **de
 - how many of the zombies killed while it applies get back up;
 - which sandbox options change while it lasts;
 - the sky colour, fog and darkness;
-- which monsters are about: The Mutants, Cry of Fear and Silent Hill stop making monsters, and other monster mods' far monsters are removed (see [Monster mods and kinds](#monster-mods-and-kinds));
+- which monsters are about: The Mutants, Cry of Fear and Silent Hill stop making monsters, Blackout Predators stops turning zombies into Volatiles, and other monster mods' far monsters are removed (see [Monster mods and kinds](#monster-mods-and-kinds));
 - a line players see, and a sound they hear, when it begins.
 
 **Events** are special nights and days (moons and suns) with conditions of their own: moon phase, date, season, weather, every few days, after another event, at random. While an event runs, its definition takes over from Day or Night.
 
-**It works as soon as it is enabled, with no setup.** The defaults below apply without any configuration. Crepuscular needs no other mod: its parts for The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs and Zomboid Forge apply only when those mods are installed, and without them the same settings have nothing to act on.
+**It works as soon as it is enabled, with no setup.** The defaults below apply without any configuration. Crepuscular needs no other mod: its parts for The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs, Blackout Predators and Zomboid Forge apply only when those mods are installed, and without them the same settings have nothing to act on.
 
 ### The defaults
 
@@ -61,7 +61,7 @@ Events1  id=bloodmoon;track=moon;moon=full;chance=50;prio=10;speed=+50;rise=100;
 | When | What happens |
 |---|---|
 | Day | A quarter of the ordinary zombies are one speed tier faster (with the game's default speed, fast shamblers become sprinters). New and reloaded zombies get 70% of the health they roll, and no ordinary zombie keeps more than 70% of the most a new one can have. Zombies killed by day stay down. |
-| Night (20:00 to 04:00) | Half of the ordinary zombies are one tier slower. Half of the zombies killed at night are marked to get back up (unless something [keeps it down](#marking)) 1 to 2 in-game hours later; they get up only at night, so a kill just before dawn waits for the next night. If The Mutants is installed, it makes no new mutants at night and far mutants are removed. |
+| Night (20:00 to 04:00) | Half of the ordinary zombies are one tier slower. Half of the zombies killed at night are marked to get back up (unless something [keeps it down](#marking)) 1 to 2 in-game hours later; they get up only at night, so a kill just before dawn waits for the next night. If The Mutants is installed, it makes no new mutants at night and far mutants are removed. If Blackout Predators is installed, its Volatiles hunt from Crepuscular's dusk to its dawn, and sleep in their nests by day. |
 | Blood moon | On the first night of each full moon, a 50% chance. Half of the ordinary zombies are one tier faster, every zombie killed that night is marked to get back up (unless something [keeps it down](#marking)), The Mutants (if installed) may make mutants, and every player sees "The moon rises red. A blood moon has begun." in red. |
 
 The sky is the game's own unless a definition sets it.
@@ -480,9 +480,10 @@ Every special-zombie mod needs a kind, even one you never turn off. Without it C
 | `mutants` | The Mutants | The zombies The Mutants says are mutants. |
 | `cof` | Cry of Fear Monster NPCs | Its monsters. |
 | `silenthill` | Silent Hill Monster NPCs | Its monsters, Pyramid Head among them: the zombies in its outfits (`SHM_` and the monster's name), told by their persistent outfit on the server and on every player's game. |
+| `volatiles` | Blackout Predators | Its Volatiles: the zombies in the outfit its own code names (`BP_Volatile`), told by their persistent outfit on the server and on every player's game. |
 | one per Zomboid Forge type | Zomboid Forge, for example The Last of Us Infected | The zombies of that type. The kind is the type's id with only A-Z, a-z, 0-9 and `_` kept, lowercased: `tlou_runner`, `tlou_stalker`, `tlou_clicker`, `tlou_bloater` for The Last of Us Infected's types as its own Lua names them. A fork may name them otherwise; Status lists the kinds it finds. `ZF_Zomboid`, the type of ordinary zombies, is no kind. |
 
-A zombie belongs to the first kind it matches, in this order: `cof`, `silenthill`, `mutants`, the kinds of the Kinds option in order, kinds other mods register, then Zomboid Forge's types. Bandits belong to no kind.
+A zombie belongs to the first kind it matches, in this order: `cof`, `silenthill`, `volatiles`, `mutants`, the kinds of the Kinds option in order, kinds other mods register, then Zomboid Forge's types. Bandits belong to no kind.
 
 ### The Kinds option
 
@@ -496,10 +497,10 @@ The **Monster kinds** option adds kinds by the outfit their monsters spawn in: `
 
 | Mod | Line | Notes |
 |---|---|---|
-| Blackout Predators (Workshop 3766513120) | `volatiles=BP_Volatile` | The outfit is inferred from the author's notes, not confirmed in its files. Don't put `off=volatiles` in Day: far removal would empty the nests they sleep in. Use its own spawn options through `set.` instead. |
-| Projeto Nemesis (Workshop 3706463588, needs ApocalipseBR Regiões) | `nemesis=Nemesis,MrX` | Its boss is put in one of the outfits its OutfitName option names, `Nemesis,MrX` in its own example: list the same names here. |
+| Projeto Nemesis (Workshop 3706463588, needs ApocalipseBR Regiões) | `nemesis=Nemesis,MrX` | Multiplayer only: it spawns its boss only on a server, with nothing to cap how many are alive. Its OutfitName option is `Nemesis` by default; Mr X comes only when it lists `MrX` too. It reads its options once, as the server starts, so no `set.` can keep it to the night (its SpawnRollPercent can't go below 1 either), and `off=nemesis` only removes far ones without a target: new ones keep coming, each aimed at a player. |
+| IZ Zombie Skins (Workshop 3746812626) | `izskins=AABoomer,AACharge,AACloaker,AADemolisher,AAExperiment,AAGoon,AAOgre,AARadiationZed,AARevenant,AARunnerZed,AASummoner,AATankyZed,AAToad,AAVolatile,AAWoodZed` | Multiplayer servers only: there the game dresses zombies in its skins' outfits as they spawn, and the line sees those. In single player it puts other clothes on ordinary zombies, which keep their own outfit, so the line catches nothing. With the line its skins keep their own abilities and health; those that don't run lose Crepuscular's day and night speed. |
 
-Both together: `volatiles=BP_Volatile;nemesis=Nemesis,MrX`.
+Occult Zombies needs no line: its monsters are ordinary zombies in other clothes, with nothing of their own, so they keep Crepuscular's speed, health and rises.
 
 ### Turning a kind off: far removal
 
@@ -511,7 +512,7 @@ While a kind is off, each in-game minute up to `RemovalsPerMinute` of its member
 
 Keep `KeepDistance` beyond what players can see, or monsters vanish in view. A removal is not a kill: it leaves no corpse.
 
-Turning a kind off can't keep a mod from making its monsters, except as The Mutants, Cry of Fear and Silent Hill allow below. Members nearby or with a target stay.
+Turning a kind off can't keep a mod from making its monsters, except as The Mutants, Cry of Fear, Silent Hill and Blackout Predators allow below. Members nearby or with a target stay. `volatiles` is never removed: see [Blackout Predators](#blackout-predators).
 
 ### The Mutants
 
@@ -542,6 +543,21 @@ Silent Hill Monster NPCs is built on the same framework as Cry of Fear Monster N
 - Its monsters that go down instead of dying are still alive: Crepuscular leaves them alone. Finish them on the floor as the mod says; Crepuscular's Finish off is for corpses marked to rise.
 - `off=silenthill` without Silent Hill Monster NPCs installed does nothing, and the log says so.
 
+### Blackout Predators
+
+Its Volatiles sleep in fixed nests by day and hunt at its night, when it also turns some ordinary zombies far from players into Volatiles: its night swap, 9 percent of those 25 or more tiles from every player by default.
+
+- **Its night is Crepuscular's.** With `VolatilesFollowNight` (on by default), Crepuscular sets the mod's own night hours (its NightStartHour and DayStartHour, which it reads every in-game minute), so its night lasts while the Night or a moon event applies and its day while the Day or a sun event applies, forced phases too. The Volatiles leave their nests at Crepuscular's dusk and go back at its dawn, and the swapped ones flee and are removed by the mod, as at its own 06:00. Its double XP follows the same night.
+- Its scream as its night begins comes once, at Crepuscular's dusk. In a night or day of 22 hours or more, such as a long moon event or an endless day, the two hours move on so that the night or day lasts, with no scream in it.
+- With `VolatilesFollowNight` off its own hours decide, 00:00 to 06:00 by default, and a `set.` of them works as any other. While it is on, a `set.` of those two hours does nothing, and the log says so. The log also warns when the sandbox options give the two hours other values than the mod's own, since Crepuscular replaces them.
+- **`off=volatiles` only stops the night swap** (its AmbientSpawnChancePercent set to 0). No Volatile is ever removed: the mod frees a nest's place only when its Volatile dies, so a removed one would leave the nest empty for good. Nests still fill their empty places when first loaded, and a killed nest Volatile never comes back, by the mod's own rule.
+- **Nests only:** put `off=volatiles` in Night and in the moon events that set their own `off=`, or `set.BlackoutPredators.AmbientSpawnChancePercent=0` in Night, which moon events take from it; the builder's Blackout Predators picker writes the `set.` per definition. A night with the swap off still counts the far zombies it looks at as rolled, so after it fewer of the zombies still loaded are swapped, until they unload.
+- **The swap takes other mods' monsters too.** It picks any zombie 25 or more tiles from every player that isn't a Volatile already: Cry of Fear and Silent Hill monsters and mutants as well, whatever their kinds. Only turning the swap off prevents it.
+- Volatiles keep the mod's own speed and health, aren't marked to rise unless `RiseKinds` lists `volatiles`, and The Mutants never converts them.
+- `volatiles` is built in: a `volatiles=` line in the Kinds option is an error now, so remove it.
+- Its options can be set per definition with `set.`, and it reads them within an in-game minute: `AmbientSpawnChancePercent`, `UVMechanicsEnabled` (a night when the lamps fail), `VolatileSpeedScale`, `VolatileStrength`, `VolatileSight`, `VolatileMemory`, `VolatileHearing`. A `VolatileHealth` changed mid-game reaches only some Volatiles, and lower nest counts retire live ones.
+- `off=volatiles` without Blackout Predators installed does nothing, and the log says so.
+
 ### Zomboid Forge
 
 - A Zomboid Forge kind that is off only loses its far members: Zomboid Forge goes on giving its types to new zombies, and its spawn shares are fixed when the world loads.
@@ -550,7 +566,7 @@ Silent Hill Monster NPCs is built on the same framework as Cry of Fear Monster N
 
 ### RiseKinds
 
-**Monster kinds that rise** (`RiseKinds`) lists the kinds whose killed members can be marked to rise too, written as in `off=`: for example `cof,mutants`, `tlou_clicker`, or a kind of the Kinds option. Empty, only ordinary zombies rise. Bandits never rise. A monster rises as any corpse does, in the same outfit; what it can do after that is up to its own mod. A list that isn't kind names separated by commas is logged and no monster rises; a name that isn't a known kind is logged too. `silenthill` there adds Crepuscular's rises on top of the mod's own going down: a monster finished on the floor could get up again later.
+**Monster kinds that rise** (`RiseKinds`) lists the kinds whose killed members can be marked to rise too, written as in `off=`: for example `cof,mutants`, `tlou_clicker`, or a kind of the Kinds option. Empty, only ordinary zombies rise. Bandits never rise. A monster rises as any corpse does, in the same outfit; what it can do after that is up to its own mod. A list that isn't kind names separated by commas is logged and no monster rises; a name that isn't a known kind is logged too. `silenthill` there adds Crepuscular's rises on top of the mod's own going down: a monster finished on the floor could get up again later. `volatiles` there lets a Volatile's corpse rise with the mod's marks on it; how the mod then treats it is untested, so it is not recommended.
 
 ## Presets and examples
 
@@ -637,6 +653,7 @@ Each option is `Crepuscular.<Option>` in the sandbox settings, on the **Crepuscu
 | `KeepDistance` | Keep distance | `40` | 0 to 300 | While a kind is off, a member is removed only with no target and no player within this many tiles. |
 | `RemovalsPerMinute` | Removals per minute | `50` | 1 to 500 | Most far members of kinds that are off removed per in-game minute, all kinds together. |
 | `MutantRequeue` | Offer zombies when mutants start | `false` | true or false | When mutants come back on, offer the loaded zombies to The Mutants (200 per minute). |
+| `VolatilesFollowNight` | Volatiles follow the night | `true` | true or false | [Blackout Predators](#blackout-predators)' night is Crepuscular's: it sets the mod's own night hours. |
 | `ZombiesPerSweep` | Zombies per sweep | `400` | 50 to 5000 | Zombies checked per in-game minute on each game for the speed and health in effect. |
 | `RiseDelayMin` | Rise after at least | `1.0` | 0.0 to 48.0 | In-game hours from death until a marked corpse may get up, at least. |
 | `RiseDelayMax` | Rise after at most | `2.0` | 0.0 to 48.0 | The same, at most. Each corpse gets a random time in between. |
@@ -683,13 +700,13 @@ When the definitions have errors, admins see "Crepuscular: N definitions have er
 - the sky values Crepuscular set and which of them an admin or another mod has overridden or turned off;
 - the sandbox values overridden now, with their bases, and any the game refused;
 - each text option's size in bytes;
-- the state of The Mutants, Cry of Fear, Silent Hill and Zomboid Forge support.
+- the state of The Mutants, Cry of Fear, Silent Hill, Blackout Predators and Zomboid Forge support.
 
 ## Multiplayer and performance
 
 | Where | What runs |
 |---|---|
-| The server (or the single player game) | Each in-game minute, the speed of the zombies no player's game runs and the health cap of every zombie it has loaded. The clock and the decisions, kept in the save. Sandbox values, sent to every player. The sky and fog. The risers: marking, checks and the waiting corpses, kept in the save. Far removal. The Mutants, Cry of Fear and Silent Hill support. The admin commands. The speed and health of the zombies it creates, loads or raises. |
+| The server (or the single player game) | Each in-game minute, the speed of the zombies no player's game runs and the health cap of every zombie it has loaded. The clock and the decisions, kept in the save. Sandbox values, sent to every player. The sky and fog. The risers: marking, checks and the waiting corpses, kept in the save. Far removal. The Mutants, Cry of Fear, Silent Hill and Blackout Predators support. The admin commands. The speed and health of the zombies it creates, loads or raises. |
 | Every player's game | Each in-game minute, the speed of the zombies that game runs and the health cap of every zombie it has loaded. The lines and sounds. The Finish off menu and head-hit reports. Removing its copies of the monsters the server removed. Taking the server's sandbox values. |
 
 The server sends its state to players whenever it changes, and a player who joins gets it at once.
@@ -716,7 +733,7 @@ The server sends its state to players whenever it changes, and a player who join
 
 **registerKind(name, spec):**
 
-- `name`: a-z, 0-9 and `_`. Not `none`, `cof`, `silenthill`, `mutants`, the kind of a Zomboid Forge type, or a kind of the Kinds option. Zomboid Forge's types are known once the game has started: a kind registered before under the name of one is set aside then, with a warning.
+- `name`: a-z, 0-9 and `_`. Not `none`, `cof`, `silenthill`, `volatiles`, `mutants`, the kind of a Zomboid Forge type, or a kind of the Kinds option. Zomboid Forge's types are known once the game has started: a kind registered before under the name of one is set aside then, with a warning.
 - `spec.isMember(z)`: returns whether `z` is a member. It runs on the server and on players' games, and must give the same answer on both: members keep their own speed and health on every game, so a member `isMember` misses on the player's game that runs it gets capped there, and the server takes that health. One that throws counts as no member, with a warning.
 - `spec.despawn = false`: keeps far members while the kind is off.
 - The same name again replaces its spec. A Kinds option entry with the same name replaces the registered kind, with a warning.
@@ -759,8 +776,9 @@ From the mods' descriptions and, where it is public, their code. None of these w
 
 **Fit well:**
 
-- The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs and Zomboid Forge (The Last of Us Infected): built-in kinds.
-- Blackout Predators and Projeto Nemesis: [ready Kinds lines](#the-kinds-option).
+- The Mutants, Cry of Fear Monster NPCs, Silent Hill Monster NPCs, Blackout Predators and Zomboid Forge (The Last of Us Infected): built-in kinds.
+- Projeto Nemesis, and IZ Zombie Skins on multiplayer servers: [ready Kinds lines](#the-kinds-option).
+- Occult Zombies: nothing to set up, its monsters are ordinary zombies.
 - Bandits: they never rise, keep their own speed and belong to no kind.
 - Kill counters and XP mods: each rise is another kill.
 - Scheduled horde mods (Dynamic Horde Events, Blood Moon Hordes, Hark's Horde Night Revamped, Horde Night Revived) and night-only creature mods with their own clock (Dark Presence): their own options can be switched per definition with `set.`. Whether each reads its options while the game runs is unverified.
@@ -776,7 +794,8 @@ From the mods' descriptions and, where it is public, their code. None of these w
 - **Risers' counts reset on unload:** a risen zombie that unloads (out of the loaded area, a restart, a single player load) is an ordinary zombie again, and `MaxRises` counts from 0 for it.
 - **Corpses on stairs**, and every corpse while `ZombieLore.DisableFakeDead` is 3, can't rise.
 - **Some `set.` values** apply only to zombies created or loaded later, stick to infections or bodies, or need a restart. See [Sandbox values](#sandbox-values-set).
-- **`off=`** removes only far members without a target. Only The Mutants, Cry of Fear and Silent Hill also stop making new ones; other mods go on making their monsters.
+- **`off=`** removes only far members without a target, and never a Volatile. Only The Mutants, Cry of Fear and Silent Hill also stop making new ones, and Blackout Predators its night swap; other mods go on making their monsters.
+- **Blackout Predators' night swap** can turn any far zombie into a Volatile, other mods' monsters too, whatever their kinds; only turning the swap off prevents it.
 - **Cry of Fear and Silent Hill** turn their monsters that load in while their kind is off into ordinary zombies, for good.
 - **A special-zombie mod without a kind** gets Crepuscular's speed and health on its monsters.
 - **Forcing a phase** isn't saved, and doesn't change the game's time or which events are decided.
@@ -792,7 +811,7 @@ From the mods' descriptions and, where it is public, their code. None of these w
 - Cry of Fear: that removing a monster stops its looping sounds, and the Sawrunner's night encounters, which the server can't tell apart.
 - Silent Hill Monster NPCs: that its monsters are members on the server, in single player and on players' games; `off=silenthill` (no new spawns, far ones removed, no ghosts on players' games, homes filled again at dusk); that a `fog=` brings out its fog-only spawns; `set.SHM_Creatures.PyramidHead` turned on and off mid-game; and its multiplayer, which its author has not tested yet.
 - Zomboid Forge: the Build 42.20 Workshop forks (their module and type ids), that the server and players' games agree on each zombie's kind, `set.ZombieLore.Sight` and `Hearing` against Zomboid Forge's own writes, and that far removal leaves no lingering sounds.
-- Blackout Predators' outfit name, and the default of Projeto Nemesis's OutfitName option.
+- Blackout Predators: that its Volatiles are members on the server, in single player and on players' games; that they leave their nests at Crepuscular's dusk and go back at its dawn, with its scream once at dusk, on a server too, where its players get the hours through its own sync; `off=volatiles` (no swaps, no Volatile removed); and the warning about the sandbox's own hours, which reads the options' defaults from the game.
 
 ## Reporting problems
 

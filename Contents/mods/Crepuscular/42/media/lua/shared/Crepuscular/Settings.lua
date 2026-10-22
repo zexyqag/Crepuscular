@@ -20,6 +20,7 @@ local DEFAULTS = {
     KeepDistance = 40,
     RemovalsPerMinute = 50,
     MutantRequeue = false,
+    VolatilesFollowNight = true,
     ZombiesPerSweep = 400,
     RiseDelayMin = 1.0,
     RiseDelayMax = 2.0,
@@ -111,6 +112,11 @@ end
 
 function Settings.mutantRequeue()
     return boolean("MutantRequeue")
+end
+
+-- Whether Blackout Predators' own night hours are set to follow the definitions'.
+function Settings.volatilesFollowNight()
+    return boolean("VolatilesFollowNight")
 end
 
 function Settings.zombiesPerSweep()

@@ -19,6 +19,7 @@
         mutants: { name: "The Mutants", without: "no mutants appear, whatever off= allows" },
         cof: { name: "Cry of Fear Monster NPCs", without: "the game skips its set.COF_Spawns values with a warning, and no Cry of Fear monster appears" },
         silenthill: { name: "Silent Hill Monster NPCs", without: "the game skips its set.SHM_ values with a warning, and no Silent Hill monster appears" },
+        volatiles: { name: "Blackout Predators", without: "the game skips its set.BlackoutPredators values with a warning, and no Volatile appears" },
     };
 
     var NOTE = {
