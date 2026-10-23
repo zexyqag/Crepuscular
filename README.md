@@ -28,12 +28,11 @@ A Project Zomboid Build 42 mod that gives day and night their own rules: faster,
 - [All sandbox options](#all-sandbox-options)
 - [Admin menu and Status](#admin-menu-and-status)
 - [Multiplayer and performance](#multiplayer-and-performance)
-- [For modders](#for-modders)
 - [Compatibility](#compatibility)
 - [Known limitations](#known-limitations)
 - [Not yet verified in game](#not-yet-verified-in-game)
 - [Reporting problems](#reporting-problems)
-- [Publishing](#publishing)
+- [For mod authors](#for-mod-authors)
 
 ## What it does
 
@@ -444,7 +443,7 @@ The **Monster kinds** option adds kinds by the outfit their monsters spawn in: `
 
 - A zombie whose outfit name starts with one of the prefixes (upper and lower case don't matter) belongs to that kind.
 - Names are made of a-z, 0-9 and `_`, and can't be `none` or a built-in kind's name. A bad entry is skipped and logged; the rest are kept.
-- It reads the outfit a zombie spawned in (its persistent outfit). A mod that later re-dresses ordinary zombies in other clothes doesn't change that, so the Kinds option can't see its monsters; such a mod needs a kind [registered by code](#for-modders).
+- It reads the outfit a zombie spawned in (its persistent outfit). A mod that later re-dresses ordinary zombies in other clothes doesn't change that, so the Kinds option can't see its monsters; such a mod needs a kind [registered by code](#for-mod-authors).
 
 **Ready lines** (the builder adds them with one click):
 
@@ -660,48 +659,6 @@ The server sends its state to players whenever it changes, and a player who join
 | `MutantRequeue` (off) | Up to 200 zombies offered to The Mutants per minute when mutants come back on. |
 | `Verbose` (off) | Every decision, change and removal written to the log. |
 
-## For modders
-
-`Crepuscular.API` is a global on the server, in single player and on players' games. Its `VERSION` is 1.
-
-| Function | Returns |
-|---|---|
-| `Crepuscular.API.registerKind(name, spec)` | `true`, or `false` and why. Registers a kind of your monsters. |
-| `Crepuscular.API.isActive(name)` | Whether the kind is active in the definition in effect. Kinds no definition turns off are, and so is every kind while this game has no state yet. |
-| `Crepuscular.API.kindOf(z)` | The kind of zombie `z`, or `nil`. |
-| `Crepuscular.API.current()` | `{ phase = "day" or "night", event, track, serial }`, with `event`, `track` and `serial` only while an event runs, or `nil` while this game has no state yet. It is a copy. |
-
-**registerKind(name, spec):**
-
-- `name`: a-z, 0-9 and `_`. Not `none`, `cof`, `silenthill`, `volatiles`, `mutants`, the kind of a Zomboid Forge type, or a kind of the Kinds option. Zomboid Forge's types are known once the game has started: a kind registered before under the name of one is set aside then, with a warning.
-- `spec.isMember(z)`: returns whether `z` is a member. It runs on the server and on players' games, and must give the same answer on both: members keep their own speed and health on every game, so a member `isMember` misses on the player's game that runs it gets capped there, and the server takes that health. One that throws counts as no member, with a warning.
-- `spec.despawn = false`: keeps far members while the kind is off.
-- The same name again replaces its spec. A Kinds option entry with the same name replaces the registered kind, with a warning.
-
-**OnCrepuscularChange(current, previous):** an event that fires once the game has started and whenever the phase or the running event changes after that. `current` is what `current()` returns; `previous` is the one before, `nil` the first time. It fires on the server, in single player and on players' games.
-
-```lua
--- media/lua/shared/MyMod/CrepuscularSupport.lua
-if getActivatedMods():contains("\\Crepuscular") then
-    local API = require "Crepuscular/API"
-
-    API.registerKind("wraiths", {
-        -- Must answer the same on the server and on every player's game.
-        isMember = function(z)
-            return MyMod.isWraith(z)
-        end,
-    })
-
-    Events.OnCrepuscularChange.Add(function(current, previous)
-        if current.event == "bloodmoon" and (previous == nil or previous.event ~= "bloodmoon") then
-            -- a blood moon has begun
-        end
-    end)
-end
-```
-
-`require "Crepuscular/API"` loads the API whichever mod loads first, and creates `Events.OnCrepuscularChange`. Build 42 lists mod ids with a leading backslash, hence `"\\Crepuscular"`.
-
 ## Compatibility
 
 From the mods' descriptions and, where it is public, their code. None of these was tested together with Crepuscular.
@@ -765,23 +722,46 @@ Open an issue at [github.com/zexyqag/Crepuscular/issues](https://github.com/zexy
 4. your other mods, especially monster and speed mods;
 5. what you expected and what happened.
 
-## Publishing
+## For mod authors
 
-Run the **Publish** workflow (Actions, Publish, Run workflow), optionally with notes for the top of the change log. It starts from the latest version: the highest `vX.Y.Z` release, or while there is none, the highest `vX.Y.Z` tag. Then:
+`Crepuscular.API` is a global on the server, in single player and on players' games. Its `VERSION` is 1.
 
-- **A release** when a commit since then is releasable (below) and something under `Contents/` changed. It is tagged `vX.Y.Z`, its notes are the change log (your notes, then the breaking changes, features and fixes from the commit messages), and `Contents/` and `preview.png` are uploaded to the Workshop item in `workshop.txt`'s `id=`, with the change log as the Steam change note.
-- **Only the Workshop page** is updated when the title, description or visibility in `workshop.txt`, or `preview.png`, changed.
-- **Nothing** otherwise.
+| Function | Returns |
+|---|---|
+| `Crepuscular.API.registerKind(name, spec)` | `true`, or `false` and why. Registers a kind of your monsters. |
+| `Crepuscular.API.isActive(name)` | Whether the kind is active in the definition in effect. Kinds no definition turns off are, and so is every kind while this game has no state yet. |
+| `Crepuscular.API.kindOf(z)` | The kind of zombie `z`, or `nil`. |
+| `Crepuscular.API.current()` | `{ phase = "day" or "night", event, track, serial }`, with `event`, `track` and `serial` only while an event runs, or `nil` while this game has no state yet. It is a copy. |
 
-| Commit message | From 0.9.0 | From 1.4.2 |
-|---|---|---|
-| `fix: ...` | 0.9.1 | 1.4.3 |
-| `feat: ...` | 0.10.0 | 1.5.0 |
-| `feat!: ...` (any type with `!`), or a `BREAKING CHANGE:` footer | 0.10.0 | 2.0.0 |
-| any other type (`docs:`, `chore:`, ...) or message | no release | no release |
+**registerKind(name, spec):**
 
-A scope is fine (`fix(fog): ...`), and the highest of the commits counts. While MAJOR is 0, a breaking change raises MINOR, as a feature does. A `Release-As: X.Y.Z` footer sets the version instead; it must be higher than the latest. That is how 1.0.0 is made.
+- `name`: a-z, 0-9 and `_`. Not `none`, `cof`, `silenthill`, `volatiles`, `mutants`, the kind of a Zomboid Forge type, or a kind of the Kinds option. Zomboid Forge's types are known once the game has started: a kind registered before under the name of one is set aside then, with a warning.
+- `spec.isMember(z)`: returns whether `z` is a member. It runs on the server and on players' games, and must give the same answer on both: members keep their own speed and health on every game, so a member `isMember` misses on the player's game that runs it gets capped there, and the server takes that health. One that throws counts as no member, with a warning.
+- `spec.despawn = false`: keeps far members while the kind is off.
+- The same name again replaces its spec. A Kinds option entry with the same name replaces the registered kind, with a warning.
 
-The version is set by Publish: `mod.info` has no `modversion=` line in the repository, and Publish writes it into the uploaded copy. When the upload fails, the release stays a pre-release, and the next run uploads it again before it publishes anything newer. The builder is not part of a release: GitHub Pages serves `builder/` from the main branch.
+**OnCrepuscularChange(current, previous):** an event that fires once the game has started and whenever the phase or the running event changes after that. `current` is what `current()` returns; `previous` is the one before, `nil` the first time. It fires on the server, in single player and on players' games.
 
-Setup: the `steam` environment holds the secrets `STEAM_USERNAME` and `STEAM_CONFIG_VDF` (steamcmd's `config/config.vdf` after a login with Steam Guard). Upload the item once from the game, which creates it and writes its `id=` into `workshop.txt`, commit that, and tag the commit you uploaded with its version (`git tag v0.1.0 <commit>`, then push the tag).
+```lua
+-- media/lua/shared/MyMod/CrepuscularSupport.lua
+if getActivatedMods():contains("\\Crepuscular") then
+    local API = require "Crepuscular/API"
+
+    API.registerKind("wraiths", {
+        -- Must answer the same on the server and on every player's game.
+        isMember = function(z)
+            return MyMod.isWraith(z)
+        end,
+    })
+
+    Events.OnCrepuscularChange.Add(function(current, previous)
+        if current.event == "bloodmoon" and (previous == nil or previous.event ~= "bloodmoon") then
+            -- a blood moon has begun
+        end
+    end)
+end
+```
+
+`require "Crepuscular/API"` loads the API whichever mod loads first, and creates `Events.OnCrepuscularChange`. Build 42 lists mod ids with a leading backslash, hence `"\\Crepuscular"`.
+
+To work on Crepuscular itself, see [CONTRIBUTING.md](CONTRIBUTING.md).
