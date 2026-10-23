@@ -70,10 +70,10 @@ function Zombies.kindOf(z, kindOf)
     return kindOf(z)
 end
 
--- Left alone: dead, crawling, dragged corpses, zombies playing dead, Bandits and every kind's members.
+-- Left alone: dead, crawling, dragged corpses, zombies playing dead, NPCs and every kind's members.
 -- A single player zombie is dressed before its kind is told, so the kinds see its outfit.
 local function ordinary(z, kindOf)
-    if z:isDead() or z:isCrawling() or z:isReanimatedForGrappleOnly() or z:isFakeDead() or Kinds.isBandit(z) then
+    if z:isDead() or z:isCrawling() or z:isReanimatedForGrappleOnly() or z:isFakeDead() or Kinds.isNpc(z) then
         return false
     end
     outfitID(z)

@@ -180,7 +180,7 @@ Day, Night and events can all have these.
 - Each in-game minute every game checks up to `ZombiesPerSweep` zombies. After a change it takes about the number of loaded zombies divided by that many minutes until every zombie has it.
 - The log warns when `ZombieLore.Speed` is Sprinters (the game makes every zombie run when it lunges, so `speed=-N` can't slow them) and when `ZombieLore.ActiveOnly` isn't Both (the game itself turns inactive zombies into shamblers and back, which fights `speed=`).
 
-**Who is ordinary:** speed and health change only ordinary zombies. Monsters of every kind, Bandits and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. Zombies playing dead and corpses being dragged are left alone.
+**Who is ordinary:** speed and health change only ordinary zombies. Monsters of every kind, [Bandits](https://steamcommunity.com/sharedfiles/filedetails/?id=3268487204), the NPCs of [Project A-Life](https://steamcommunity.com/sharedfiles/filedetails/?id=3803984183) and crawlers keep their own speed and are never capped; the health factor is given as the game creates a zombie, before it marks some of them, so a reloaded crawler or a new mutant may get it too. Zombies playing dead and corpses being dragged are left alone.
 
 **Health in detail:** the most a new zombie can have depends on the game's `ZombieLore.Toughness`: 3.8 for Tough and Random, 1.8 for Normal, 0.8 for Fragile. With `health=0.7` and Normal toughness, no ordinary zombie keeps more than 1.26.
 
@@ -380,7 +380,7 @@ With Relentless Dead loaded, Crepuscular drives it:
 - **Cry of Fear and Silent Hill monsters** that rise lose the marks of their health buffer first, so in single player they don't skip their health and die again at once.
 - **Each riser** gets the speed and health of the definition in effect as it gets up.
 
-Everything else is Relentless Dead's, with its own options on its own sandbox page: how soon a marked corpse comes due, how often one body can rise, what keeps a corpse down (burning, Finish off, floor head hits, safehouses, its age), Bandits and headless corpses, and its Status. Its README has the details.
+Everything else is Relentless Dead's, with its own options on its own sandbox page: how soon a marked corpse comes due, how often one body can rise, what keeps a corpse down (burning, Finish off, head kills, safehouses, its age), Bandits, Project A-Life's NPCs and headless corpses, and its Status. Its README has the details.
 
 ## Sky and fog
 
@@ -436,7 +436,7 @@ Every special-zombie mod needs a kind, even one you never turn off. Without it C
 | `volatiles` | Blackout Predators | Its Volatiles: the zombies in the outfit its own code names (`BP_Volatile`), told by their persistent outfit on the server and on every player's game. |
 | one per Zomboid Forge type | Zomboid Forge, for example The Last of Us Infected | The zombies of that type. The kind is the type's id with only A-Z, a-z, 0-9 and `_` kept, lowercased: `tlou_runner`, `tlou_stalker`, `tlou_clicker`, `tlou_bloater` for The Last of Us Infected's types as its own Lua names them. A fork may name them otherwise; Status lists the kinds it finds. `ZF_Zomboid`, the type of ordinary zombies, is no kind. |
 
-A zombie belongs to the first kind it matches, in this order: `cof`, `silenthill`, `volatiles`, `mutants`, the kinds of the Kinds option in order, kinds other mods register, then Zomboid Forge's types. Bandits belong to no kind.
+A zombie belongs to the first kind it matches, in this order: `cof`, `silenthill`, `volatiles`, `mutants`, the kinds of the Kinds option in order, kinds other mods register, then Zomboid Forge's types. Bandits and Project A-Life's NPCs belong to no kind.
 
 ### The Kinds option
 
@@ -721,6 +721,7 @@ From the mods' descriptions and, where it is public, their code. None of these w
 - Occult Zombies: nothing to set up, its monsters are ordinary zombies.
 - Relentless Dead: raises the corpses `rise=` marks, driven by the definition in effect (see [Risers](#risers)).
 - Bandits: they never rise, keep their own speed and belong to no kind.
+- Project A-Life: its NPCs keep their own speed and health and belong to no kind.
 - Kill counters and XP mods: each rise is another kill.
 - Scheduled horde mods (Dynamic Horde Events, Blood Moon Hordes, Hark's Horde Night Revamped, Horde Night Revived) and night-only creature mods with their own clock (Dark Presence): their own options can be switched per definition with `set.`. Whether each reads its options while the game runs is unverified.
 
@@ -752,6 +753,7 @@ From the mods' descriptions and, where it is public, their code. None of these w
 - Silent Hill Monster NPCs: that its monsters are members on the server, in single player and on players' games; `off=silenthill` (no new spawns, far ones removed, no ghosts on players' games, homes filled again at dusk); that a `fog=` brings out its fog-only spawns; `set.SHM_Creatures.PyramidHead` turned on and off mid-game; and its multiplayer, which its author has not tested yet.
 - Zomboid Forge: the Build 42.20 Workshop forks (their module and type ids), that the server and players' games agree on each zombie's kind, `set.ZombieLore.Sight` and `Hearing` against Zomboid Forge's own writes, and that far removal leaves no lingering sounds.
 - Blackout Predators: that its Volatiles are members on the server, in single player and on players' games; that they leave their nests at Crepuscular's dusk and go back at its dawn, with its scream once at dusk, on a server too, where its players get the hours through its own sync; `off=volatiles` (no swaps, no Volatile removed); and the warning about the sandbox's own hours, which reads the options' defaults from the game.
+- Project A-Life: that its NPCs keep their own health by day, in single player, on a server and on players' games, which know an NPC once A-Life has told them it is one.
 
 ## Reporting problems
 

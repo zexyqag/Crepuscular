@@ -98,9 +98,9 @@ end
 Events.OnServerStarted.Add(check)
 Events.OnGameStart.Add(check)
 
--- Members of every kind stay as they are: a mutant offered again would be healed.
+-- NPCs and members of every kind stay as they are: a mutant offered again would be healed.
 local function ordinary(z, kindOf)
-    return not z:isDead() and not z:isReanimatedForGrappleOnly() and not Kinds.isBandit(z) and kindOf(z) == nil
+    return not z:isDead() and not z:isReanimatedForGrappleOnly() and not Kinds.isNpc(z) and kindOf(z) == nil
 end
 
 -- Requeue in progress: the next index in the zombie list.

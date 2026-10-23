@@ -5,7 +5,7 @@ local Defs = require "Crepuscular/Defs"
 -- Monster kinds: named sets of zombies that other mods make. A zombie belongs to the first kind
 -- whose test it passes: cof, silenthill, volatiles, mutants, the kinds of the Kinds option in order,
 -- the kinds other mods register (API.lua), then the kinds of Zomboid Forge's types, last because
--- Zomboid Forge can give every zombie a type. Bandits belong to none.
+-- Zomboid Forge can give every zombie a type. Bandits and Project A-Life's NPCs belong to none.
 local Kinds = {}
 
 Kinds.BUILTIN = { cof = true, silenthill = true, volatiles = true, mutants = true }
@@ -20,6 +20,8 @@ local SILENT_HILL_MOD = "\\SilentHillMonsters"
 -- Its monsters' outfits, SHM_ and the monster's name, lowercased as outfitName gives them.
 local SILENT_HILL_OUTFIT = "shm_"
 local BLACKOUT_MOD = "\\blackoutpredators"
+local ALIFE_MOD = "\\ProjectALifeNPCs"
+local ALIFE_API_VERSION = 1
 
 -- The Mutants tries its outfit lookup only once, so a call before the game has started can switch
 -- off its identity for the whole session.
@@ -88,8 +90,40 @@ local function minute()
     end
 end
 
+-- Project A-Life's ProjectALife.Interop, or nil and why it can't be used.
+local function alifeApi()
+    local api = type(ProjectALife) == "table" and ProjectALife.Interop or nil
+    if type(api) ~= "table" or type(api.isNpc) ~= "function" then
+        return nil, "loaded without ProjectALife.Interop.isNpc"
+    end
+    if api.VERSION ~= ALIFE_API_VERSION then
+        return nil, "loaded with ProjectALife.Interop version " .. tostring(api.VERSION) .. ", Crepuscular knows version "
+            .. ALIFE_API_VERSION
+    end
+    return api
+end
+
+-- Project A-Life's Interop once the game has started, if it is as Crepuscular knows it: its shared file
+-- may load after this one.
+local alife = nil
+
+local function startAlife()
+    if not getActivatedMods():contains(ALIFE_MOD) then
+        return
+    end
+    local api, why = alifeApi()
+    alife = api
+    if api == nil then
+        Log.warnOnce("alife api", "Project A-Life is " .. why .. ", so Crepuscular treats only Bandits as NPCs"
+            .. " and A-Life's NPCs as ordinary zombies")
+    else
+        Log.info("Project A-Life: its NPCs are left alone")
+    end
+end
+
 local function start()
     started = true
+    startAlife()
     local api, why = forgeApi()
     forgeWhy = why
     if api ~= nil then
@@ -204,8 +238,9 @@ function Kinds.cryOfFear(z)
     return identity.name(z)
 end
 
-function Kinds.isBandit(z)
-    return z:getVariableBoolean("Bandit")
+-- People that are zombies underneath: Bandits, and Project A-Life's NPCs once the game has started.
+function Kinds.isNpc(z)
+    return z:getVariableBoolean("Bandit") or (alife ~= nil and alife.isNpc(z))
 end
 
 -- Outfit index -> name, numbered as the game numbers persistent outfits: the female names sorted,
@@ -403,7 +438,7 @@ local function classifier()
         end
     end
     test = function(z)
-        if Kinds.isBandit(z) then
+        if Kinds.isNpc(z) then
             return nil
         end
         for _, entry in ipairs(builtins) do
