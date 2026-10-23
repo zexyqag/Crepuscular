@@ -764,4 +764,4 @@ end
 
 `require "Crepuscular/API"` loads the API whichever mod loads first, and creates `Events.OnCrepuscularChange`. Build 42 lists mod ids with a leading backslash, hence `"\\Crepuscular"`.
 
-To work on Crepuscular itself, see [CONTRIBUTING.md](CONTRIBUTING.md).
+To contribute to Crepuscular, see [CONTRIBUTING.md](CONTRIBUTING.md).
